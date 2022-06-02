@@ -1,6 +1,6 @@
 
 import numpy as np
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -26,7 +26,8 @@ test_loader = DataLoader(testset, batch_size=batch_size, shuffle=False, num_work
 
 print("Data loaders created")
 
-#input_dim = images[0].flatten().shape[0]
+images, labels = next(iter(train_loader))
+input_dim = images[0].flatten().shape[0]
 
 
 class Network(nn.Module):
@@ -60,7 +61,7 @@ optimizer = torch.optim.SGD(model.parameters(), lr=0.1)
 
 print('Training...')
 
-num_epochs = 5
+num_epochs = 20
 
 for epoch in tqdm(range(num_epochs), unit='epoch'):
     print(epoch)    

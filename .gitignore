@@ -8,6 +8,8 @@ __pycache__/
 # venv Files not included
 /venv
 
+lectures/**/data
+
 # Distribution / packaging
 .Python
 env/
