@@ -74,21 +74,23 @@ class ConvNet():
     def build_model(self):
 
         def conv_block(layer_input, n_channels, kernel_size=3):
-            d = layers.Conv2D(n_channels, kernel_size=(3,3), strides=1, padding='same',activation='relu')(layer_input)
+            d = layers.Conv2D(n_channels, kernel_size=kernel_size, strides=1, activation='relu', padding='same')(layer_input)
+            d = layers.BatchNormalization()(d)
             d = layers.Dropout(.2)(d)
-            d = layers.Conv2D(n_channels, kernel_size=(3,3), strides=1, padding='same',activation='relu')(d)
-            d = layers.MaxPooling2D((2, 2),strides=(2,2))(d)
+            d = layers.Conv2D(n_channels, kernel_size=kernel_size, strides=1, activation='relu', padding='same')(d)
+            d = layers.Dropout(.2)(d)
+            d = layers.MaxPooling2D((2, 2))(d)
             #d = LeakyReLU(alpha=0.2)(d)
             #d = InstanceNormalization()(d)
             return d
 
         d0 = layers.Input(shape=self.img_shape)
 
-        d1 = conv_block(d0, 64)
+        d1 = conv_block(d0, self.n_filters, kernel_size=7)
  
         for _ in range(self.n_blocks):
-            self.n_filters = 2*self.n_filters
             d1 = conv_block(d1, self.n_filters)
+            self.n_filters = 2*self.n_filters
 
         d4 = layers.Flatten()(d1)
         d5 = layers.Dense(100, activation='relu')(d4)
