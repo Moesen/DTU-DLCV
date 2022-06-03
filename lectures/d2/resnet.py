@@ -1,5 +1,5 @@
 import numpy as np
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -8,14 +8,18 @@ from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
 from pathlib import Path
+import json
+from clogger import init_logger
 
 
-log_folder = Path("/log")
+log_folder = Path("log")
+
+logger = init_logger(__name__, testing_mode=True, log_folder=log_folder)
 
 if torch.cuda.is_available():
-    print("The code will run on GPU.")
+    logger.info("The code will run on GPU.")
 else:
-    print(
+    logger.warning(
         "The code will run on CPU. Go to Edit->Notebook Settings and choose GPU as the hardware accelerator"
     )
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -72,7 +76,7 @@ def train(
         out_dict["test_acc"].append(test_correct / len(test_loader.dataset))  # type: ignore
         out_dict["train_loss"].append(np.mean(train_loss))
         out_dict["test_loss"].append(np.mean(test_loss))
-        print(
+        logger.info(
             f"Loss train: {np.mean(train_loss):.3f}\t test: {np.mean(test_loss):.3f}\t",
             f"Accuracy train: {out_dict['train_acc'][-1]*100:.1f}%\t test: {out_dict['test_acc'][-1]*100:.1f}%",
         )
@@ -125,23 +129,31 @@ class ResNet(nn.Module):
 
 
 if __name__ == "__main__":
+    logger.info("loading dataset")
     batch_size = 64
     trainset = datasets.CIFAR10(
         "./data", train=True, download=True, transform=transforms.ToTensor()
     )
     train_loader = DataLoader(trainset, batch_size=batch_size, shuffle=True)
+    logger.info("train dataset loaded")
     testset = datasets.CIFAR10(
         "./data", train=False, download=True, transform=transforms.ToTensor()
     )
     test_loader = DataLoader(testset, batch_size=batch_size, shuffle=False)
+    logger.info("test dataset loaded")
 
     model = ResNet(3, 8)
     model.to(device)
     # Initialize the optimizer
     optimizer = torch.optim.SGD(model.parameters(), lr=0.1)
     num_epochs = 10
-    out_dict = train(model, optimizer, train_loader, test_loader, num_epochs=num_epochs)
+    logger.info("model created")
 
+    logger.info("beginning training")
+    out_dict = train(model, optimizer, train_loader, test_loader, num_epochs=num_epochs)
+    logger.info("Training done")
+
+    logger.info("creating report")
     _, [ax1, ax2] = plt.subplots(1, 2, figsize=(10, 5))
     ax1.plot(out_dict['train_acc'])
     ax1.plot(out_dict['test_acc'])
@@ -156,5 +168,6 @@ if __name__ == "__main__":
     ax2.set_xlabel('Epoch number')
     plt.ylabel('Accuracy')
 
-    plt.savefig("exercise1-4.png")
-    
+    plt.savefig(log_folder / "exercise1-4.png")
+    with open(log_folder / "exercise1-4_results.json", "w") as f:
+        f.write(json.dumps(out_dict, indent=2))
