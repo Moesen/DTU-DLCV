@@ -10,6 +10,8 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 
 # built tensorflow with GPU
+import os
+os.environ['TF_XLA_FLAGS'] = '--tf_xla_enable_xla_devices'
 
 print(tf.test.is_built_with_cuda())
 print(tf.config.list_physical_devices('GPU'))
