@@ -64,37 +64,42 @@ model.add(layers.Dense(100, activation='relu'))
 model.add(layers.Dense(10))
 """
 
-class Net():
+class ConvNet():
     def __init__(self):
 
         self.img_shape = (32, 32, 3)
         self.n_filters = 64
         self.n_blocks = 3
         
+    def build_model(self):
+
+        def conv_block(layer_input, n_channels, kernel_size=3):
+            d = layers.Conv2D(n_channels, kernel_size=(3,3), strides=1, padding='same',activation='relu')(layer_input)
+            d = layers.Dropout(.2)(d)
+            d = layers.Conv2D(n_channels, kernel_size=(3,3), strides=1, padding='same',activation='relu')(d)
+            d = layers.MaxPooling2D((2, 2),strides=(2,2))(d)
+            #d = LeakyReLU(alpha=0.2)(d)
+            #d = InstanceNormalization()(d)
+            return d
+
         d0 = layers.Input(shape=self.img_shape)
 
-        d1 = self.conv_block(d0, self.n_filters)
-
+        d1 = conv_block(d0, 64)
+ 
         for _ in range(self.n_blocks):
-            d1 = self.conv_block(d0, self.n_filters)(d1)
+            d1 = conv_block(d1, self.n_filters)
 
         d4 = layers.Flatten()(d1)
         d5 = layers.Dense(100, activation='relu')(d4)
-        d6 = layers.Dense(2)(d5)
+        d6 = layers.Dense(10)(d5)
 
-        return layers.Model(inputs=d0, outputs=d6)
+        return keras.models.Model(inputs=d0, outputs=d6)
 
-    def conv_block(layer_input, n_channels, kernel_size=3):
-        """Layers used during downsampling"""
-        d = layers.Conv2D(n_channels, kernel_size=kernel_size, strides=1, padding='same',activation='relu')(layer_input)
-        d = layers.Dropout(.2)(d)
-        d = layers.Conv2D(n_channels, kernel_size=kernel_size, strides=1, padding='same',activation='relu')(d)
-        d = layers.MaxPooling2D((2, 2))(d)
-        #d = LeakyReLU(alpha=0.2)(d)
-        #d = InstanceNormalization()(d)
-        return d
 
-model = Net()
+
+
+net = ConvNet()
+model = net.build_model()
 
 # Instantiate an optimizer to train the model.
 optimizer = keras.optimizers.Adam(lr=1e-3)
