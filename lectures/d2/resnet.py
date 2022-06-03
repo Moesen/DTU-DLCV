@@ -87,6 +87,7 @@ class ResNetBlock(nn.Module):
         super(ResNetBlock, self).__init__()
         self.weight_layer = nn.Sequential(
             nn.Conv2d(n_features, n_features, 3, padding="same"),
+	    nn.Dropout(p=.2),
             nn.ReLU(),
             nn.Conv2d(n_features, n_features, 3, padding="same"),
         )
@@ -105,6 +106,7 @@ class ResNet(nn.Module):
         # First conv layers needs to output the desired number of features.
         conv_layers = [
             nn.Conv2d(n_in, n_features, kernel_size=3, stride=1, padding=1),
+	    nn.Dropout(p=.2),
             nn.ReLU(),
         ]
         for i in range(num_res_blocks):
@@ -131,7 +133,7 @@ if __name__ == "__main__":
     logger.info("loading dataset")
     batch_size = 64
     trainset = datasets.CIFAR10(
-        "./data", train=True, download=True, transform=transforms.ToTensor()
+        "./data", train=True, download=True, transform=transforms.Compose([transforms.ToTensor(), transforms.RandomRotation(20)])
     )
     train_loader = DataLoader(trainset, batch_size=batch_size, shuffle=True)
     logger.info("train dataset loaded")
@@ -144,7 +146,7 @@ if __name__ == "__main__":
     model = ResNet(3, 8)
     model.to(device)
     # Initialize the optimizer
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.1)
+    optimizer = torch.optim.Adam(model.parameters())
     num_epochs = 10
     logger.info("model created")
 
