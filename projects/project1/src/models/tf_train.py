@@ -1,9 +1,3 @@
-import os 
-if len(tf.config.list_physical_devices('GPU')) > 0:
-    os.environ['CUDA_VISIBLE_DEVICES'] = '1'
-else:
-    os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-
 
 from tensorflow.keras import datasets, layers, models
 import matplotlib.pyplot as plt
@@ -12,9 +6,9 @@ import numpy as np
 import time 
 from tqdm import tqdm
 import ssl
+import os 
 
 ssl._create_default_https_context = ssl._create_unverified_context
-
 
 # built tensorflow with GPU
 
@@ -25,6 +19,13 @@ print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
 
 from tensorflow.python.client import device_lib
 print("TENSORFLOW VISIBLE DEVIES: ",device_lib.list_local_devices())
+
+method = "GPU"
+
+if method == "GPU":
+    os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
+else:
+    os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 
 (train_images, train_labels), (test_images, test_labels) = datasets.cifar10.load_data()
@@ -45,19 +46,26 @@ val_dataset = val_dataset.batch(batch_size)
 
 
 model = models.Sequential()
-model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(32, 32, 3)))
+model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(32, 32, 3)) )
+model.add(layers.Dropout(.2) )
+model.add(layers.Conv2D(32, (3, 3), activation='relu') )
 model.add(layers.MaxPooling2D((2, 2)))
-model.add(layers.Conv2D(64, (3, 3), activation='relu'))
+model.add(layers.Conv2D(64, (3, 3), activation='relu') )
+model.add(layers.Dropout(.2) )
+model.add(layers.Conv2D(64, (3, 3), activation='relu') )
 model.add(layers.MaxPooling2D((2, 2)))
-model.add(layers.Conv2D(64, (3, 3), activation='relu'))
+model.add(layers.Conv2D(128, (3, 3), activation='relu') )
+model.add(layers.Dropout(.2) )
+model.add(layers.Conv2D(128, (3, 3), activation='relu') )
 
 model.add(layers.Flatten())
-model.add(layers.Dense(64, activation='relu'))
+model.add(layers.Dense(100, activation='relu'))
 model.add(layers.Dense(10))
 
 
 # Instantiate an optimizer to train the model.
-optimizer = keras.optimizers.SGD(lr=1e-3)
+optimizer = keras.optimizers.Adam(lr=1e-3)
+
 # Instantiate a loss function.
 loss_fn = keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 
