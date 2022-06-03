@@ -68,7 +68,7 @@ class ConvNet():
     def __init__(self):
 
         self.img_shape = (32, 32, 3)
-        self.n_filters = 64
+        self.n_filters = 32
         self.n_blocks = 3
         
     def build_model(self):
@@ -87,6 +87,7 @@ class ConvNet():
         d1 = conv_block(d0, 64)
  
         for _ in range(self.n_blocks):
+            self.n_filters = 2*self.n_filters
             d1 = conv_block(d1, self.n_filters)
 
         d4 = layers.Flatten()(d1)
