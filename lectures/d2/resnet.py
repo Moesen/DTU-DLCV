@@ -77,8 +77,7 @@ def train(
         out_dict["train_loss"].append(np.mean(train_loss))
         out_dict["test_loss"].append(np.mean(test_loss))
         logger.info(
-            f"Loss train: {np.mean(train_loss):.3f}\t test: {np.mean(test_loss):.3f}\t",
-            f"Accuracy train: {out_dict['train_acc'][-1]*100:.1f}%\t test: {out_dict['test_acc'][-1]*100:.1f}%",
+            f"Loss train: {np.mean(train_loss):.3f}\t test: {np.mean(test_loss):.3f}\t\nAccuracy train: {out_dict['train_acc'][-1]*100:.1f}%\t test: {out_dict['test_acc'][-1]*100:.1f}%",
         )
     return out_dict
 
