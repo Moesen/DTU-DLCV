@@ -10,17 +10,17 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 
 # built tensorflow with GPU
-import os
-os.environ['TF_XLA_FLAGS'] = '--tf_xla_enable_xla_devices'
+#import os
+#os.environ['TF_XLA_FLAGS'] = '--tf_xla_enable_xla_devices'
 
-print(tf.test.is_built_with_cuda())
-print(tf.config.list_physical_devices('GPU'))
-print(tf.test.is_gpu_available())
+print("TENSORFLOW BUILT WITH CUDA: ",tf.test.is_built_with_cuda())
+#print(tf.config.list_physical_devices('GPU'))
+print("TENSORFLOW GPU AVAILABLE: ",tf.test.is_gpu_available())
 
-print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
+#print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
 
 from tensorflow.python.client import device_lib
-print(device_lib.list_local_devices())
+print("TENSORFLOW VISIBLE DEVIES: ",device_lib.list_local_devices())
 
 
 
@@ -56,7 +56,7 @@ model.add(layers.Dense(10))
 
 
 # Instantiate an optimizer to train the model.
-optimizer = keras.optimizers.SGD(learning_rate=1e-3)
+optimizer = keras.optimizers.SGD(lr=1e-3)
 # Instantiate a loss function.
 loss_fn = keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 
@@ -65,7 +65,7 @@ train_acc_metric = keras.metrics.SparseCategoricalAccuracy()
 val_acc_metric = keras.metrics.SparseCategoricalAccuracy()
 
 
-epochs = 5
+epochs = 50
 #for epoch in range(epochs):
 for epoch in tqdm(range(epochs), unit='epoch'):
     print("\nStart of epoch %d" % (epoch,))
