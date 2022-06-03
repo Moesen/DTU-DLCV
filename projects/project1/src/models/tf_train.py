@@ -44,7 +44,8 @@ val_dataset = tf.data.Dataset.from_tensor_slices((test_images, test_labels))
 val_dataset = val_dataset.batch(batch_size)
 
 
-
+#one way 
+"""
 model = models.Sequential()
 model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(32, 32, 3)) )
 model.add(layers.Dropout(.2) )
@@ -61,7 +62,39 @@ model.add(layers.Conv2D(128, (3, 3), activation='relu') )
 model.add(layers.Flatten())
 model.add(layers.Dense(100, activation='relu'))
 model.add(layers.Dense(10))
+"""
 
+class Net():
+    def __init__(self):
+
+        self.img_shape = (32, 32, 3)
+        self.n_filters = 64
+        self.n_blocks = 3
+        
+        d0 = layers.Input(shape=self.img_shape)
+
+        d1 = self.conv_block(d0, self.n_filters)
+
+        for _ in range(self.n_blocks):
+            d1 = self.conv_block(d0, self.n_filters)(d1)
+
+        d4 = layers.Flatten()(d1)
+        d5 = layers.Dense(100, activation='relu')(d4)
+        d6 = layers.Dense(2)(d5)
+
+        return layers.Model(inputs=d0, outputs=d6)
+
+    def conv_block(layer_input, n_channels, kernel_size=3):
+        """Layers used during downsampling"""
+        d = layers.Conv2D(n_channels, kernel_size=kernel_size, strides=1, padding='same',activation='relu')(layer_input)
+        d = layers.Dropout(.2)(d)
+        d = layers.Conv2D(n_channels, kernel_size=kernel_size, strides=1, padding='same',activation='relu')(d)
+        d = layers.MaxPooling2D((2, 2))(d)
+        #d = LeakyReLU(alpha=0.2)(d)
+        #d = InstanceNormalization()(d)
+        return d
+
+model = Net()
 
 # Instantiate an optimizer to train the model.
 optimizer = keras.optimizers.Adam(lr=1e-3)
@@ -99,7 +132,7 @@ for epoch in tqdm(range(epochs), unit='epoch'):
                 "Training loss (for one batch) at step %d: %.4f"
                 % (step, float(loss_value))
             )
-            print("Seen so far: %d samples" % ((step + 1) * batch_size))
+            #print("Seen so far: %d samples" % ((step + 1) * batch_size))
 
     # Display metrics at the end of each epoch.
     train_acc = train_acc_metric.result()
