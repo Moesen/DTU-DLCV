@@ -23,7 +23,7 @@ print("TENSORFLOW VISIBLE DEVIES: ",device_lib.list_local_devices())
 method = "GPU"
 
 if method == "GPU":
-    os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
+    os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 else:
     os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
