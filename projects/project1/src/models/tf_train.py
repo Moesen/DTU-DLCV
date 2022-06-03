@@ -1,3 +1,10 @@
+import os 
+if len(tf.config.list_physical_devices('GPU')) > 0:
+    os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+else:
+    os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+
+
 import tensorflow as tf
 from tensorflow.keras import datasets, layers, models
 import matplotlib.pyplot as plt
@@ -6,7 +13,6 @@ import numpy as np
 import time 
 from tqdm import tqdm
 import ssl
-import os 
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -20,12 +26,6 @@ print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
 
 from tensorflow.python.client import device_lib
 print("TENSORFLOW VISIBLE DEVIES: ",device_lib.list_local_devices())
-
-if len(tf.config.list_physical_devices('GPU')) > 0:
-    os.environ['CUDA_VISIBLE_DEVICES'] = '1'
-else:
-    os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-
 
 
 (train_images, train_labels), (test_images, test_labels) = datasets.cifar10.load_data()
