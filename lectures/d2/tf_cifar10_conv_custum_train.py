@@ -64,7 +64,7 @@ for epoch in tqdm(range(epochs), unit='epoch'):
     # Iterate over the batches of the dataset.
     #for minibatch_no, (data, target) in tqdm(enumerate(train_loader), total=len(train_loader)):
     #for step, (x_batch_train, y_batch_train) in enumerate(train_dataset):
-    for step, (x_batch_train, y_batch_train) in tqdm(enumerate(train_dataset, total=len(train_dataset))):
+    for step, (x_batch_train, y_batch_train) in tqdm(enumerate(train_dataset), total=len(train_dataset)):
         with tf.GradientTape() as tape:
             logits = model(x_batch_train, training=True)
             loss_value = loss_fn(y_batch_train, logits)
