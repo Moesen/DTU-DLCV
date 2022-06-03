@@ -15,17 +15,16 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 print("TENSORFLOW BUILT WITH CUDA: ",tf.test.is_built_with_cuda())
 #print(tf.config.list_physical_devices('GPU'))
-print("TENSORFLOW GPU AVAILABLE: ",tf.test.is_gpu_available())
+#print("TENSORFLOW GPU AVAILABLE: ",tf.test.is_gpu_available())
 print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
 
 from tensorflow.python.client import device_lib
 print("TENSORFLOW VISIBLE DEVIES: ",device_lib.list_local_devices())
 
 if len(tf.config.list_physical_devices('GPU')) > 0:
-    os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+    os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 else:
-    os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-
+    os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 
 
