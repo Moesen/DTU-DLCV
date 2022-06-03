@@ -8,6 +8,22 @@ from tqdm import tqdm
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
+
+# built tensorflow with GPU
+
+print(tf.test.is_built_with_cuda())
+print(tf.config.list_physical_devices('GPU'))
+print(tf.test.is_gpu_available())
+
+print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
+
+from tensorflow.python.client import device_lib
+print(device_lib.list_local_devices())
+
+
+
+
+
 (train_images, train_labels), (test_images, test_labels) = datasets.cifar10.load_data()
 
 # Normalize pixel values to be between 0 and 1
@@ -24,14 +40,6 @@ val_dataset = tf.data.Dataset.from_tensor_slices((test_images, test_labels))
 val_dataset = val_dataset.batch(batch_size)
 
 
-"""
-# Get model
-inputs = keras.Input(shape=(784,), name="digits")
-x = layers.Dense(64, activation="relu", name="dense_1")(inputs)
-x = layers.Dense(64, activation="relu", name="dense_2")(x)
-outputs = layers.Dense(10, name="predictions")(x)
-model = keras.Model(inputs=inputs, outputs=outputs)
-"""
 
 model = models.Sequential()
 model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(32, 32, 3)))
@@ -98,32 +106,5 @@ for epoch in tqdm(range(epochs), unit='epoch'):
     val_acc_metric.reset_states()
     print("Validation acc: %.4f" % (float(val_acc),))
     print("Time taken: %.2fs" % (time.time() - start_time))
-
-
-
-
-""""
-model = models.Sequential()
-model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(32, 32, 3)))
-model.add(layers.MaxPooling2D((2, 2)))
-model.add(layers.Conv2D(64, (3, 3), activation='relu'))
-model.add(layers.MaxPooling2D((2, 2)))
-model.add(layers.Conv2D(64, (3, 3), activation='relu'))
-
-model.add(layers.Flatten())
-model.add(layers.Dense(64, activation='relu'))
-model.add(layers.Dense(10))
-
-model.compile(optimizer='adam',
-              loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-              metrics=['accuracy'])
-
-model.summary()
-
-history = model.fit(train_images, train_labels, epochs=10, 
-                    validation_data=(test_images, test_labels))
-
-test_loss, test_acc = model.evaluate(test_images,  test_labels, verbose=2)
-"""
 
 
