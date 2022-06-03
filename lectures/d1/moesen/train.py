@@ -14,7 +14,7 @@ else:
     print("The code will run on CPU. Go to Edit->Notebook Settings and choose GPU as the hardware accelerator")
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  
 
-batch_size = 64
+batch_size = 1000
 trainset = datasets.MNIST('./data', train=True, download=True, transform=transforms.ToTensor())
 train_loader = DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=1)
 testset = datasets.MNIST('./data', train=False, download=True, transform=transforms.ToTensor())

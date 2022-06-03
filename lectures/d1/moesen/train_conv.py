@@ -21,7 +21,7 @@ trainset = datasets.MNIST(
     train=True,
     download=True,
     transform=transforms.Compose(
-        [transforms.ToTensor(), transforms.RandomRotation(10)]
+        [transforms.ToTensor(), transforms.RandomRotation(50)]
     ),
 )
 train_loader = DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=1)
