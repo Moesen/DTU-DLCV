@@ -5,12 +5,14 @@ import ssl
 import time
 
 import tensorflow as tf
-from keras import backend as K
+#from tensorflow import keras 
+import tensorflow.keras as keras
+from tensorflow.keras import backend as K
 from src.data.dataloader import load_dataset
 from src.models.optuna_model import ConvNet
-from tensorflow import keras
 from tensorflow.python.client import device_lib
 from tqdm import tqdm
+
 
 ssl._create_default_https_context = ssl._create_unverified_context
 

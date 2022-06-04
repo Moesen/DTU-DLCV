@@ -1,5 +1,6 @@
-from tensorflow import keras
-from keras import layers
+#from tensorflow import keras
+import tensorflow.keras as keras
+from tensorflow.keras import layers
 
 
 class ConvNet:
