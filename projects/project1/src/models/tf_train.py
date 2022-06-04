@@ -11,6 +11,7 @@ from src.models.optuna_model import ConvNet
 from tensorflow import keras
 from tensorflow.python.client import device_lib
 from tqdm import tqdm
+import numpy as np
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -137,7 +138,7 @@ if __name__ == "__main__":
         train_acc_metric.reset_states()
 
         # Run a validation loop at the end of each epoch.
-        for x_batch_val, y_batch_val in val_dataset:
+        for x_batch_val, y_batch_val in test_data:
             val_logits = model(x_batch_val, training=False)
             # Update val metrics
             val_acc_metric.update_state(y_batch_val, val_logits)
