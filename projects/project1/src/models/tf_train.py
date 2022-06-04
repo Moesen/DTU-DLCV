@@ -1,19 +1,16 @@
 from __future__ import annotations
+
 import os
 import ssl
 import time
 
-# import matplotlib.pyplot as plt
-# import numpy as np
 import tensorflow as tf
 from keras import backend as K
-# from keras import datasets, layers, models
+from src.data.dataloader import load_dataset
+from src.models.optuna_model import ConvNet
 from tensorflow import keras
 from tensorflow.python.client import device_lib
 from tqdm import tqdm
-
-from src.models.optuna_model import ConvNet
-from src.data.dataloader import load_dataset
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -41,17 +38,31 @@ def recall(y_true, y_pred):
 
 
 if __name__ == "__main__":
-
+    img_size = (32, 32)
     batch_size = 64
-    train_dataset  = load_dataset(train=True, normalize=True, batch_size=batch_size, tune_for_perfomance=True)
-    test_data = load_dataset(train=False, normalize=True, batch_size=batch_size, tune_for_perfomance=True)
+
+    train_dataset = load_dataset(
+        train=True,
+        normalize=True,
+        batch_size=batch_size,
+        tune_for_perfomance=False,
+        image_size=img_size,
+    )
+
+    test_data = load_dataset(
+        train=False,
+        normalize=True,
+        batch_size=batch_size,
+        tune_for_perfomance=False,
+        image_size=img_size,
+    )
 
     net = ConvNet()
     model = net.build_model()
     model.summary()
 
     # Instantiate an optimizer to train the model.
-    optimizer = keras.optimizers.Adam(lr=1e-3)
+    optimizer = keras.optimizers.Adam(learning_rate=1e-3)
 
     # Instantiate a loss function.
     loss_fn = keras.losses.SparseCategoricalCrossentropy(from_logits=True)
