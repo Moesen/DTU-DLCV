@@ -2,6 +2,7 @@ import tensorflow as tf
 from tensorflow.keras import datasets, layers, models
 import matplotlib.pyplot as plt
 from tensorflow import keras
+from keras import backend as K
 import numpy as np
 import time 
 from tqdm import tqdm
@@ -45,8 +46,7 @@ val_dataset = val_dataset.batch(batch_size)
 
 
 #one way 
-
-model = models.Sequential()
+"""model = models.Sequential()
 model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(32, 32, 3)) )
 model.add(layers.Dropout(.2) )
 model.add(layers.Conv2D(32, (3, 3), activation='relu') )
@@ -61,11 +61,11 @@ model.add(layers.Conv2D(128, (3, 3), activation='relu') )
 
 model.add(layers.Flatten())
 model.add(layers.Dense(100, activation='relu'))
-model.add(layers.Dense(10))
+model.add(layers.Dense(10))"""
 
 
 
-"""class ConvNet():
+class ConvNet():
     def __init__(self):
 
         self.img_shape = (32, 32, 3)
@@ -108,7 +108,8 @@ model.add(layers.Dense(10))
 net = ConvNet()
 model = net.build_model()
 
-model.summary()"""
+model.summary()
+
 
 # Instantiate an optimizer to train the model.
 optimizer = keras.optimizers.Adam(lr=1e-3)
@@ -119,6 +120,13 @@ loss_fn = keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 # Prepare the metrics.
 train_acc_metric = keras.metrics.SparseCategoricalAccuracy()
 val_acc_metric = keras.metrics.SparseCategoricalAccuracy()
+
+def recall(y_true, y_pred):
+    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+    possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+    recall_keras = true_positives / (possible_positives + K.epsilon())
+    return recall_keras
+
 
 
 epochs = 50
@@ -164,5 +172,3 @@ for epoch in tqdm(range(epochs), unit='epoch'):
     val_acc_metric.reset_states()
     print("Validation acc: %.4f" % (float(val_acc),))
     print("Time taken: %.2fs" % (time.time() - start_time))
-
-
