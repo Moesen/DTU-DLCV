@@ -1,5 +1,5 @@
 from tensorflow import keras
-from keras import layers 
+from keras import layers
 
 
 class ConvNet:
@@ -51,7 +51,7 @@ class ConvNet:
         return keras.models.Model(inputs=d0, outputs=d6)
 
 
-# one way
+# What final model might look like using standard parameters
 """model = models.Sequential()
 model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(32, 32, 3)) )
 model.add(layers.Dropout(.2) )
