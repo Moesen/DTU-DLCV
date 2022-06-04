@@ -1,32 +1,34 @@
-import tensorflow as tf
-from tensorflow.keras import datasets, layers, models
-import matplotlib.pyplot as plt
-from tensorflow import keras
-from keras import backend as K
-import numpy as np
-import time 
-from tqdm import tqdm
+import os
 import ssl
-import os 
+import time
+
+import matplotlib.pyplot as plt
+import numpy as np
+import tensorflow as tf
+from keras import backend as K
+from keras import datasets, layers, models
+from tensorflow import keras
+from tensorflow.python.client import device_lib
+from tqdm import tqdm
+
+from optuna_model import ConvNet
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
 # built tensorflow with GPU
 
-print("TENSORFLOW BUILT WITH CUDA: ",tf.test.is_built_with_cuda())
-#print(tf.config.list_physical_devices('GPU'))
-#print("TENSORFLOW GPU AVAILABLE: ",tf.test.is_gpu_available())
-print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
+print("TENSORFLOW BUILT WITH CUDA: ", tf.test.is_built_with_cuda())
+print("Num GPUs Available: ", len(tf.config.list_physical_devices("GPU")))
 
-from tensorflow.python.client import device_lib
-print("TENSORFLOW VISIBLE DEVIES: ",device_lib.list_local_devices())
+
+print("TENSORFLOW VISIBLE DEVIES: ", device_lib.list_local_devices())
 
 method = "GPU"
 
 if method == "GPU":
-    os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
 else:
-    os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+    os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 
 (train_images, train_labels), (test_images, test_labels) = datasets.cifar10.load_data()
@@ -45,71 +47,9 @@ val_dataset = tf.data.Dataset.from_tensor_slices((test_images, test_labels))
 val_dataset = val_dataset.batch(batch_size)
 
 
-#one way 
-"""model = models.Sequential()
-model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(32, 32, 3)) )
-model.add(layers.Dropout(.2) )
-model.add(layers.Conv2D(32, (3, 3), activation='relu') )
-model.add(layers.MaxPooling2D((2, 2)))
-model.add(layers.Conv2D(64, (3, 3), activation='relu') )
-model.add(layers.Dropout(.2) )
-model.add(layers.Conv2D(64, (3, 3), activation='relu') )
-model.add(layers.MaxPooling2D((2, 2)))
-model.add(layers.Conv2D(128, (3, 3), activation='relu') )
-model.add(layers.Dropout(.2) )
-model.add(layers.Conv2D(128, (3, 3), activation='relu') )
-
-model.add(layers.Flatten())
-model.add(layers.Dense(100, activation='relu'))
-model.add(layers.Dense(10))"""
-
-
-
-class ConvNet():
-    def __init__(self):
-
-        self.img_shape = (32, 32, 3)
-        self.n_filters = 32
-        self.n_blocks = 3
-        self.BN = True
-        self.DO = True
-
-    def build_model(self):
-
-        def conv_block(layer_input, n_channels, kernel_size=3,BN=True,DO=True):
-            d = layers.Conv2D(n_channels, kernel_size=kernel_size, strides=1, activation='relu', padding='same')(layer_input)
-            if BN:
-                d = layers.BatchNormalization()(d)
-            if DO:
-                d = layers.Dropout(.2)(d)
-            d = layers.Conv2D(n_channels, kernel_size=kernel_size, strides=1, activation='relu', padding='same')(d)
-            if DO:
-                d = layers.Dropout(.2)(d)
-            d = layers.MaxPooling2D((2, 2))(d)
-            return d
-
-        d0 = layers.Input(shape=self.img_shape)
-
-        d1 = conv_block(d0, self.n_filters, kernel_size=7,BN=self.BN, DO=self.DO)
- 
-        for _ in range(self.n_blocks):
-            d1 = conv_block(d1, self.n_filters,BN=self.BN, DO=self.DO)
-            self.n_filters = 2*self.n_filters
-
-        d4 = layers.Flatten()(d1)
-        d5 = layers.Dense(100, activation='relu')(d4)
-        d6 = layers.Dense(10)(d5)
-
-        return keras.models.Model(inputs=d0, outputs=d6)
-
-
-
-
 net = ConvNet()
 model = net.build_model()
-
 model.summary()
-
 
 # Instantiate an optimizer to train the model.
 optimizer = keras.optimizers.Adam(lr=1e-3)
@@ -121,6 +61,7 @@ loss_fn = keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 train_acc_metric = keras.metrics.SparseCategoricalAccuracy()
 val_acc_metric = keras.metrics.SparseCategoricalAccuracy()
 
+
 def recall(y_true, y_pred):
     true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
     possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
@@ -128,17 +69,18 @@ def recall(y_true, y_pred):
     return recall_keras
 
 
-
 epochs = 50
-#for epoch in range(epochs):
-for epoch in tqdm(range(epochs), unit='epoch'):
+# for epoch in range(epochs):
+for epoch in tqdm(range(epochs), unit="epoch"):
     print("\nStart of epoch %d" % (epoch,))
     start_time = time.time()
 
     # Iterate over the batches of the dataset.
-    #for minibatch_no, (data, target) in tqdm(enumerate(train_loader), total=len(train_loader)):
-    #for step, (x_batch_train, y_batch_train) in enumerate(train_dataset):
-    for step, (x_batch_train, y_batch_train) in tqdm(enumerate(train_dataset), total=len(train_dataset)):
+    # for minibatch_no, (data, target) in tqdm(enumerate(train_loader), total=len(train_loader)):
+    # for step, (x_batch_train, y_batch_train) in enumerate(train_dataset):
+    for step, (x_batch_train, y_batch_train) in tqdm(
+        enumerate(train_dataset), total=len(train_dataset)
+    ):
         with tf.GradientTape() as tape:
             logits = model(x_batch_train, training=True)
             loss_value = loss_fn(y_batch_train, logits)
@@ -154,7 +96,7 @@ for epoch in tqdm(range(epochs), unit='epoch'):
                 "Training loss (for one batch) at step %d: %.4f"
                 % (step, float(loss_value))
             )
-            #print("Seen so far: %d samples" % ((step + 1) * batch_size))
+            # print("Seen so far: %d samples" % ((step + 1) * batch_size))
 
     # Display metrics at the end of each epoch.
     train_acc = train_acc_metric.result()
