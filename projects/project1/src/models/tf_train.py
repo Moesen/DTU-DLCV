@@ -6,14 +6,16 @@ import time
 
 import tensorflow as tf
 #from tensorflow import keras 
-import tensorflow.keras as keras
-from tensorflow.keras import backend as K
+from tensorflow import keras
+from keras import backend as K
 from src.data.dataloader import load_dataset
 from src.models.optuna_model import ConvNet
 from tensorflow.python.client import device_lib
 from tqdm import tqdm
 import numpy as np
-
+from src.utils import get_project_root
+from pathlib import Path
+import datetime 
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -46,6 +48,7 @@ out_dict = {"train_acc": [], "train_recall": [], "train_loss": []}
 
 
 if __name__ == "__main__":
+    save_model = False
     img_size = (32, 32)
     batch_size = 64
 
@@ -79,7 +82,7 @@ if __name__ == "__main__":
     train_acc_metric = keras.metrics.SparseCategoricalAccuracy()
     val_acc_metric = keras.metrics.SparseCategoricalAccuracy()
 
-    epochs = 50
+    epochs = 1
     # for epoch in range(epochs):
     for epoch in tqdm(range(epochs), unit="epoch"):
         print("\nStart of epoch %d" % (epoch,))
@@ -151,3 +154,10 @@ if __name__ == "__main__":
         val_acc_metric.reset_states()
         print("Validation acc: %.4f" % (float(val_acc),))
         print("Time taken: %.2fs" % (time.time() - start_time))
+    
+    #save last model 
+    if save_model
+        PROJECT_ROOT = get_project_root()
+        model_name = 'hotdog_conv_'+datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+        model_path = PROJECT_ROOT / "models" / model_name
+        model.save(model_path)

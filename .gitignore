@@ -11,6 +11,8 @@ __pycache__/
 **/data
 !**/src/data
 
+**/models
+!**/src/models
 
 # Distribution / packaging
 .Python
