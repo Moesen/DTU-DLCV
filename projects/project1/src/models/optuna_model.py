@@ -7,7 +7,8 @@ def conv_block(
     n_channels: int,
     do_batchnorm: bool,
     do_dropout: bool,
-    kernel_size: int = 3,
+    dropout_percentage: float = .2, 
+    kernel_size: int = 3, 
 ):
     d = layers.Conv2D(
         n_channels,
@@ -21,7 +22,7 @@ def conv_block(
         d = layers.BatchNormalization()(d)
 
     if do_dropout:
-        d = layers.Dropout(0.2)(d)
+        d = layers.Dropout(dropout_percentage)(d)
 
     d = layers.Conv2D(
         n_channels,
@@ -32,7 +33,7 @@ def conv_block(
     )(d)
 
     if do_dropout:
-        d = layers.Dropout(0.2)(d)
+        d = layers.Dropout(dropout_percentage)(d)
 
     d = layers.MaxPooling2D((2, 2))(d)
     return d
@@ -43,6 +44,7 @@ def build_model(
     num_classes: int,
     img_shape: tuple = (32, 32, 3),
     do_batchnorm=True,
+    dropout_percentage: float = .2,
     do_dropout=True,
 ):
     """build_model.
@@ -66,6 +68,7 @@ def build_model(
         first_layer_channels,
         do_batchnorm=do_batchnorm,
         do_dropout=do_dropout,
+        dropout_percentage=dropout_percentage,
         kernel_size=7,
     )
 
