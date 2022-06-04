@@ -7,9 +7,10 @@ __pycache__/
 
 /venv
 *venv*
-**/data
 
-lectures/**/data
+**/data
+!**/src/data
+
 
 # Distribution / packaging
 .Python

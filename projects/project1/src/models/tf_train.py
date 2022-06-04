@@ -1,168 +1,147 @@
-import tensorflow as tf
-from tensorflow.keras import datasets, layers, models
-import matplotlib.pyplot as plt
-from tensorflow import keras
-import numpy as np
-import time 
-from tqdm import tqdm
+from __future__ import annotations
+
+import os
 import ssl
-import os 
+import time
+
+import tensorflow as tf
+from keras import backend as K
+from src.data.dataloader import load_dataset
+from src.models.optuna_model import ConvNet
+from tensorflow import keras
+from tensorflow.python.client import device_lib
+from tqdm import tqdm
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
 # built tensorflow with GPU
 
-print("TENSORFLOW BUILT WITH CUDA: ",tf.test.is_built_with_cuda())
-#print(tf.config.list_physical_devices('GPU'))
-#print("TENSORFLOW GPU AVAILABLE: ",tf.test.is_gpu_available())
-print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
+print("TENSORFLOW BUILT WITH CUDA: ", tf.test.is_built_with_cuda())
+print("Num GPUs Available: ", len(tf.config.list_physical_devices("GPU")))
 
-from tensorflow.python.client import device_lib
-print("TENSORFLOW VISIBLE DEVIES: ",device_lib.list_local_devices())
+
+print("TENSORFLOW VISIBLE DEVIES: ", device_lib.list_local_devices())
 
 method = "GPU"
 
 if method == "GPU":
+
     os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 else:
-    os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+    os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 
-(train_images, train_labels), (test_images, test_labels) = datasets.cifar10.load_data()
+def recall(y_true, y_pred):
+    y_true = tf.cast(y_true,tf.float32)
+    y_pred = tf.cast(y_pred,tf.float32)
+    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+    possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+    recall_keras = true_positives / (possible_positives + K.epsilon())
+    return recall_keras
 
-# Normalize pixel values to be between 0 and 1
-train_images, test_images = train_images / 255.0, test_images / 255.0
-
-batch_size = 64
-
-# Prepare the training dataset.
-train_dataset = tf.data.Dataset.from_tensor_slices((train_images, train_labels))
-train_dataset = train_dataset.shuffle(buffer_size=1024).batch(batch_size)
-
-# Prepare the validation dataset.
-val_dataset = tf.data.Dataset.from_tensor_slices((test_images, test_labels))
-val_dataset = val_dataset.batch(batch_size)
+out_dict = {'train_acc': [],
+            'train_recall': [],
+            'train_loss': []}
 
 
-#one way 
+if __name__ == "__main__":
+    img_size = (32, 32)
+    batch_size = 64
 
-model = models.Sequential()
-model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(32, 32, 3)) )
-model.add(layers.Dropout(.2) )
-model.add(layers.Conv2D(32, (3, 3), activation='relu') )
-model.add(layers.MaxPooling2D((2, 2)))
-model.add(layers.Conv2D(64, (3, 3), activation='relu') )
-model.add(layers.Dropout(.2) )
-model.add(layers.Conv2D(64, (3, 3), activation='relu') )
-model.add(layers.MaxPooling2D((2, 2)))
-model.add(layers.Conv2D(128, (3, 3), activation='relu') )
-model.add(layers.Dropout(.2) )
-model.add(layers.Conv2D(128, (3, 3), activation='relu') )
+    train_dataset = load_dataset(
+        train=True,
+        normalize=True,
+        batch_size=batch_size,
+        tune_for_perfomance=False,
+        image_size=img_size,
+    )
 
-model.add(layers.Flatten())
-model.add(layers.Dense(100, activation='relu'))
-model.add(layers.Dense(10))
+    test_data = load_dataset(
+        train=False,
+        normalize=True,
+        batch_size=batch_size,
+        tune_for_perfomance=False,
+        image_size=img_size,
+    )
 
+    net = ConvNet(32, 3, 2, (*img_size, 3), BN=True, DO=True)
+    model = net.build_model()
+    model.summary()
 
+    # Instantiate an optimizer to train the model.
+    optimizer = keras.optimizers.Adam(learning_rate=1e-3)
 
-"""class ConvNet():
-    def __init__(self):
+    # Instantiate a loss function.
+    loss_fn = keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 
-        self.img_shape = (32, 32, 3)
-        self.n_filters = 32
-        self.n_blocks = 3
-        self.BN = True
-        self.DO = True
+    # Prepare the metrics.
+    train_acc_metric = keras.metrics.SparseCategoricalAccuracy()
+    val_acc_metric = keras.metrics.SparseCategoricalAccuracy()
 
-    def build_model(self):
+    epochs = 50
+    # for epoch in range(epochs):
+    for epoch in tqdm(range(epochs), unit="epoch"):
+        print("\nStart of epoch %d" % (epoch,))
+        start_time = time.time()
 
-        def conv_block(layer_input, n_channels, kernel_size=3,BN=True,DO=True):
-            d = layers.Conv2D(n_channels, kernel_size=kernel_size, strides=1, activation='relu', padding='same')(layer_input)
-            if BN:
-                d = layers.BatchNormalization()(d)
-            if DO:
-                d = layers.Dropout(.2)(d)
-            d = layers.Conv2D(n_channels, kernel_size=kernel_size, strides=1, activation='relu', padding='same')(d)
-            if DO:
-                d = layers.Dropout(.2)(d)
-            d = layers.MaxPooling2D((2, 2))(d)
-            return d
+        train_acc = []
+        train_loss = []
+        train_recall = []
+        train_n_correct_epoch = 0
+        dataset_size = 0
 
-        d0 = layers.Input(shape=self.img_shape)
+        # Iterate over the batches of the dataset.
+        for step, (x_batch_train, y_batch_train) in tqdm(
+            enumerate(train_dataset), total=len(train_dataset)
+        ):
+            with tf.GradientTape() as tape:
+                logits = model(x_batch_train, training=True)
+                loss_value = loss_fn(y_batch_train, logits)
+            grads = tape.gradient(loss_value, model.trainable_weights)
+            optimizer.apply_gradients(zip(grads, model.trainable_weights))
 
-        d1 = conv_block(d0, self.n_filters, kernel_size=7,BN=self.BN, DO=self.DO)
- 
-        for _ in range(self.n_blocks):
-            d1 = conv_block(d1, self.n_filters,BN=self.BN, DO=self.DO)
-            self.n_filters = 2*self.n_filters
+            # Update training metric.
+            # accuracy with tensorflow metric object
+            train_acc_metric.update_state(y_batch_train, logits)
 
-        d4 = layers.Flatten()(d1)
-        d5 = layers.Dense(100, activation='relu')(d4)
-        d6 = layers.Dense(10)(d5)
+            #custom accuracy computation with keras backend 
+            predicted = K.cast(K.argmax(logits,axis=1),"uint8") #one dimensional
 
-        return keras.models.Model(inputs=d0, outputs=d6)
+            #y_targets = K.squeeze(y_batch_train, axis=1) #y_batch_train is 2 dimensional
+            y_targets = tf.cast(y_batch_train,tf.uint8)
+            train_n_correct_epoch += K.sum(tf.cast(y_targets==predicted, tf.float32))
+            dataset_size += len(y_batch_train) 
+            #training loss
+            train_loss.append( loss_value.numpy() )
+            
+            #custom computation of recall with keras backend
+            train_recall.append( recall(y_targets, predicted).numpy() )
 
+            # Log every 200 batches.
+            if step % 200 == 0:
+                print("Training loss (for one batch) at batch step %d: %.4f" % (step, float(loss_value)))
 
-
-
-net = ConvNet()
-model = net.build_model()
-
-model.summary()"""
-
-# Instantiate an optimizer to train the model.
-optimizer = keras.optimizers.Adam(lr=1e-3)
-
-# Instantiate a loss function.
-loss_fn = keras.losses.SparseCategoricalCrossentropy(from_logits=True)
-
-# Prepare the metrics.
-train_acc_metric = keras.metrics.SparseCategoricalAccuracy()
-val_acc_metric = keras.metrics.SparseCategoricalAccuracy()
-
-
-epochs = 50
-#for epoch in range(epochs):
-for epoch in tqdm(range(epochs), unit='epoch'):
-    print("\nStart of epoch %d" % (epoch,))
-    start_time = time.time()
-
-    # Iterate over the batches of the dataset.
-    #for minibatch_no, (data, target) in tqdm(enumerate(train_loader), total=len(train_loader)):
-    #for step, (x_batch_train, y_batch_train) in enumerate(train_dataset):
-    for step, (x_batch_train, y_batch_train) in tqdm(enumerate(train_dataset), total=len(train_dataset)):
-        with tf.GradientTape() as tape:
-            logits = model(x_batch_train, training=True)
-            loss_value = loss_fn(y_batch_train, logits)
-        grads = tape.gradient(loss_value, model.trainable_weights)
-        optimizer.apply_gradients(zip(grads, model.trainable_weights))
-
-        # Update training metric.
-        train_acc_metric.update_state(y_batch_train, logits)
-
-        # Log every 200 batches.
-        if step % 200 == 0:
-            print(
-                "Training loss (for one batch) at step %d: %.4f"
-                % (step, float(loss_value))
-            )
-            #print("Seen so far: %d samples" % ((step + 1) * batch_size))
-
-    # Display metrics at the end of each epoch.
-    train_acc = train_acc_metric.result()
-    print("Training acc over epoch: %.4f" % (float(train_acc),))
-
-    # Reset training metrics at the end of each epoch
-    train_acc_metric.reset_states()
-
-    # Run a validation loop at the end of each epoch.
-    for x_batch_val, y_batch_val in val_dataset:
-        val_logits = model(x_batch_val, training=False)
-        # Update val metrics
-        val_acc_metric.update_state(y_batch_val, val_logits)
-    val_acc = val_acc_metric.result()
-    val_acc_metric.reset_states()
-    print("Validation acc: %.4f" % (float(val_acc),))
-    print("Time taken: %.2fs" % (time.time() - start_time))
+        out_dict['train_acc'].append(train_n_correct_epoch / dataset_size )
+        out_dict['train_loss'].append(np.mean(train_loss))
+        out_dict['train_recall'].append(np.mean(train_recall))
 
 
+        # Display metrics at the end of each epoch.
+        train_acc = train_acc_metric.result()
+        print("Training acc over epoch: %.4f" % (float(train_acc),))
+        print("Training acc (numpy) over epoch: %.4f" % (float(train_n_correct_epoch / dataset_size),))
+        print("Training loss over epoch: %.4f" % (float(np.mean(train_loss)),))
+        print("Training recall over epoch: %.4f" % (float(np.mean(train_recall)),))
+
+        # Reset training metrics at the end of each epoch
+        train_acc_metric.reset_states()
+
+        # Run a validation loop at the end of each epoch.
+        for x_batch_val, y_batch_val in val_dataset:
+            val_logits = model(x_batch_val, training=False)
+            # Update val metrics
+            val_acc_metric.update_state(y_batch_val, val_logits)
+        val_acc = val_acc_metric.result()
+        val_acc_metric.reset_states()
+        print("Validation acc: %.4f" % (float(val_acc),))
+        print("Time taken: %.2fs" % (time.time() - start_time))
