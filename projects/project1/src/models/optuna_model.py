@@ -1,21 +1,121 @@
-#from tensorflow import keras
-import tensorflow.keras as keras
-from tensorflow.keras import layers
+from keras import layers
+from tensorflow import keras
+import tensorflow as tf
+
+def conv_block(
+    layer_input: tf.Tensor,
+    n_channels: int,
+    do_batchnorm: bool,
+    do_dropout: bool,
+    kernel_size: int = 3,
+):
+    d = layers.Conv2D(
+        n_channels,
+        kernel_size=kernel_size,
+        strides=1,
+        activation="relu",
+        padding="same",
+    )(layer_input)
+
+    if do_batchnorm:
+        d = layers.BatchNormalization()(d)
+
+    if do_dropout:
+        d = layers.Dropout(0.2)(d)
+
+    d = layers.Conv2D(
+        n_channels,
+        kernel_size=kernel_size,
+        strides=1,
+        activation="relu",
+        padding="same",
+    )(d)
+
+    if do_dropout:
+        d = layers.Dropout(0.2)(d)
+
+    d = layers.MaxPooling2D((2, 2))(d)
+    return d
+
+def build_model(
+    first_layer_channels: int,
+    num_conv_blocks: int,
+    num_classes: int,
+    img_shape: tuple = (32, 32, 3),
+    do_batchnorm=True,
+    do_dropout=True,
+):
+    """build_model.
+
+    :param first_layer_channels:
+    :type first_layer_channels: int
+    :param num_conv_blocks:
+    :type num_conv_blocks: int
+    :param num_classes:
+    :type num_classes: int
+    :param img_shape:
+    :type img_shape: tuple
+    :param do_batchnorm:
+    :param do_dropout:
+    """
+    d0 = layers.Input(shape=img_shape)
+
+
+    d1 = conv_block(
+        d0,
+        first_layer_channels,
+        do_batchnorm=do_batchnorm,
+        do_dropout=do_dropout,
+        kernel_size=7,
+    )
+
+    for i in range(num_conv_blocks):
+        d1 = conv_block(
+            d1,
+            first_layer_channels * 2 ** (i + 1),
+            do_batchnorm=do_batchnorm,
+            do_dropout=do_dropout,
+        )
+
+    d4 = layers.Flatten()(d1)
+    d5 = layers.Dense(100, activation="relu")(d4)
+    d6 = layers.Dense(num_classes)(d5)
+
+    return keras.models.Model(inputs=d0, outputs=d6)
 
 
 class ConvNet:
-    def __init__(self, f, nb, nc, img_shape: tuple = (32, 32, 3), BN = True, DO = True):
+    def __init__(
+        self,
+        first_layer_channels: int,
+        num_conv_blocks: int,
+        num_classes: int,
+        img_shape: tuple = (32, 32, 3),
+        do_batchnorm=True,
+        do_dropout=True,
+    ) -> None:
+        """
+        :type first_layer_channels: int
+        :type num_conv_blocks: int
+        :type num_classes: int
+        :type img_shape: tuple
+        :param do_dropout:
+        :rtype: None
+        """
+
         self.img_shape = img_shape
-        self.n_filters = f #32
-        self.n_blocks = nb #3
-        self.BN = BN
-        self.DO = DO
-        self.n_classes = nc
+        self.first_layer_channels = first_layer_channels
+        self.num_conv_blocks = num_conv_blocks
+        self.do_batchnorm = do_batchnorm
+        self.do_dropout = do_dropout
+        self.num_classes = num_classes
 
     def build_model(self):
-        """Text to see this is one function"""
+        """Returns a model based on parameters given in conv net"""
 
-        def conv_block(layer_input, n_channels, kernel_size=3, BN=self.BN, DO=True):
+        def conv_block(
+            layer_input, n_channels, kernel_size=3, BN=self.do_batchnorm, DO=True
+        ):
             d = layers.Conv2D(
                 n_channels,
                 kernel_size=kernel_size,
@@ -41,14 +141,25 @@ class ConvNet:
 
         d0 = layers.Input(shape=self.img_shape)
 
-        d1 = conv_block(d0, self.n_filters, kernel_size=7, BN=self.BN, DO=self.DO)
+        d1 = conv_block(
+            d0,
+            self.first_layer_channels,
+            kernel_size=7,
+            BN=self.do_batchnorm,
+            DO=self.do_dropout,
+        )
 
-        for i in range(self.n_blocks):
-            d1 = conv_block(d1, self.n_filters * 2 ** (i + 1), BN=self.BN, DO=self.DO)
+        for i in range(self.num_conv_blocks):
+            d1 = conv_block(
+                d1,
+                self.first_layer_channels * 2 ** (i + 1),
+                BN=self.do_batchnorm,
+                DO=self.do_dropout,
+            )
 
         d4 = layers.Flatten()(d1)
         d5 = layers.Dense(100, activation="relu")(d4)
-        d6 = layers.Dense(self.n_classes)(d5)
+        d6 = layers.Dense(self.num_classes)(d5)
 
         return keras.models.Model(inputs=d0, outputs=d6)
 
