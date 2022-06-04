@@ -11,7 +11,7 @@ from tensorflow import keras
 from tensorflow.python.client import device_lib
 from tqdm import tqdm
 
-from optuna_model import ConvNet
+from src.models.optuna_model import ConvNet
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
