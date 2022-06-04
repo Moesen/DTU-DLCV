@@ -28,23 +28,21 @@ print("TENSORFLOW VISIBLE DEVIES: ", device_lib.list_local_devices())
 method = "GPU"
 
 if method == "GPU":
-
-    os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 else:
     os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 
 def recall(y_true, y_pred):
-    y_true = tf.cast(y_true,tf.float32)
-    y_pred = tf.cast(y_pred,tf.float32)
+    y_true = tf.cast(y_true, tf.float32)
+    y_pred = tf.cast(y_pred, tf.float32)
     true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
     possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
     recall_keras = true_positives / (possible_positives + K.epsilon())
     return recall_keras
 
-out_dict = {'train_acc': [],
-            'train_recall': [],
-            'train_loss': []}
+
+out_dict = {"train_acc": [], "train_recall": [], "train_loss": []}
 
 
 if __name__ == "__main__":
@@ -107,32 +105,37 @@ if __name__ == "__main__":
             # accuracy with tensorflow metric object
             train_acc_metric.update_state(y_batch_train, logits)
 
-            #custom accuracy computation with keras backend 
-            predicted = K.cast(K.argmax(logits,axis=1),"uint8") #one dimensional
+            # custom accuracy computation with keras backend
+            predicted = K.cast(K.argmax(logits, axis=1), "uint8")  # one dimensional
 
-            #y_targets = K.squeeze(y_batch_train, axis=1) #y_batch_train is 2 dimensional
-            y_targets = tf.cast(y_batch_train,tf.uint8)
-            train_n_correct_epoch += K.sum(tf.cast(y_targets==predicted, tf.float32))
-            dataset_size += len(y_batch_train) 
-            #training loss
-            train_loss.append( loss_value.numpy() )
-            
-            #custom computation of recall with keras backend
-            train_recall.append( recall(y_targets, predicted).numpy() )
+            # y_targets = K.squeeze(y_batch_train, axis=1) #y_batch_train is 2 dimensional
+            y_targets = tf.cast(y_batch_train, tf.uint8)
+            train_n_correct_epoch += K.sum(tf.cast(y_targets == predicted, tf.float32))
+            dataset_size += len(y_batch_train)
+            # training loss
+            train_loss.append(loss_value.numpy())
+
+            # custom computation of recall with keras backend
+            train_recall.append(recall(y_targets, predicted).numpy())
 
             # Log every 200 batches.
             if step % 200 == 0:
-                print("Training loss (for one batch) at batch step %d: %.4f" % (step, float(loss_value)))
+                print(
+                    "Training loss (for one batch) at batch step %d: %.4f"
+                    % (step, float(loss_value))
+                )
 
-        out_dict['train_acc'].append(train_n_correct_epoch / dataset_size )
-        out_dict['train_loss'].append(np.mean(train_loss))
-        out_dict['train_recall'].append(np.mean(train_recall))
-
+        out_dict["train_acc"].append(train_n_correct_epoch / dataset_size)
+        out_dict["train_loss"].append(np.mean(train_loss))
+        out_dict["train_recall"].append(np.mean(train_recall))
 
         # Display metrics at the end of each epoch.
         train_acc = train_acc_metric.result()
         print("Training acc over epoch: %.4f" % (float(train_acc),))
-        print("Training acc (numpy) over epoch: %.4f" % (float(train_n_correct_epoch / dataset_size),))
+        print(
+            "Training acc (numpy) over epoch: %.4f"
+            % (float(train_n_correct_epoch / dataset_size),)
+        )
         print("Training loss over epoch: %.4f" % (float(np.mean(train_loss)),))
         print("Training recall over epoch: %.4f" % (float(np.mean(train_recall)),))
 
