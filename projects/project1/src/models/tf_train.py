@@ -156,7 +156,7 @@ if __name__ == "__main__":
         print("Time taken: %.2fs" % (time.time() - start_time))
     
     #save last model 
-    if save_model
+    if save_model:
         PROJECT_ROOT = get_project_root()
         model_name = 'hotdog_conv_'+datetime.datetime.now().strftime("%Y%m%d%H%M%S")
         model_path = PROJECT_ROOT / "models" / model_name
