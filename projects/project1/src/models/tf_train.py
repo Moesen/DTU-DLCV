@@ -63,7 +63,7 @@ if __name__ == "__main__":
         image_size=img_size,
     )
 
-    net = ConvNet()
+    net = ConvNet(32, 3, 2, (*img_size, 3), BN=True, DO=True)
     model = net.build_model()
     model.summary()
 

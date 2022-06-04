@@ -3,12 +3,13 @@ from keras import layers
 
 
 class ConvNet:
-    def __init__(self, img_shape: tuple = (32, 32, 3)):
+    def __init__(self, f, nb, nc, img_shape: tuple = (32, 32, 3), BN = True, DO = True):
         self.img_shape = img_shape
-        self.n_filters = 32
-        self.n_blocks = 3
-        self.BN = True
-        self.DO = True
+        self.n_filters = f #32
+        self.n_blocks = nb #3
+        self.BN = BN
+        self.DO = DO
+        self.n_classes = nc
 
     def build_model(self):
         """Text to see this is one function"""
@@ -46,7 +47,7 @@ class ConvNet:
 
         d4 = layers.Flatten()(d1)
         d5 = layers.Dense(100, activation="relu")(d4)
-        d6 = layers.Dense(10)(d5)
+        d6 = layers.Dense(self.n_classes)(d5)
 
         return keras.models.Model(inputs=d0, outputs=d6)
 
