@@ -1,2 +1,3 @@
-## Load python module
-`module load python3/3.9.10`
+## Notes
+### *Link to overview of optuna and wandb integration for creating cool sweep plots*
+[https://www.h4pz.co/blog/2020/10/3/optuna-and-wandb](Link)
