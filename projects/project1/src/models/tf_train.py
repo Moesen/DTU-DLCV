@@ -45,7 +45,7 @@ val_dataset = val_dataset.batch(batch_size)
 
 
 #one way 
-"""
+
 model = models.Sequential()
 model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(32, 32, 3)) )
 model.add(layers.Dropout(.2) )
@@ -62,34 +62,38 @@ model.add(layers.Conv2D(128, (3, 3), activation='relu') )
 model.add(layers.Flatten())
 model.add(layers.Dense(100, activation='relu'))
 model.add(layers.Dense(10))
-"""
 
-class ConvNet():
+
+
+"""class ConvNet():
     def __init__(self):
 
         self.img_shape = (32, 32, 3)
         self.n_filters = 32
         self.n_blocks = 3
-        
+        self.BN = True
+        self.DO = True
+
     def build_model(self):
 
-        def conv_block(layer_input, n_channels, kernel_size=3):
+        def conv_block(layer_input, n_channels, kernel_size=3,BN=True,DO=True):
             d = layers.Conv2D(n_channels, kernel_size=kernel_size, strides=1, activation='relu', padding='same')(layer_input)
-            d = layers.BatchNormalization()(d)
-            d = layers.Dropout(.2)(d)
+            if BN:
+                d = layers.BatchNormalization()(d)
+            if DO:
+                d = layers.Dropout(.2)(d)
             d = layers.Conv2D(n_channels, kernel_size=kernel_size, strides=1, activation='relu', padding='same')(d)
-            d = layers.Dropout(.2)(d)
+            if DO:
+                d = layers.Dropout(.2)(d)
             d = layers.MaxPooling2D((2, 2))(d)
-            #d = LeakyReLU(alpha=0.2)(d)
-            #d = InstanceNormalization()(d)
             return d
 
         d0 = layers.Input(shape=self.img_shape)
 
-        d1 = conv_block(d0, self.n_filters, kernel_size=7)
+        d1 = conv_block(d0, self.n_filters, kernel_size=7,BN=self.BN, DO=self.DO)
  
         for _ in range(self.n_blocks):
-            d1 = conv_block(d1, self.n_filters)
+            d1 = conv_block(d1, self.n_filters,BN=self.BN, DO=self.DO)
             self.n_filters = 2*self.n_filters
 
         d4 = layers.Flatten()(d1)
@@ -103,6 +107,8 @@ class ConvNet():
 
 net = ConvNet()
 model = net.build_model()
+
+model.summary()"""
 
 # Instantiate an optimizer to train the model.
 optimizer = keras.optimizers.Adam(lr=1e-3)
