@@ -82,7 +82,7 @@ if __name__ == "__main__":
     train_acc_metric = keras.metrics.SparseCategoricalAccuracy()
     val_acc_metric = keras.metrics.SparseCategoricalAccuracy()
 
-    epochs = 1
+    epochs = 10
     # for epoch in range(epochs):
     for epoch in tqdm(range(epochs), unit="epoch"):
         print("\nStart of epoch %d" % (epoch,))
