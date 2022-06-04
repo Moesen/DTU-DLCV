@@ -105,7 +105,9 @@ if __name__ == "__main__":
 
             #custom accuracy computation with keras backend 
             predicted = K.cast(K.argmax(logits,axis=1),"uint8") #one dimensional
-            y_targets = K.squeeze(y_batch_train, axis=1) #y_batch_train is 2 dimensional
+
+            #y_targets = K.squeeze(y_batch_train, axis=1) #y_batch_train is 2 dimensional
+            y_targets = tf.cast(y_batch_train,tf.uint8)
             train_n_correct_epoch += K.sum(tf.cast(y_targets==predicted, tf.float32))
             dataset_size += len(y_batch_train) 
             #training loss
