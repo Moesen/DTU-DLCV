@@ -48,7 +48,7 @@ out_dict = {"train_acc": [], "train_recall": [], "train_loss": []}
 
 
 if __name__ == "__main__":
-    save_model = False
+    save_model = True
     img_size = (32, 32)
     batch_size = 64
 
@@ -82,7 +82,7 @@ if __name__ == "__main__":
     train_acc_metric = keras.metrics.SparseCategoricalAccuracy()
     val_acc_metric = keras.metrics.SparseCategoricalAccuracy()
 
-    epochs = 10
+    epochs = 50
     # for epoch in range(epochs):
     for epoch in tqdm(range(epochs), unit="epoch"):
         print("\nStart of epoch %d" % (epoch,))
