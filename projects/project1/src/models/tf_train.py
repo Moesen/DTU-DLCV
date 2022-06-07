@@ -148,9 +148,11 @@ if __name__ == "__main__":
         # Run a validation loop at the end of each epoch.
         for x_batch_val, y_batch_val in test_data:
             val_logits = model(x_batch_val, training=False)
+
             # Update val metrics
             val_acc_metric.update_state(y_batch_val, val_logits)
         val_acc = val_acc_metric.result()
+        out_dict["val_acc"].append(val_acc)
         val_acc_metric.reset_states()
         print("Validation acc: %.4f" % (float(val_acc),))
         print("Time taken: %.2fs" % (time.time() - start_time))
