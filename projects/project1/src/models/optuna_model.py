@@ -10,31 +10,24 @@ def conv_block(
     do_dropout: bool,
     dropout_percentage: float = 0.2,
     kernel_size: int = 3,
+    num_kernels: int = 2
 ):
-    d = layers.Conv2D(
-        n_channels,
-        kernel_size=kernel_size,
-        strides=1,
-        activation="relu",
-        padding="same",
-    )(layer_input)
 
-    if do_batchnorm:
-        d = layers.BatchNormalization()(d)
+    d = layer_input
+    for _ in range(num_kernels):            
+        d = layers.Conv2D(
+            n_channels,
+            kernel_size=kernel_size,
+            strides=1,
+            activation="relu",
+            padding="same",
+        )(layer_input)
 
-    if do_dropout:
-        d = layers.Dropout(dropout_percentage)(d)
+        if do_batchnorm:
+            d = layers.BatchNormalization()(d)
 
-    d = layers.Conv2D(
-        n_channels,
-        kernel_size=kernel_size,
-        strides=1,
-        activation="relu",
-        padding="same",
-    )(d)
-
-    if do_dropout:
-        d = layers.Dropout(dropout_percentage)(d)
+        if do_dropout:
+            d = layers.Dropout(dropout_percentage)(d)
 
     d = layers.MaxPooling2D((2, 2))(d)
     return d
@@ -44,7 +37,7 @@ def build_model(
     first_layer_channels: int,
     num_conv_blocks: int,
     num_classes: int,
-    img_shape: tuple = (32, 32, 3),
+    img_shape: tuple, 
     do_batchnorm=True,
     dropout_percentage: float = 0.2,
     do_dropout=True,
@@ -59,11 +52,12 @@ def build_model(
     :type num_classes: int
     :param img_shape:
     :type img_shape: tuple
+    :format (32, 32, 3), should be based on resize in dataloader
     :param do_batchnorm:
     :param do_dropout:
     """
     d0 = layers.Input(shape=img_shape)
-
+    
     d1 = conv_block(
         d0,
         first_layer_channels,
