@@ -95,7 +95,7 @@ def objective(trial) -> float:
     trial_dropout_percentage = trial.suggest_float("dropout_percentage", 0.0, 0.6)
     trial_do_crop = trial.suggest_categorical("crop images", [True, False])
     trial_learning_rate = trial.suggest_loguniform("learning rate", 1e-6, 1e-2)
-    trial_batch_size = trial.suggest_int("batch size", 32, 128, 16)
+    trial_batch_size = trial.suggest_int("batch size", 32, 64)
     trial_augmentation_flip = trial.suggest_categorical(
         "augmentation_flip",
         ["horizontal_and_vertical", "horizontal", "vertical", "none"],
