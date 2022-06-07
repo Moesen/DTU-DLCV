@@ -1,21 +1,22 @@
 from __future__ import annotations
 
+import datetime
 import os
 import ssl
 import time
+from pathlib import Path
 
+import numpy as np
 import tensorflow as tf
+from keras import backend as K
 #from tensorflow import keras 
 from tensorflow import keras
-from keras import backend as K
-from src.data.dataloader import load_dataset
-from src.models.optuna_model import ConvNet
 from tensorflow.python.client import device_lib
 from tqdm import tqdm
-import numpy as np
+
+from src.data.dataloader import load_dataset
+from src.models import optuna_model
 from src.utils import get_project_root
-from pathlib import Path
-import datetime 
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -70,8 +71,7 @@ if __name__ == "__main__":
         image_size=img_size,
     )
 
-    net = ConvNet(32, 3, 2, (*img_size, 3), do_batchnorm=True, do_dropout=True)
-    model = net.build_model()
+    model = optuna_model.build_model(32, 3, 2, (*img_size, 3), do_batchnorm=True, do_dropout=True)
     model.summary()
 
     # Instantiate an optimizer to train the model.
@@ -150,9 +150,11 @@ if __name__ == "__main__":
         # Run a validation loop at the end of each epoch.
         for x_batch_val, y_batch_val in test_data:
             val_logits = model(x_batch_val, training=False)
+
             # Update val metrics
             val_acc_metric.update_state(y_batch_val, val_logits)
         val_acc = val_acc_metric.result()
+        out_dict["val_acc"].append(val_acc)
         val_acc_metric.reset_states()
         print("Validation acc: %.4f" % (float(val_acc),))
         print("Time taken: %.2fs" % (time.time() - start_time))

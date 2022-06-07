@@ -2,15 +2,16 @@ from __future__ import annotations
 
 import os
 
+import numpy as np
+import optuna
 import tensorflow as tf
-from tensorflow import keras
+import wandb
 from keras.models import Model
+from tensorflow import keras
+from tqdm import tqdm
+
 from src.data.dataloader import load_dataset
 from src.models.optuna_model import build_model
-from tqdm import tqdm
-import numpy as np
-import wandb
-import optuna
 
 
 def train_and_validate(
@@ -39,6 +40,7 @@ def train_and_validate(
     # Constructing accuracy objects
     train_acc_metric = keras.metrics.SparseCategoricalAccuracy()
     val_acc_metric = keras.metrics.SparseCategoricalAccuracy()
+    val_acc = None
 
     for epoch in tqdm(range(epochs), unit="epoch"):
         # Itterating over the batches of the dataset
@@ -56,11 +58,16 @@ def train_and_validate(
             with wandb_run:
                 wandb_run.log({"train_accuracy": train_acc_metric.result()})
 
-    # TODO: Do validation of parameters
-    # for x_batch_val, y_batch_val  in tqdm(validation_dataset):
-    #     pass
+        # 
+        for x_batch_val, y_batch_val in validation_dataset:
+            val_logits = model(x_batch_val, training=False)
 
-    return 0.1
+            # Update val metrics
+            val_acc_metric.update_state(y_batch_val, val_logits)
+        val_acc = val_acc_metric.result()
+        val_acc_metric.reset_states()
+
+    return val_acc
 
 
 def objective(trial):
