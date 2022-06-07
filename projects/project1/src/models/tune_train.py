@@ -184,13 +184,4 @@ if __name__ == "__main__":
     logger.info("Beginning optuna optimization")
     study.optimize(objective, n_trials=5)
 
-    logger.info("Beginning wandb sweep")
-    summary = wandb.init(project="project1", name="summary", job_type="logging")
-
-    trials = study.trials
-    for step, trial in enumerate(trials):
-        summary.log({"mse": trial.value})  # type: ignore
-        for k, v in trial.params.items():
-            summary.log({k: v}, step=step)  # type: ignore
-
     joblib.dump(study, model_folder / (study_name + ".pkl"))
