@@ -50,7 +50,7 @@ out_dict = defaultdict(list)
 
 if __name__ == "__main__":
     save_model = True
-    img_size = (512, 512)
+    img_size = (32, 32)
     batch_size = 64
 
     train_dataset = load_dataset(

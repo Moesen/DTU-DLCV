@@ -1,7 +1,5 @@
 import tensorflow as tf
 
-from tqdm import tqdm
-
 from keras import backend as K, regularizers
 from src.data.dataloader import load_dataset
 from src.utils import get_project_root
@@ -44,16 +42,16 @@ test_data = load_dataset(
 #batch_imgs = next(iter(train_dataset))
 #feature_batch = base_model(batch_imgs)
 
-base_model.trainable = True
+"""base_model.trainable = True
 
 # Fine-tune from this layer onwards
 fine_tune_at = 6
 
 # Freeze all the layers before the `fine_tune_at` layer
 for layer in base_model.layers[:fine_tune_at]:
-    layer.trainable = False
+    layer.trainable = False"""
 
-#base_model.trainable = False
+base_model.trainable = False
 
 inputs = tf.keras.Input(shape=img_size)
 x = base_model(inputs)

@@ -1,6 +1,7 @@
 import tensorflow as tf
 from keras import layers
 from tensorflow import keras
+from keras import backend as K, regularizers
 
 
 def conv_block(
@@ -21,6 +22,7 @@ def conv_block(
             strides=1,
             activation="relu",
             padding="same",
+            kernel_regularizer=regularizers.l2(1e-1), kernel_initializer='he_normal',
         )(layer_input)
 
         if do_batchnorm:
