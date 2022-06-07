@@ -46,6 +46,7 @@ def build_model(
     do_batchnorm=True,
     dropout_percentage: float = 0.2,
     do_dropout=True,
+    num_kernels: int = 2,
     kernel_regularizer_strength: float = 1e-3,
     kernel_initializer: str = "he_normal"
 ):
@@ -83,6 +84,7 @@ def build_model(
             first_layer_channels * 2 ** (i + 1),
             do_batchnorm=do_batchnorm,
             do_dropout=do_dropout,
+	    num_kernels=num_kernels,
         )
 
     d4 = layers.Flatten()(d1)
