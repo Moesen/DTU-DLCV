@@ -50,7 +50,7 @@ out_dict = {"train_acc": [], "train_recall": [], "train_loss": []}
 
 if __name__ == "__main__":
     save_model = True
-    img_size = (32, 32)
+    img_size = (512, 512)
     batch_size = 64
 
     train_dataset = load_dataset(
