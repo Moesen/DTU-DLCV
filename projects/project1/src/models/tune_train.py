@@ -20,7 +20,7 @@ log_path = Path("./log")
 logger = init_logger(__name__, True, log_path)
 
 # Get name of study
-study_name = "wandb10run_2"
+study_name = "wandb10run_4"
 
 
 def train_and_validate(
@@ -99,7 +99,7 @@ def objective(trial) -> float:
     trial_augmentation_contrast = trial.suggest_float("augmentation_contrast", 0.0, 0.6)
     trial_batchnorm = trial.suggest_categorical("batch norm", [True, False])
     trial_kernel_regularizer_strength = trial.suggest_loguniform(
-        "kernel regularizer strength", 0, 1e-1
+        "kernel regularizer strength", 1e-35, 1e-1
     )
     trial_kernel_initializer = trial.suggest_categorical(
         "kernel initializer", ["he_normal", "he_uniform", "glorot_uniform"]
@@ -165,7 +165,7 @@ def objective(trial) -> float:
     optimizer = keras.optimizers.Adam(learning_rate=trial_learning_rate)
 
     logger.info(f"Beginning {trial.number = }")
-    num_epochs = 10
+    num_epochs = 50
     acc = train_and_validate(
         model, optimizer, loss_fn, train_dateset, test_dataset, wandb_run, num_epochs
     )
@@ -200,6 +200,6 @@ if __name__ == "__main__":
         study = joblib.load(model_folder / (study_name + ".pkl"))
 
     logger.info("Beginning optuna optimization")
-    study.optimize(objective, n_trials=5)
+    study.optimize(objective, n_trials=250)
 
     joblib.dump(study, model_folder / (study_name + ".pkl"))
