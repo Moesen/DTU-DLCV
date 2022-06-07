@@ -99,3 +99,5 @@ target/
 
 # Mypy cache
 .mypy_cache/
+
+**/wandb/

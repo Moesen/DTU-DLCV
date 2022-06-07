@@ -3,21 +3,26 @@ from __future__ import annotations
 import os
 
 import joblib
-import numpy as np
 import optuna
 import tensorflow as tf
 import wandb
+from tqdm import tqdm
 from dotenv import find_dotenv, load_dotenv
 from keras.models import Model
 from src.data.dataloader import load_dataset
 from src.models.optuna_model import build_model
 from tensorflow import keras
-from tqdm import tqdm
 from src.utils import get_project_root
+from src.color_logger import init_logger
+from pathlib import Path
 
+log_path = Path("./log")
+logger = init_logger(__name__, True, log_path)
+
+# Get name of study
+study_name = "wandb10run"
 
 def train_and_validate(
-    trial,
     model: Model,
     optimizer,
     loss_function,
@@ -54,25 +59,24 @@ def train_and_validate(
                 loss_value = loss_function(y_batch_train, logits)
                 grads = tape.gradient(loss_value, model.trainable_weights)
                 optimizer.apply_gradients(zip(grads, model.trainable_weights))
-
             train_acc_metric.update_state(y_batch_train, logits)
 
-            with wandb_run:
-                wandb_run.log({"train_accuracy": train_acc_metric.result()})
-
-        #
         for x_batch_val, y_batch_val in validation_dataset:
             val_logits = model(x_batch_val, training=False)
-
-            # Update val metrics
             val_acc_metric.update_state(y_batch_val, val_logits)
+
+        train_acc = train_acc_metric.result()
         val_acc = val_acc_metric.result()
+
+        wandb_run.log({"validation accuracy": val_acc, "training accuracy": train_acc})
+        train_acc_metric.reset_states()
         val_acc_metric.reset_states()
+        logger.info(f"epoch: {epoch}/{epochs} finished")
 
     return val_acc
 
 
-def objective(trial):
+def objective(trial) -> float:
     # List of things we want parameters for
     #   - model
     #   - optimizer
@@ -80,8 +84,8 @@ def objective(trial):
     #   - train_dataset
 
     trial_first_layer_channels = trial.suggest_int("first layer channels", 1, 50)
-    trial_num_conv_blocks = trial.suggest_int("number convolutional blocks", 2, 10)
-    trial_image_size = trial.suggest_int("image size", 16, 256, 16)
+    trial_num_conv_blocks = trial.suggest_int("number convolutional blocks", 1, 5)
+    trial_image_size = trial.suggest_int("image size", 64, 256, 16)
     trial_dropout_percentage = trial.suggest_float("dropout_percentage", 0.0, 0.6)
     trial_do_crop = trial.suggest_categorical("crop images", [True, False])
     trial_learning_rate = trial.suggest_loguniform("learning rate", 1e-6, 1e-2)
@@ -93,7 +97,8 @@ def objective(trial):
     trial_augmentation_rotation = trial.suggest_float("augmentation_rotation", 0.0, 0.6)
     trial_augmentation_contrast = trial.suggest_float("augmentation_contrast", 0.0, 0.6)
 
-    img_shape = (trial_image_size, trial_image_size, 3)
+    img_size = (trial_image_size, trial_image_size)
+    img_shape = (*img_size, 3)
 
     config = {
         "trial_first_layer_channels": trial_first_layer_channels,
@@ -106,9 +111,9 @@ def objective(trial):
     }
 
     wandb_run = wandb.init(
-        project="DTU-DLCV",
+        project="project1",
         name=f"trial_{trial.number}",
-        group="sampling",
+        group=study_name,
         config=config,
         reinit=True,  # Dunno why this is needed but it is
     )
@@ -124,7 +129,7 @@ def objective(trial):
     train_dateset = load_dataset(
         train=True,
         batch_size=trial_batch_size,
-        image_size=img_shape,
+        image_size=img_size,
         crop_to_aspect_ratio=trial_do_crop,
         augmentation_flip=trial_augmentation_flip,
         augmentation_rotation=trial_augmentation_rotation,
@@ -134,34 +139,59 @@ def objective(trial):
     test_dataset = load_dataset(
         train=False,
         batch_size=32,
-        img_size=img_shape,
+        image_size=img_size,
         crop_to_aspect_ratio=trial_do_crop,
         use_data_augmentation=False,
     )
+
+    loss_fn = keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+    optimizer = keras.optimizers.Adam(learning_rate=trial_learning_rate)
+
+    logger.info(f"Beginning {trial.number = }")
+    num_epochs = 10
+    acc = train_and_validate(
+        model, optimizer, loss_fn, train_dateset, test_dataset, wandb_run, num_epochs
+    )
+    logger.info(f"Finished {trial.number = }")
+
+    return acc
 
 
 if __name__ == "__main__":
     # Load environment file. Should contain wandb key
     load_dotenv(find_dotenv())
+    os.environ["WANDB_START_METHOD"] = "thread"
+    # breakpoint()
     # Get root of project
-    root = get_project_root() 
+    root = get_project_root()
     model_folder = root / "models"
-    
-    # Get name of study
-
-
-
-
     method = "GPU"
     if method == "GPU":
         os.environ["CUDA_VISIBLE_DEVICES"] = "0"
     else:
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
-    seed: int = 42
-    sampler = optuna.samplers.TPESampler(seed=seed)
-    study = optuna.create_study(direction="maximize", sampler=sampler)
-    study.optimize(objective, n_trials=100, show_progress_bar=True) # type: ignore
-    
+    logger.info("Instantiating study")
+    if not (model_folder / (study_name + ".pkl")).is_file():
+        logger.debug("Study not found in model folder, creating new one")
+        seed: int = 42
+        sampler = optuna.samplers.TPESampler(seed=seed)
+        study = optuna.create_study(direction="maximize", sampler=sampler)
+        logger.debug(f'Study path set to {(model_folder / (study_name + ".pkl"))}')
+    else:
+        logger.debug(f"Study with name {study_name} found in models folder")
+        study = joblib.load(model_folder / (study_name + ".pkl"))
 
+    logger.info("Beginning optuna optimization")
+    study.optimize(objective, n_trials=10)
 
+    logger.info("Beginning wandb sweep")
+    summary = wandb.init(project="project1", name=study_name, job_type="logging")
+
+    trials = study.trials
+    for step, trial in enumerate(trials):
+        summary.log({"mse": trial.value})  # type: ignore
+        for k, v in trial.params.items():
+            summary.log({k: v}, step=step)  # type: ignore
+
+    joblib.dump(study, model_folder / (study_name + ".pkl"))

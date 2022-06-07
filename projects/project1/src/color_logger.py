@@ -8,8 +8,6 @@ import colorlog
 def init_logger(dunder_name, testing_mode, log_folder=Path("./")) -> logging.Logger:
     log_format = (
         "%(asctime)s - "
-        "%(name)s - "
-        "%(funcName)s - "
         "%(levelname)s - "
         "%(message)s"
     )

@@ -1,8 +1,15 @@
 click==8.0.3
 colorlog==6.6.0
+joblib==1.1.0
+keras==2.9.0
 matplotlib==3.4.3
+numpy==1.22.4
+optuna==2.10.0
 Pillow==9.1.1
+python-dotenv==0.20.0
+scipy==1.8.1
+setuptools==61.2.0
 tensorflow==2.9.0
-protobuf==3.20.0
+tf_keras_vis==0.8.1
 tqdm==4.63.1
-numpy
+wandb==0.12.17
