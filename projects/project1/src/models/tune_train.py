@@ -91,6 +91,7 @@ def objective(trial) -> float:
 
     trial_first_layer_channels = trial.suggest_int("first layer channels", 1, 50)
     trial_num_conv_blocks = trial.suggest_int("number convolutional blocks", 1, 5)
+    trial_num_kernels = trial.suggest_int("num kernels", 1, 4)
     trial_image_size = trial.suggest_int("image size", 64, 256, 16)
     trial_dropout_percentage = trial.suggest_float("dropout_percentage", 0.0, 0.6)
     trial_do_crop = trial.suggest_categorical("crop images", [True, False])
@@ -127,6 +128,7 @@ def objective(trial) -> float:
         "trial_batchnorm ": trial_batchnorm,
         "trial_kernel_regularizer_strength ": trial_kernel_regularizer_strength,
         "trial_kernel_initializer ": trial_kernel_initializer,
+        "trial_num_kernels": trial_num_kernels
     }
 
     wandb_run = wandb.init(
@@ -146,6 +148,7 @@ def objective(trial) -> float:
         do_batchnorm=trial_batchnorm,
         kernel_regularizer_strength=trial_kernel_regularizer_strength,
         kernel_initializer=trial_kernel_initializer,
+        num_kernels = trial_num_kernels
     )
 
     train_dateset = load_dataset(
