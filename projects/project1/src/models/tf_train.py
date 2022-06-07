@@ -58,6 +58,7 @@ if __name__ == "__main__":
         normalize=True,
         batch_size=batch_size,
         tune_for_perfomance=False,
+        use_data_augmentation=True,
         image_size=img_size,
     )
 
@@ -66,6 +67,7 @@ if __name__ == "__main__":
         normalize=True,
         batch_size=batch_size,
         tune_for_perfomance=False,
+        use_data_augmentation=False,
         image_size=img_size,
     )
 
