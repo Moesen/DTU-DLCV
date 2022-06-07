@@ -15,7 +15,7 @@ from tensorflow.python.client import device_lib
 from tqdm import tqdm
 
 from src.data.dataloader import load_dataset
-from src.models.optuna_model import ConvNet
+from src.models import optuna_model
 from src.utils import get_project_root
 
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -69,8 +69,7 @@ if __name__ == "__main__":
         image_size=img_size,
     )
 
-    net = ConvNet(32, 3, 2, (*img_size, 3), do_batchnorm=True, do_dropout=True)
-    model = net.build_model()
+    model = optuna_model.build_model(32, 3, 2, (*img_size, 3), do_batchnorm=True, do_dropout=True)
     model.summary()
 
     # Instantiate an optimizer to train the model.
