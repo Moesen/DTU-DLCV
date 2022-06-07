@@ -20,7 +20,7 @@ log_path = Path("./log")
 logger = init_logger(__name__, True, log_path)
 
 # Get name of study
-study_name = "wandb10run_4"
+study_name = "250OptunaStudy_1"
 
 
 def train_and_validate(
@@ -71,7 +71,7 @@ def train_and_validate(
         val_acc = val_acc_metric.result()
 
         wandb_run.log({"validation accuracy": val_acc, "training accuracy": train_acc})
-        
+
         trial.report(val_acc, epoch)
         if trial.should_prune():
             raise optuna.TrialPruned()
@@ -126,7 +126,7 @@ def objective(trial) -> float:
         "trial_augmentation_contrast ": trial_augmentation_contrast,
         "trial_batchnorm ": trial_batchnorm,
         "trial_kernel_regularizer_strength ": trial_kernel_regularizer_strength,
-        "trial_kernel_initializer ": trial_kernel_initializer
+        "trial_kernel_initializer ": trial_kernel_initializer,
     }
 
     wandb_run = wandb.init(
@@ -172,7 +172,14 @@ def objective(trial) -> float:
     logger.info(f"Beginning {trial.number = }")
     num_epochs = 50
     acc = train_and_validate(
-        trial, model, optimizer, loss_fn, train_dateset, test_dataset, wandb_run, num_epochs
+        trial,
+        model,
+        optimizer,
+        loss_fn,
+        train_dateset,
+        test_dataset,
+        wandb_run,
+        num_epochs,
     )
     logger.info(f"Finished {trial.number = }")
 
@@ -196,10 +203,13 @@ if __name__ == "__main__":
     logger.info("Instantiating study")
     if not (model_folder / (study_name + ".pkl")).is_file():
         logger.debug("Study not found in model folder, creating new one")
-        seed: int = 42
-        sampler = optuna.samplers.TPESampler(seed=seed)
-        pruner = optuna.pruners.PercentilePruner(25.0, n_startup_trials=5, n_warmup_steps=10, interval_steps=1)
-        study = optuna.create_study(direction="maximize", sampler=sampler, pruner=pruner)
+        sampler = optuna.samplers.TPESampler()
+        pruner = optuna.pruners.PercentilePruner(
+            20.0, n_startup_trials=10, n_warmup_steps=10, interval_steps=1
+        )
+        study = optuna.create_study(
+            direction="maximize", sampler=sampler, pruner=pruner
+        )
         logger.debug(f'Study path set to {(model_folder / (study_name + ".pkl"))}')
     else:
         logger.debug(f"Study with name {study_name} found in models folder")
