@@ -19,6 +19,8 @@ from pathlib import Path
 log_path = Path("./log")
 logger = init_logger(__name__, True, log_path)
 
+# Get name of study
+study_name = "wandb10run"
 
 def train_and_validate(
     model: Model,
@@ -83,7 +85,7 @@ def objective(trial) -> float:
 
     trial_first_layer_channels = trial.suggest_int("first layer channels", 1, 50)
     trial_num_conv_blocks = trial.suggest_int("number convolutional blocks", 1, 5)
-    trial_image_size = trial.suggest_int("image size", 32, 256, 16)
+    trial_image_size = trial.suggest_int("image size", 64, 256, 16)
     trial_dropout_percentage = trial.suggest_float("dropout_percentage", 0.0, 0.6)
     trial_do_crop = trial.suggest_categorical("crop images", [True, False])
     trial_learning_rate = trial.suggest_loguniform("learning rate", 1e-6, 1e-2)
@@ -111,7 +113,7 @@ def objective(trial) -> float:
     wandb_run = wandb.init(
         project="project1",
         name=f"trial_{trial.number}",
-        group="sampling",
+        group=study_name,
         config=config,
         reinit=True,  # Dunno why this is needed but it is
     )
@@ -163,10 +165,6 @@ if __name__ == "__main__":
     # Get root of project
     root = get_project_root()
     model_folder = root / "models"
-
-    # Get name of study
-    study_name = "initial_study"
-
     method = "GPU"
     if method == "GPU":
         os.environ["CUDA_VISIBLE_DEVICES"] = "0"
@@ -185,10 +183,10 @@ if __name__ == "__main__":
         study = joblib.load(model_folder / (study_name + ".pkl"))
 
     logger.info("Beginning optuna optimization")
-    study.optimize(objective, n_trials=3)
+    study.optimize(objective, n_trials=10)
 
     logger.info("Beginning wandb sweep")
-    summary = wandb.init(project="project1", name="summary", job_type="logging")
+    summary = wandb.init(project="project1", name=study_name, job_type="logging")
 
     trials = study.trials
     for step, trial in enumerate(trials):
