@@ -39,6 +39,7 @@ def train_and_validate(
     # Constructing accuracy objects
     train_acc_metric = keras.metrics.SparseCategoricalAccuracy()
     val_acc_metric = keras.metrics.SparseCategoricalAccuracy()
+    val_acc = None
 
     for epoch in tqdm(range(epochs), unit="epoch"):
         # Itterating over the batches of the dataset
@@ -56,10 +57,7 @@ def train_and_validate(
             with wandb_run:
                 wandb_run.log({"train_accuracy": train_acc_metric.result()})
 
-    # TODO: Do validation of parameters
-    # for x_batch_val, y_batch_val  in tqdm(validation_dataset):
-    #     pass
-    # Run a validation loop at the end of each epoch.
+        # 
         for x_batch_val, y_batch_val in validation_dataset:
             val_logits = model(x_batch_val, training=False)
 
