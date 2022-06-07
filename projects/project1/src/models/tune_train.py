@@ -59,8 +59,16 @@ def train_and_validate(
     # TODO: Do validation of parameters
     # for x_batch_val, y_batch_val  in tqdm(validation_dataset):
     #     pass
+    # Run a validation loop at the end of each epoch.
+        for x_batch_val, y_batch_val in validation_dataset:
+            val_logits = model(x_batch_val, training=False)
 
-    return 0.1
+            # Update val metrics
+            val_acc_metric.update_state(y_batch_val, val_logits)
+        val_acc = val_acc_metric.result()
+        val_acc_metric.reset_states()
+
+    return val_acc
 
 
 def objective(trial):
