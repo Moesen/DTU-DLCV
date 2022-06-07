@@ -11,8 +11,10 @@ def conv_block(
     do_dropout: bool,
     dropout_percentage: float = 0.2,
     kernel_size: int = 3,
-    num_kernels: int = 2
-):
+    num_kernels: int = 2,
+    kernel_regularizer_strength: float = 1e-3,
+    kernel_initializer: str = "he_normal"
+    ):
 
     d = layer_input
     for _ in range(num_kernels):            
@@ -22,7 +24,8 @@ def conv_block(
             strides=1,
             activation="relu",
             padding="same",
-            kernel_regularizer=regularizers.l2(1e-1), kernel_initializer='he_normal',
+            kernel_regularizer=regularizers.l2(kernel_regularizer_strength),
+            kernel_initializer=kernel_initializer
         )(layer_input)
 
         if do_batchnorm:
@@ -43,6 +46,8 @@ def build_model(
     do_batchnorm=True,
     dropout_percentage: float = 0.2,
     do_dropout=True,
+    kernel_regularizer_strength: float = 1e-3,
+    kernel_initializer: str = "he_normal"
 ):
     """build_model.
 
@@ -67,6 +72,9 @@ def build_model(
         do_dropout=do_dropout,
         dropout_percentage=dropout_percentage,
         kernel_size=7,
+        kernel_regularizer_strength=kernel_regularizer_strength,
+        kernel_initializer=kernel_initializer
+        
     )
 
     for i in range(num_conv_blocks):

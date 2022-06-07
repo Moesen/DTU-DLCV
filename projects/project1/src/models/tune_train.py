@@ -22,6 +22,7 @@ logger = init_logger(__name__, True, log_path)
 # Get name of study
 study_name = "wandb10run_2"
 
+
 def train_and_validate(
     model: Model,
     optimizer,
@@ -97,18 +98,30 @@ def objective(trial) -> float:
     trial_augmentation_rotation = trial.suggest_float("augmentation_rotation", 0.0, 0.6)
     trial_augmentation_contrast = trial.suggest_float("augmentation_contrast", 0.0, 0.6)
     trial_batchnorm = trial.suggest_categorical("batch norm", [True, False])
+    trial_kernel_regularizer_strength = trial.suggest_loguniform(
+        "kernel regularizer strength", 0, 1e-1
+    )
+    trial_kernel_initializer = trial.suggest_categorical(
+        "kernel initializer", ["he_normal", "he_uniform", "glorot_uniform"]
+    )
 
     img_size = (trial_image_size, trial_image_size)
     img_shape = (*img_size, 3)
 
     config = {
-        "trial_first_layer_channels": trial_first_layer_channels,
-        "trial_num_conv_blocks": trial_num_conv_blocks,
-        "trial_image_size": trial_image_size,
-        "trial_dropout_percentage": trial_dropout_percentage,
-        "trial_do_crop": trial_do_crop,
-        "trial_learning_rate": trial_learning_rate,
-        "trial_batch_size": trial_batch_size,
+        "trial_first_layer_channels ": trial_first_layer_channels,
+        "trial_num_conv_blocks ": trial_num_conv_blocks,
+        "trial_image_size ": trial_image_size,
+        "trial_dropout_percentage ": trial_dropout_percentage,
+        "trial_do_crop ": trial_do_crop,
+        "trial_learning_rate ": trial_learning_rate,
+        "trial_batch_size ": trial_batch_size,
+        "trial_augmentation_flip ": trial_augmentation_flip,
+        "trial_augmentation_rotation ": trial_augmentation_rotation,
+        "trial_augmentation_contrast ": trial_augmentation_contrast,
+        "trial_batchnorm ": trial_batchnorm,
+        "trial_kernel_regularizer_strength ": trial_kernel_regularizer_strength,
+        "trial_kernel_initializer ": trial_kernel_initializer
     }
 
     wandb_run = wandb.init(
@@ -125,7 +138,9 @@ def objective(trial) -> float:
         2,
         img_shape=img_shape,
         dropout_percentage=trial_dropout_percentage,
-        do_batchnorm=trial_batchnorm
+        do_batchnorm=trial_batchnorm,
+        kernel_regularizer_strength=trial_kernel_regularizer_strength,
+        kernel_initializer=trial_kernel_initializer,
     )
 
     train_dateset = load_dataset(
@@ -152,7 +167,8 @@ def objective(trial) -> float:
     logger.info(f"Beginning {trial.number = }")
     num_epochs = 10
     acc = train_and_validate(
-        model, optimizer, loss_fn, train_dateset, test_dataset, wandb_run, num_epochs)
+        model, optimizer, loss_fn, train_dateset, test_dataset, wandb_run, num_epochs
+    )
     logger.info(f"Finished {trial.number = }")
 
     return acc
