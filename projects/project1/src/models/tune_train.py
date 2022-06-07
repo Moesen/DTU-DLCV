@@ -96,6 +96,7 @@ def objective(trial) -> float:
     )
     trial_augmentation_rotation = trial.suggest_float("augmentation_rotation", 0.0, 0.6)
     trial_augmentation_contrast = trial.suggest_float("augmentation_contrast", 0.0, 0.6)
+    trial_batchnorm = trial.suggest_categorical("batch norm", [True, False])
 
     img_size = (trial_image_size, trial_image_size)
     img_shape = (*img_size, 3)
@@ -124,6 +125,7 @@ def objective(trial) -> float:
         2,
         img_shape=img_shape,
         dropout_percentage=trial_dropout_percentage,
+        do_batchnorm=trial_batchnorm
     )
 
     train_dateset = load_dataset(
