@@ -1,9 +1,11 @@
 from __future__ import annotations
+
+from typing import Union
+
+import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.keras import layers
 from src.utils import get_project_root
-import matplotlib.pyplot as plt
-from typing import Union
 
 
 def load_dataset(

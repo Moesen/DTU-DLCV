@@ -1,10 +1,12 @@
-import tensorflow as tf
-from src.utils import get_project_root
-from src.data.dataloader import load_dataset
-from keras import backend as K
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
-import matplotlib as mpl
+import tensorflow as tf
+from keras import backend as K
+from scipy.ndimage.filters import gaussian_filter
+
+from src.data.dataloader import load_dataset
+from src.utils import get_project_root
 
 PROJECT_ROOT = get_project_root()
 model_name = 'hotdog_conv_20220604214318' #'hotdog_conv_20220604190940'
@@ -57,7 +59,7 @@ plt.savefig(fig_path)
 
 
 
-# Saliency map
+# Vanilla Saliency map
 img_idx = 0
 img = test_img[img_idx,...]
 img = tf.reshape(img, [-1] + img.shape.as_list())
@@ -86,22 +88,23 @@ def get_saliency_map(model, image, class_idx):
 class_idx = 0
 smap = get_saliency_map(new_model, img, class_idx)
 
-#original image
+#raw saliency map
 plt.subplot(1,2,1)
 plt.imshow(img.numpy().squeeze())
 pred_prob = np.max(probs[img_idx,...])
 pred_label = labels[int(predicted[img_idx,...])]
 plt.title(f"Pred: {pred_label}, p={pred_prob:.2f}")
-
-#saliency map 
+ 
 plt.subplot(1,2,2)
 plt.imshow(smap.squeeze(),cmap='jet')
 plt.title(f"Saliency of P(img=class {class_idx})")
 
-saliency_fig_path = PROJECT_ROOT / "reports/figures/test_saliency.png" 
+saliency_fig_path = PROJECT_ROOT / "reports/figures/raw_saliency.png" 
 plt.savefig(saliency_fig_path)
 
-#two images on top
+
+
+#saliency map on top 
 plt.subplot(1,2,1)
 plt.imshow(img.numpy().squeeze())
 pred_prob = np.max(probs[img_idx,...])
@@ -109,32 +112,43 @@ pred_label = labels[int(predicted[img_idx,...])]
 plt.title(f"Pred: {pred_label}, p={pred_prob:.2f}")
 plt.subplot(1,2,2)
 plt.imshow(img.numpy().squeeze())
-smap[smap<0.4] = np.NaN
+
+blurred = gaussian_filter(smap, sigma=3)
+#blurred[blurred<0.4] = np.NaN ### use 0.5 for non blurred
+
 cmap = mpl.cm.jet
 cmap.set_bad("white")
-plt.imshow(smap.squeeze(),cmap=cmap,alpha=0.5)
-saliency_fig_path = PROJECT_ROOT / "reports/figures/test_saliency2.png" 
+plt.imshow(blurred.squeeze(),cmap=cmap,alpha=0.5)
+saliency_fig_path = PROJECT_ROOT / "reports/figures/raw_saliency_smooth.png" 
 plt.savefig(saliency_fig_path)
 
-"""images = tf.Variable(img, dtype=float)
 
-y_pred = model.predict(img)
 
-with tf.GradientTape() as tape:
-    pred = model(images, training=False)
-    class_idxs_sorted = np.argsort(pred.numpy().flatten())[::-1]
-    loss = pred[0][class_idxs_sorted[0]]
-    
-grads = tape.gradient(loss, images)
 
-dgrad_abs = tf.math.abs(grads)
 
-dgrad_max_ = np.max(dgrad_abs, axis=3)[0]
 
-arr_min, arr_max  = np.min(dgrad_max_), np.max(dgrad_max_)
-grad_eval = (dgrad_max_ - arr_min) / (arr_max - arr_min + 1e-18)
+from keras import backend as K
+from tf_keras_vis.saliency import Saliency
+from tf_keras_vis.utils.scores import CategoricalScore
 
-fig, axes = plt.subplots(1,2,figsize=(14,5))
-axes[0].imshow(_img)
-i = axes[1].imshow(grad_eval,cmap="jet",alpha=0.8)
-fig.colorbar(i)"""
+#from tf_keras_vis.gradcam import Gradcam
+
+
+logits = new_model(img)
+class_pred = predicted[0]
+
+score = CategoricalScore([class_pred])
+
+saliency = Saliency(new_model, clone=True)
+
+saliency_map = saliency(score,
+                        img,
+                        smooth_samples=20, # The number of calculating gradients iterations.
+                        smooth_noise=0.20) # noise spread level.
+plt.subplot(1,2,1)
+plt.imshow(img.numpy().squeeze())
+plt.subplot(1,2,2)
+plt.imshow(img.numpy().squeeze())
+plt.imshow(saliency_map.squeeze(),cmap=cmap,alpha=0.5)
+saliency_fig_path = PROJECT_ROOT / "reports/figures/smoothgrad_saliency.png" 
+plt.savefig(saliency_fig_path)
