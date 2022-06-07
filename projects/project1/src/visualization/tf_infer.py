@@ -4,7 +4,6 @@ import numpy as np
 import tensorflow as tf
 from keras import backend as K
 from scipy.ndimage.filters import gaussian_filter
-
 from src.data.dataloader import load_dataset
 from src.utils import get_project_root
 

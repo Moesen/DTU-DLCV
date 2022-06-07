@@ -1,11 +1,9 @@
 from __future__ import annotations
-
-from typing import Union
-
-import matplotlib.pyplot as plt
 import tensorflow as tf
-
+from tensorflow.keras import layers
 from src.utils import get_project_root
+import matplotlib.pyplot as plt
+from typing import Union
 
 
 def load_dataset(
@@ -13,9 +11,13 @@ def load_dataset(
     batch_size: int = 32,
     normalize: bool = True,
     image_size: tuple = (32, 32),
-    shuffle: bool = True,
+    shuffle: bool = False,
     crop_to_aspect_ratio: bool = False,
     tune_for_perfomance: bool = False,
+    use_data_augmentation: bool = True,
+    augmentation_flip: str = "horizontal_and_vertical",
+    augmentation_rotation: float = 0.5,
+    augmentation_contrast: float = 0.5,
     **kwargs,
 ) -> tf.data.Dataset:
     """
@@ -45,14 +47,27 @@ def load_dataset(
         **kwargs,
     )
 
+    map_layers = tf.keras.Sequential()
+
     if normalize:
         normalization_layer = tf.keras.layers.Rescaling(1.0 / 255)
-        dataset = dataset.map(lambda x, y: (normalization_layer(x), y))
+        map_layers.add(normalization_layer)
+
+    if use_data_augmentation:
+        augmentation_layer = tf.keras.Sequential([
+            layers.RandomRotation(augmentation_rotation),
+            layers.RandomContrast(augmentation_contrast)
+            ])
+        if augmentation_flip.lower() != "none":
+            augmentation_layer.add(layers.RandomFlip(augmentation_flip))
+        map_layers.add(augmentation_layer)
+
+    dataset = dataset.map(lambda x, y: (map_layers(x), y))
 
     if tune_for_perfomance:
         AUTOTUNE = tf.data.AUTOTUNE
         dataset = dataset.cache().prefetch(buffer_size=AUTOTUNE)
-
+    
     return dataset
 
 

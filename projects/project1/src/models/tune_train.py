@@ -2,16 +2,18 @@ from __future__ import annotations
 
 import os
 
+import joblib
 import numpy as np
 import optuna
 import tensorflow as tf
 import wandb
+from dotenv import find_dotenv, load_dotenv
 from keras.models import Model
-from tensorflow import keras
-from tqdm import tqdm
-
 from src.data.dataloader import load_dataset
 from src.models.optuna_model import build_model
+from tensorflow import keras
+from tqdm import tqdm
+from src.utils import get_project_root
 
 
 def train_and_validate(
@@ -58,7 +60,7 @@ def train_and_validate(
             with wandb_run:
                 wandb_run.log({"train_accuracy": train_acc_metric.result()})
 
-        # 
+        #
         for x_batch_val, y_batch_val in validation_dataset:
             val_logits = model(x_batch_val, training=False)
 
@@ -81,9 +83,15 @@ def objective(trial):
     trial_num_conv_blocks = trial.suggest_int("number convolutional blocks", 2, 10)
     trial_image_size = trial.suggest_int("image size", 16, 256, 16)
     trial_dropout_percentage = trial.suggest_float("dropout_percentage", 0.0, 0.6)
-    trial_do_crop = trial.suggest_catagorical("crop images", [True, False])
+    trial_do_crop = trial.suggest_categorical("crop images", [True, False])
     trial_learning_rate = trial.suggest_loguniform("learning rate", 1e-6, 1e-2)
     trial_batch_size = trial.suggest_int("batch size", 32, 128, 16)
+    trial_augmentation_flip = trial.suggest_categorical(
+        "augmentation_flip",
+        ["horizontal_and_vertical", "horizontal", "vertical", "none"],
+    )
+    trial_augmentation_rotation = trial.suggest_float("augmentation_rotation", 0.0, 0.6)
+    trial_augmentation_contrast = trial.suggest_float("augmentation_contrast", 0.0, 0.6)
 
     img_shape = (trial_image_size, trial_image_size, 3)
 
@@ -102,7 +110,7 @@ def objective(trial):
         name=f"trial_{trial.number}",
         group="sampling",
         config=config,
-        reinit=True, # Dunno why this is needed but it is
+        reinit=True,  # Dunno why this is needed but it is
     )
 
     model = build_model(
@@ -118,6 +126,9 @@ def objective(trial):
         batch_size=trial_batch_size,
         image_size=img_shape,
         crop_to_aspect_ratio=trial_do_crop,
+        augmentation_flip=trial_augmentation_flip,
+        augmentation_rotation=trial_augmentation_rotation,
+        augmentation_contrast=trial_augmentation_contrast,
     )
 
     test_dataset = load_dataset(
@@ -125,13 +136,32 @@ def objective(trial):
         batch_size=32,
         img_size=img_shape,
         crop_to_aspect_ratio=trial_do_crop,
+        use_data_augmentation=False,
     )
 
 
 if __name__ == "__main__":
+    # Load environment file. Should contain wandb key
+    load_dotenv(find_dotenv())
+    # Get root of project
+    root = get_project_root() 
+    model_folder = root / "models"
+    
+    # Get name of study
+
+
+
+
     method = "GPU"
     if method == "GPU":
         os.environ["CUDA_VISIBLE_DEVICES"] = "0"
     else:
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-    pass
+
+    seed: int = 42
+    sampler = optuna.samplers.TPESampler(seed=seed)
+    study = optuna.create_study(direction="maximize", sampler=sampler)
+    study.optimize(objective, n_trials=100, show_progress_bar=True) # type: ignore
+    
+
+
