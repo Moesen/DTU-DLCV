@@ -4,20 +4,19 @@ import datetime
 import os
 import ssl
 import time
-from pathlib import Path
 from collections import defaultdict
+from pathlib import Path
 
 import numpy as np
 import tensorflow as tf
 from keras import backend as K
+from src.data.dataloader import load_dataset
+from src.models import optuna_model
+from src.utils import get_project_root
 #from tensorflow import keras 
 from tensorflow import keras
 from tensorflow.python.client import device_lib
 from tqdm import tqdm
-
-from src.data.dataloader import load_dataset
-from src.models import optuna_model
-from src.utils import get_project_root
 
 ssl._create_default_https_context = ssl._create_unverified_context
 

@@ -58,7 +58,7 @@ def load_dataset(
             layers.RandomRotation(augmentation_rotation),
             layers.RandomContrast(augmentation_contrast)
             ])
-        if augmentation_flip != "none":
+        if augmentation_flip.lower() != "none":
             augmentation_layer.add(layers.RandomFlip(augmentation_flip))
         map_layers.add(augmentation_layer)
 
