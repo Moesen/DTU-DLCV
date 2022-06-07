@@ -146,8 +146,9 @@ def objective(trial) -> float:
     optimizer = keras.optimizers.Adam(learning_rate=trial_learning_rate)
 
     logger.info(f"Beginning {trial.number = }")
+    num_epochs = 10
     acc = train_and_validate(
-        model, optimizer, loss_fn, train_dateset, test_dataset, wandb_run, 5
+        model, optimizer, loss_fn, train_dateset, test_dataset, wandb_run, num_epochs
     )
     logger.info(f"Finished {trial.number = }")
 
