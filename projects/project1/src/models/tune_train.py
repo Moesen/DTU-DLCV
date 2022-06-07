@@ -24,6 +24,7 @@ study_name = "wandb10run_4"
 
 
 def train_and_validate(
+    trial,
     model: Model,
     optimizer,
     loss_function,
@@ -70,10 +71,14 @@ def train_and_validate(
         val_acc = val_acc_metric.result()
 
         wandb_run.log({"validation accuracy": val_acc, "training accuracy": train_acc})
+        
+        trial.report(val_acc, epoch)
+        if trial.should_prune():
+            raise optuna.TrialPruned()
+
         train_acc_metric.reset_states()
         val_acc_metric.reset_states()
         logger.info(f"epoch: {epoch}/{epochs} finished")
-
     return val_acc
 
 
@@ -167,7 +172,7 @@ def objective(trial) -> float:
     logger.info(f"Beginning {trial.number = }")
     num_epochs = 50
     acc = train_and_validate(
-        model, optimizer, loss_fn, train_dateset, test_dataset, wandb_run, num_epochs
+        trial, model, optimizer, loss_fn, train_dateset, test_dataset, wandb_run, num_epochs
     )
     logger.info(f"Finished {trial.number = }")
 
@@ -193,7 +198,8 @@ if __name__ == "__main__":
         logger.debug("Study not found in model folder, creating new one")
         seed: int = 42
         sampler = optuna.samplers.TPESampler(seed=seed)
-        study = optuna.create_study(direction="maximize", sampler=sampler)
+        pruner = optuna.pruners.PercentilePruner(25.0, n_startup_trials=5, n_warmup_steps=10, interval_steps=1)
+        study = optuna.create_study(direction="maximize", sampler=sampler, pruner=pruner)
         logger.debug(f'Study path set to {(model_folder / (study_name + ".pkl"))}')
     else:
         logger.debug(f"Study with name {study_name} found in models folder")
