@@ -1,6 +1,6 @@
+import tensorflow as tf
 from keras import layers
 from tensorflow import keras
-import tensorflow as tf
 
 
 def conv_block(

@@ -1,21 +1,22 @@
 from __future__ import annotations
 
+import datetime
 import os
 import ssl
 import time
+from pathlib import Path
 
+import numpy as np
 import tensorflow as tf
+from keras import backend as K
 #from tensorflow import keras 
 from tensorflow import keras
-from keras import backend as K
-from src.data.dataloader import load_dataset
-from src.models.optuna_model import ConvNet
 from tensorflow.python.client import device_lib
 from tqdm import tqdm
-import numpy as np
+
+from src.data.dataloader import load_dataset
+from src.models.optuna_model import ConvNet
 from src.utils import get_project_root
-from pathlib import Path
-import datetime 
 
 ssl._create_default_https_context = ssl._create_unverified_context
 

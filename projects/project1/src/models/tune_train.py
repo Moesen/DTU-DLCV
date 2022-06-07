@@ -2,15 +2,16 @@ from __future__ import annotations
 
 import os
 
+import numpy as np
+import optuna
 import tensorflow as tf
-from tensorflow import keras
+import wandb
 from keras.models import Model
+from tensorflow import keras
+from tqdm import tqdm
+
 from src.data.dataloader import load_dataset
 from src.models.optuna_model import build_model
-from tqdm import tqdm
-import numpy as np
-import wandb
-import optuna
 
 
 def train_and_validate(

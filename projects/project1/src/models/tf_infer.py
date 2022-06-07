@@ -1,11 +1,12 @@
-import tensorflow as tf
-from src.utils import get_project_root
-from src.data.dataloader import load_dataset
-from keras import backend as K
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
-import matplotlib as mpl
+import tensorflow as tf
+from keras import backend as K
 from scipy.ndimage.filters import gaussian_filter
+
+from src.data.dataloader import load_dataset
+from src.utils import get_project_root
 
 PROJECT_ROOT = get_project_root()
 model_name = 'hotdog_conv_20220604214318' #'hotdog_conv_20220604190940'
@@ -129,6 +130,7 @@ plt.savefig(saliency_fig_path)
 from keras import backend as K
 from tf_keras_vis.saliency import Saliency
 from tf_keras_vis.utils.scores import CategoricalScore
+
 #from tf_keras_vis.gradcam import Gradcam
 
 

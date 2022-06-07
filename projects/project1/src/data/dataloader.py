@@ -1,8 +1,11 @@
 from __future__ import annotations
-import tensorflow as tf
-from src.utils import get_project_root
-import matplotlib.pyplot as plt
+
 from typing import Union
+
+import matplotlib.pyplot as plt
+import tensorflow as tf
+
+from src.utils import get_project_root
 
 
 def load_dataset(
