@@ -8,8 +8,8 @@ import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
-img_size_loader = (32,32)
-img_size = (32,32,3)
+img_size_loader = (128,128)
+img_size = (128,128,3)
 batch_size = 64
 
 base_model = tf.keras.applications.efficientnet_v2.EfficientNetV2S(
@@ -42,21 +42,23 @@ test_data = load_dataset(
 #batch_imgs = next(iter(train_dataset))
 #feature_batch = base_model(batch_imgs)
 
-"""base_model.trainable = True
+
+#base_model.trainable = True
 
 # Fine-tune from this layer onwards
-fine_tune_at = 6
+#fine_tune_at = 15
 
 # Freeze all the layers before the `fine_tune_at` layer
-for layer in base_model.layers[:fine_tune_at]:
-    layer.trainable = False"""
+
+#for layer in base_model.layers[:fine_tune_at]:
+#    layer.trainable = False
 
 base_model.trainable = False
 
 inputs = tf.keras.Input(shape=img_size)
 x = base_model(inputs)
 x = tf.keras.layers.GlobalAveragePooling2D()(x) ## 
-x = tf.keras.layers.Dense(200,kernel_regularizer=regularizers.l2(1e-1), kernel_initializer='he_normal')(x) ## 
+x = tf.keras.layers.Dense(200,kernel_regularizer=regularizers.l2(1e-3), kernel_initializer='he_normal')(x) ## 
 predictions = tf.keras.layers.Dense(1)(x)
 model = tf.keras.Model(inputs, predictions)
 
@@ -66,14 +68,14 @@ x = tf.keras.layers.BatchNormalization()(x)"""
 
 
 
-model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
+model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4),
               loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
               metrics=['accuracy'])
 
 model.summary()
 
 history = model.fit(train_dataset,
-                    epochs=20,
+                    epochs=50,
                     validation_data=test_data)
 
 #loss0, accuracy0 = model.evaluate(test_data)

@@ -20,7 +20,7 @@ log_path = Path("./log")
 logger = init_logger(__name__, True, log_path)
 
 # Get name of study
-study_name = "wandb10run"
+study_name = "wandb10run_2"
 
 def train_and_validate(
     model: Model,
@@ -150,8 +150,7 @@ def objective(trial) -> float:
     logger.info(f"Beginning {trial.number = }")
     num_epochs = 10
     acc = train_and_validate(
-        model, optimizer, loss_fn, train_dateset, test_dataset, wandb_run, num_epochs
-    )
+        model, optimizer, loss_fn, train_dateset, test_dataset, wandb_run, num_epochs)
     logger.info(f"Finished {trial.number = }")
 
     return acc
@@ -183,15 +182,6 @@ if __name__ == "__main__":
         study = joblib.load(model_folder / (study_name + ".pkl"))
 
     logger.info("Beginning optuna optimization")
-    study.optimize(objective, n_trials=10)
-
-    logger.info("Beginning wandb sweep")
-    summary = wandb.init(project="project1", name=study_name, job_type="logging")
-
-    trials = study.trials
-    for step, trial in enumerate(trials):
-        summary.log({"mse": trial.value})  # type: ignore
-        for k, v in trial.params.items():
-            summary.log({k: v}, step=step)  # type: ignore
+    study.optimize(objective, n_trials=5)
 
     joblib.dump(study, model_folder / (study_name + ".pkl"))
