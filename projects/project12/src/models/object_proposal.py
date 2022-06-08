@@ -88,7 +88,7 @@ if __name__ == "__main__":
     imgs = dataset['images']
 
     # Load specific image for testing function
-    image_filepath = 'batch_11/000030.jpg'
+    image_filepath = 'batch_11/000028.jpg'
     pylab.rcParams['figure.figsize'] = (28,28)
 
     # Obtain Exif orientation tag code
@@ -146,22 +146,27 @@ if __name__ == "__main__":
         # plt.show()
 
 
-    ### Begin making own rectangle
-    image_tensor = tf.convert_to_tensor(I, dtype=tf.uint8)
-    image_tensor = tf.expand_dims(image_tensor , 0)
-    print(image_tensor.shape)
 
 
-    proposal_generator = ObjectProposalGenerator()
-    box = proposal_generator.object_proposal(rgb_tensor=image_tensor)
+        ### Begin making own rectangle
+        image_tensor = tf.convert_to_tensor(I, dtype=tf.uint8)
+        image_tensor = tf.expand_dims(image_tensor , 0)
+        print(image_tensor.shape)
 
-    for score, (ymin,xmin,ymax,xmax), label in zip(pred_scores, pred_boxes, pred_labels):
-        if score < 0.5:
-            continue
 
-        score_txt = f'{100 * round(score)}%'
-        img_boxes = cv2.rectangle(rgb,(xmin, ymax),(xmax, ymin),(0,255,0),2)      
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        cv2.putText(img_boxes, label,(xmin, ymax-10), font, 1.5, (255,0,0), 2, cv2.LINE_AA)
-        cv2.putText(img_boxes,score_txt,(xmax, ymax-10), font, 1.5, (255,0,0), 2, cv2.LINE_AA)
+        proposal_generator = ObjectProposalGenerator()
+        pred_boxes = proposal_generator.object_proposal(rgb_tensor=image_tensor)
+
+        # for (ymin,xmin,ymax,xmax) in pred_boxes:
+        i = 0
+        for (x,y,w,h) in pred_boxes:
+            w = w-x
+            h = h-y
+            rect = Rectangle((x,y),w,h,linewidth=2,edgecolor="green",
+                            facecolor='none', alpha=0.7, linestyle = '-')
+            ax.add_patch(rect)
+            i += 1
+            if i == 10:
+                break
+        plt.show()
 
