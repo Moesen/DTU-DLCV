@@ -1,4 +1,4 @@
-from __future__ import annotations
+fkernel_sizerom __future__ import annotations
 
 import os
 
@@ -89,20 +89,20 @@ def objective(trial) -> float:
     #   - loss_function
     #   - train_dataset
 
-    trial_first_layer_channels = trial.suggest_int("first layer channels", 1, 50)
+    trial_first_layer_channels = trial.suggest_int("first layer channels", 30, 100)
     trial_num_conv_blocks = trial.suggest_int("number convolutional blocks", 1, 5)
-    trial_num_kernels = trial.suggest_int("num kernels", 1, 4)
-    trial_image_size = trial.suggest_int("image size", 64, 256, 16)
-    trial_dropout_percentage = trial.suggest_float("dropout_percentage", 0.0, 0.6)
-    trial_do_crop = trial.suggest_categorical("crop images", [True, False])
-    trial_learning_rate = trial.suggest_loguniform("learning rate", 1e-6, 1e-2)
-    trial_batch_size = trial.suggest_int("batch size", 32, 64)
+    trial_num_kernels = trial.suggest_int("num kernels", 1, 5)
+    trial_image_size = trial.suggest_int("image size", 64, 400, 16)
+    trial_dropout_percentage = trial.suggest_float("dropout_percentage", 0.1, 0.4)
+    # trial_do_crop = trial.suggest_categorical("crop images", [True, False])
+    trial_learning_rate = trial.suggest_loguniform("learning rate", 1e-9, 1e-3)
+    trial_batch_size = trial.suggest_int("batch size", 32, 64, 16)
     trial_augmentation_flip = trial.suggest_categorical(
         "augmentation_flip",
         ["horizontal_and_vertical", "horizontal", "vertical", "none"],
     )
-    trial_augmentation_rotation = trial.suggest_float("augmentation_rotation", 0.0, 0.6)
-    trial_augmentation_contrast = trial.suggest_float("augmentation_contrast", 0.0, 0.6)
+    trial_augmentation_rotation = trial.suggest_float("augmentation_rotation", 0.0, 0.3)
+    trial_augmentation_contrast = trial.suggest_float("augmentation_contrast", 0.0, 0.8)
     trial_batchnorm = trial.suggest_categorical("batch norm", [True, False])
     trial_kernel_regularizer_strength = trial.suggest_loguniform(
         "kernel regularizer strength", 1e-35, 1e-1
@@ -119,7 +119,7 @@ def objective(trial) -> float:
         "trial_num_conv_blocks ": trial_num_conv_blocks,
         "trial_image_size ": trial_image_size,
         "trial_dropout_percentage ": trial_dropout_percentage,
-        "trial_do_crop ": trial_do_crop,
+        # "trial_do_crop ": trial_do_crop,
         "trial_learning_rate ": trial_learning_rate,
         "trial_batch_size ": trial_batch_size,
         "trial_augmentation_flip ": trial_augmentation_flip,
@@ -155,7 +155,7 @@ def objective(trial) -> float:
         train=True,
         batch_size=trial_batch_size,
         image_size=img_size,
-        crop_to_aspect_ratio=trial_do_crop,
+        # crop_to_aspect_ratio=trial_do_crop,
         augmentation_flip=trial_augmentation_flip,
         augmentation_rotation=trial_augmentation_rotation,
         augmentation_contrast=trial_augmentation_contrast,
