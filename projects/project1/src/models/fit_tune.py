@@ -25,7 +25,7 @@ from src.utils import get_project_root
 log_path = Path("./log")
 logger = init_logger(__name__, True, log_path)
 
-study_name = "fit_test"
+study_name = "fit_test_100"
 
 
 def objective(trial: optuna.trial.Trial) -> float:
@@ -67,8 +67,7 @@ def objective(trial: optuna.trial.Trial) -> float:
 
     train_ds, val_ds = load_dataset(
         train=True,
-        # batch_size=c["batch_size"],
-        batch_size=3,
+        batch_size=c["batch_size"],
         image_size=img_size,
         shuffle=True,
         validation_split=0.2,
