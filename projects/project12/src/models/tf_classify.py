@@ -53,8 +53,8 @@ inputs = tf.keras.Input(shape=img_size)
 x = base_model(inputs) #these are feature maps 
 x = tf.keras.layers.GlobalAveragePooling2D()(x) ## 
 x = tf.keras.layers.Dense(200)(x) ## 
-predictions = tf.keras.layers.Dense(num_classes)(x)
-model = tf.keras.Model(inputs, predictions)
+logits = tf.keras.layers.Dense(num_classes)(x)
+model = tf.keras.Model(inputs, logits)
 
 
 model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4),
