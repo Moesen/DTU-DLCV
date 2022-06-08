@@ -1,4 +1,4 @@
-fkernel_sizerom __future__ import annotations
+from __future__ import annotations
 
 import os
 
@@ -20,7 +20,7 @@ log_path = Path("./log")
 logger = init_logger(__name__, True, log_path)
 
 # Get name of study
-study_name = "250OptunaStudy_1"
+study_name = "250OptunaStudy_2"
 
 
 def train_and_validate(
@@ -90,7 +90,7 @@ def objective(trial) -> float:
     #   - train_dataset
 
     trial_first_layer_channels = trial.suggest_int("first layer channels", 30, 100)
-    trial_num_conv_blocks = trial.suggest_int("number convolutional blocks", 1, 5)
+    trial_num_conv_blocks = trial.suggest_int("number convolutional blocks", 1, 6)
     trial_num_kernels = trial.suggest_int("num kernels", 1, 5)
     trial_image_size = trial.suggest_int("image size", 64, 400, 16)
     trial_dropout_percentage = trial.suggest_float("dropout_percentage", 0.1, 0.4)
@@ -105,7 +105,7 @@ def objective(trial) -> float:
     trial_augmentation_contrast = trial.suggest_float("augmentation_contrast", 0.0, 0.8)
     trial_batchnorm = trial.suggest_categorical("batch norm", [True, False])
     trial_kernel_regularizer_strength = trial.suggest_loguniform(
-        "kernel regularizer strength", 1e-35, 1e-1
+        "kernel regularizer strength", 1e-25, 1e-1
     )
     trial_kernel_initializer = trial.suggest_categorical(
         "kernel initializer", ["he_normal", "he_uniform", "glorot_uniform"]
@@ -115,20 +115,20 @@ def objective(trial) -> float:
     img_shape = (*img_size, 3)
 
     config = {
-        "trial_first_layer_channels ": trial_first_layer_channels,
-        "trial_num_conv_blocks ": trial_num_conv_blocks,
-        "trial_image_size ": trial_image_size,
-        "trial_dropout_percentage ": trial_dropout_percentage,
-        # "trial_do_crop ": trial_do_crop,
-        "trial_learning_rate ": trial_learning_rate,
-        "trial_batch_size ": trial_batch_size,
-        "trial_augmentation_flip ": trial_augmentation_flip,
-        "trial_augmentation_rotation ": trial_augmentation_rotation,
-        "trial_augmentation_contrast ": trial_augmentation_contrast,
-        "trial_batchnorm ": trial_batchnorm,
-        "trial_kernel_regularizer_strength ": trial_kernel_regularizer_strength,
-        "trial_kernel_initializer ": trial_kernel_initializer,
-        "trial_num_kernels": trial_num_kernels
+        "first_layer_channels ": trial_first_layer_channels,
+        "num_conv_blocks ": trial_num_conv_blocks,
+        "image_size ": trial_image_size,
+        "dropout_percentage ": trial_dropout_percentage,
+        #l_do_crop ": trial_do_crop,
+        "learning_rate ": trial_learning_rate,
+        "batch_size ": trial_batch_size,
+        "augmentation_flip ": trial_augmentation_flip,
+        "augmentation_rotation ": trial_augmentation_rotation,
+        "augmentation_contrast ": trial_augmentation_contrast,
+        "batchnorm ": trial_batchnorm,
+        "kernel_regularizer_strength ": trial_kernel_regularizer_strength,
+        "kernel_initializer ": trial_kernel_initializer,
+        "num_kernels": trial_num_kernels
     }
 
     wandb_run = wandb.init(
@@ -136,7 +136,7 @@ def objective(trial) -> float:
         name=f"trial_{trial.number}",
         group=study_name,
         config=config,
-        reinit=True,  # Dunno why this is needed but it is
+        reinit=True  
     )
 
     model = build_model(
@@ -165,7 +165,7 @@ def objective(trial) -> float:
         train=False,
         batch_size=32,
         image_size=img_size,
-        crop_to_aspect_ratio=trial_do_crop,
+        # crop_to_aspect_ratio=trial_do_crop,
         use_data_augmentation=False,
     )
 
@@ -174,19 +174,23 @@ def objective(trial) -> float:
 
     logger.info(f"Beginning {trial.number = }")
     num_epochs = 50
-    acc = train_and_validate(
-        trial,
-        model,
-        optimizer,
-        loss_fn,
-        train_dateset,
-        test_dataset,
-        wandb_run,
-        num_epochs,
-    )
-    logger.info(f"Finished {trial.number = }")
-
-    return acc
+    try:
+        acc = train_and_validate(
+            trial,
+            model,
+            optimizer,
+            loss_fn,
+            train_dateset,
+            test_dataset,
+            wandb_run,
+            num_epochs,
+        )
+    except:
+        logger.warning(f"Encountered error when trying to run train_validate with parameters: ", config)
+        raise optuna.TrialPruned()
+    else:
+        logger.info(f"Finished {trial.number = }")
+        return acc
 
 
 if __name__ == "__main__":
