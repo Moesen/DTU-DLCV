@@ -109,7 +109,7 @@ def objective(trial: optuna.trial.Trial) -> float:
 
     # Compiling model with optimizer and loss function
     model.compile(optimizer, loss=loss_fn, metrics=[metric])
-    history = model.fit(train_ds, validation_data=val_ds, epochs=1, callbacks=[early_stopping, wandb_callback])
+    history = model.fit(train_ds, validation_data=val_ds, epochs=100, callbacks=[early_stopping, wandb_callback])
 
     run.log({"validation accuracy": history.history["val_accuracy"][-1]}) # type: ignore
     run.finish() # type: ignore
@@ -136,4 +136,4 @@ if __name__ == "__main__":
     study = optuna.create_study(direction="maximize", sampler=sampler, pruner=pruner)
 
     logger.info("Beginning optuna optimization")
-    study.optimize(objective, n_trials=1)
+    study.optimize(objective, n_trials=100)
