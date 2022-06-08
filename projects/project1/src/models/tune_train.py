@@ -90,7 +90,7 @@ def objective(trial) -> float:
     #   - train_dataset
 
     trial_first_layer_channels = trial.suggest_int("first layer channels", 30, 100)
-    trial_num_conv_blocks = trial.suggest_int("number convolutional blocks", 1, 6)
+    trial_num_conv_blocks = trial.suggest_int("number convolutional blocks", 1, 5)
     trial_num_kernels = trial.suggest_int("num kernels", 1, 5)
     trial_image_size = trial.suggest_int("image size", 64, 400, 16)
     trial_dropout_percentage = trial.suggest_float("dropout_percentage", 0.1, 0.4)
