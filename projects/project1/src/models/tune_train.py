@@ -1,20 +1,21 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 import joblib
 import optuna
 import tensorflow as tf
-import wandb
-from tqdm import tqdm
 from dotenv import find_dotenv, load_dotenv
 from keras.models import Model
+from tensorflow import keras
+from tqdm import tqdm
+
+import wandb
+from src.color_logger import init_logger
 from src.data.dataloader import load_dataset
 from src.models.optuna_model import build_model
-from tensorflow import keras
 from src.utils import get_project_root
-from src.color_logger import init_logger
-from pathlib import Path
 
 log_path = Path("./log")
 logger = init_logger(__name__, True, log_path)
@@ -90,7 +91,7 @@ def objective(trial) -> float:
     #   - train_dataset
 
     trial_first_layer_channels = trial.suggest_int("first layer channels", 30, 100)
-    trial_num_conv_blocks = trial.suggest_int("number convolutional blocks", 1, 6)
+    trial_num_conv_blocks = trial.suggest_int("number convolutional blocks", 1, 5)
     trial_num_kernels = trial.suggest_int("num kernels", 1, 5)
     trial_image_size = trial.suggest_int("image size", 64, 400, 16)
     trial_dropout_percentage = trial.suggest_float("dropout_percentage", 0.1, 0.4)
@@ -155,7 +156,7 @@ def objective(trial) -> float:
         train=True,
         batch_size=trial_batch_size,
         image_size=img_size,
-        # crop_to_aspect_ratio=trial_do_crop,
+        shuffle=True,
         augmentation_flip=trial_augmentation_flip,
         augmentation_rotation=trial_augmentation_rotation,
         augmentation_contrast=trial_augmentation_contrast,
@@ -165,8 +166,6 @@ def objective(trial) -> float:
         train=False,
         batch_size=32,
         image_size=img_size,
-        # crop_to_aspect_ratio=trial_do_crop,
-        use_data_augmentation=False,
     )
 
     loss_fn = keras.losses.SparseCategoricalCrossentropy(from_logits=True)
