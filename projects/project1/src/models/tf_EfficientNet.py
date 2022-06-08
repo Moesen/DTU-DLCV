@@ -1,10 +1,12 @@
-import tensorflow as tf
+import ssl
 
-from keras import backend as K, regularizers
+import tensorflow as tf
+from keras import backend as K
+from keras import regularizers
+
 from src.data.dataloader import load_dataset
 from src.utils import get_project_root
 
-import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
@@ -26,6 +28,8 @@ base_model = tf.keras.applications.efficientnet_v2.EfficientNetV2S(
 train_dataset = load_dataset(
     train=True,
     normalize=False,
+    shuffle = True,
+    use_data_augmentation=True,
     batch_size=batch_size,
     tune_for_perfomance=False,
     image_size=img_size_loader,
