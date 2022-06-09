@@ -7,6 +7,7 @@ import numpy as np
 from typing import Union
 import json
 import pandas as pd
+from PIL import Image, ExifTags
 
 def make_data_splits(dataset_json, train_data_amount, validation_data_amount, test_data_amount, datapath, seed=800):
     np.random.seed(seed)
@@ -91,6 +92,8 @@ def load_dataset_rcnn(
     augmentation_flip: str = "horizontal_and_vertical",
     augmentation_rotation: float = 0.5,
     augmentation_contrast: float = 0.5,
+    box_batch_size: int = 64,
+    pct_not_background: float = 0.25,
     **kwargs,
 ) -> tf.data.Dataset:
     """
@@ -105,7 +108,52 @@ def load_dataset_rcnn(
 
     data = data_json["images"]
 
-    dataset = tf.data.Dataset.from_tensor_slices((image_annotations_paths, image_annotations_bbox, image_annotations_label))
+    image_paths = [i["path"] for i in data]
+    image_boxes = [i["bboxs"] for i in data]
+    image_labels = [i["labels"] for i in data]
+
+    dataset = tf.data.Dataset.from_tensor_slices((image_paths, image_boxes, image_labels))
+
+    # Obtain Exif orientation tag code
+    for orientation in ExifTags.TAGS.keys():
+        if ExifTags.TAGS[orientation] == 'Orientation':
+            break
+
+    def make_img_batch(img_path, img_boxes, img_labels):
+        pil_img = Image.open(str(path) + "/" + img_path)
+        if pil_img._getexif():
+            exif = dict(pil_img._getexif().items())
+            # Rotate portrait and upside down images if necessary
+            if orientation in exif:
+                if exif[orientation] == 3:
+                    pil_img = pil_img.rotate(180,expand=True)
+                if exif[orientation] == 6:
+                    pil_img = pil_img.rotate(270,expand=True)
+                if exif[orientation] == 8:
+                    pil_img = pil_img.rotate(90,expand=True)
+        base_img = tf.keras.preprocessing.image.img_to_array(pil_img)
+        tensor_batch = tf.zeros([box_batch_size, 3, image_size[0], image_size[1]])
+        tensor_labels = tf.zeros([box_batch_size])
+        n_not_background = int(box_batch_size / pct_not_background)
+        n_background = box_batch_size - n_not_background
+        not_background_choices = np.random.choice(np.where(img_labels != "Background")[0], n_not_background)
+        background_choices =  np.random.choice(np.where(img_labels == "Background")[0], n_background)
+        for i, choice in enumerate(not_background_choices):
+            bbox = img_boxes[choice]
+            label = img_labels[choice]
+            img_crop = tf.image.crop_to_bounding_box(base_img, int(bbox[1]), int(bbox[0]), int(bbox[3]), int(bbox[2]))
+            img_crop = tf.image.resize(img_crop, img_crop)
+            tensor_batch[i] = img_crop
+            tensor_labels[i] = label
+        for i, choice in enumerate(background_choices):
+            bbox = img_boxes[choice]
+            label = img_labels[choice]
+            img_crop = tf.image.crop_to_bounding_box(base_img, int(bbox[1]), int(bbox[0]), int(bbox[3]), int(bbox[2]))
+            img_crop = tf.image.resize(img_crop, img_crop)
+            tensor_batch[i+n_not_background] = img_crop
+            tensor_labels[i+n_not_background] = label
+        return tensor_batch, tensor_labels
+        
 
     def read_image(image_file, bbox, labels):
         image = tf.io.read_file(str(path) + "/" + image_file)
