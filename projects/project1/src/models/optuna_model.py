@@ -1,7 +1,7 @@
 import tensorflow as tf
-from keras import layers
+from keras import backend as K
+from keras import layers, regularizers
 from tensorflow import keras
-from keras import backend as K, regularizers
 
 
 def conv_block(
