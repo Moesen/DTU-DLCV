@@ -4,7 +4,7 @@ setup(
     name="src",
     packages=find_packages(),
     version="0.1.0",
-    description="Project 1 source directory",
+    description="Project 1.2 source directory",
     author="moesen",
     license="MIT",
 )

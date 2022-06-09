@@ -15,15 +15,6 @@ batch_size = 64
 # REMEBER TO ADD ONE IF THE BACKGROUND IS NOT INCLUDED 
 num_classes = 2
 
-base_model = tf.keras.applications.efficientnet_v2.EfficientNetV2S(
-    include_top=False,
-    weights='imagenet',
-    input_tensor=None,
-    input_shape=img_size,
-    pooling=None,
-    classes=None,
-    include_preprocessing=True
-)
 
 train_dataset = load_dataset(
     train=True,
@@ -42,6 +33,17 @@ test_data = load_dataset(
     use_data_augmentation=False,
     image_size=img_size_loader,
 )
+
+base_model = tf.keras.applications.efficientnet_v2.EfficientNetV2S(
+    include_top=False,
+    weights='imagenet',
+    input_tensor=None,
+    input_shape=img_size,
+    pooling=None,
+    classes=None,
+    include_preprocessing=True
+)
+
 
 #batch_imgs = next(iter(train_dataset))
 #feature_batch = base_model(batch_imgs)
