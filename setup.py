@@ -4,7 +4,7 @@ setup(
     name="projects",
     packages=find_packages(),
     version="0.1.0",
-    description="Project 1 source directory",
+    description="Source directory for DLCV - Group 11",
     author="moesen",
     license="MIT",
 )
