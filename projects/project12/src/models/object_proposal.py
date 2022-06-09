@@ -1,19 +1,7 @@
 """
 Script containing function for object bounding box proposal generation in TF-domain.
 """
-
-
-import tensorflow as tf
-import tensorflow_hub as hub
-import numpy as np
-# # import cv2
-import matplotlib.pyplot as plt
-
-
 import json
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
 import seaborn as sns; sns.set()
 import os
 from src.utils import get_project_root
@@ -25,6 +13,9 @@ from matplotlib.collections import PatchCollection
 import colorsys
 import random
 import pylab
+import numpy as np
+import time
+from selective_search import selective_search
 
 import cv2
 
@@ -91,17 +82,22 @@ class ObjectProposalGenerator:
 
         ## Compute proposals
         print("Computing proposals...")
+        start_time = time.time()
         self.ss.setBaseImage(image)
-        self.ss.switchToSelectiveSearchFast(base_k=1000)
+        self.ss.switchToSelectiveSearchFast(inc_k=150)
         ssresults = self.ss.process()
+        print(f"Selective Search time usage: {time.time() - start_time}")
 
         ## Loop over proposal in the first 2000 proposals
         print("Computing IoU's...")
+        start_time = time.time()
+        n_proposals = ssresults.shape[0]
         proposal_list = []
-        subset = random.choices(ssresults, k=2000)
+        subset = random.choices(ssresults, k=n_proposals)
 
+        count_iou = 0
         for e, result in tqdm(enumerate(subset)):
-            if e < 2000:  # Only do for the first 2000 proposals
+            if e < n_proposals or count_iou < 16:  # Only do for the first 2000 proposals
                 
                 ## For each proposal, compute the intersection for all gt_bboxes
                 for gtval in gtvalues:
@@ -115,12 +111,14 @@ class ObjectProposalGenerator:
                     if iou > 0.50 and iou > iou_temp:
                         print(e)
                         print("IoU:", iou)
+                        count_iou += 1
                         iou_temp = iou
                         proposal_label = gtval[-1]
                 
                 proposal_list.append([x, y, w, h, proposal_label])
         
         ## Lastly, append ground truth bboxes to the proposal list
+        print(f"For loop through all {ssresults.shape[0]} SS results time usage: {time.time() - start_time}")
         for gtval in gtvalues:
             proposal_list.append(gtval)
 
@@ -132,13 +130,29 @@ class ObjectProposalGenerator:
         ## Read annotations
         with open(annotation_file_path, 'r') as f:
             dataset = json.loads(f.read())['images']
+        
+        for orientation in ExifTags.TAGS.keys():
+            if ExifTags.TAGS[orientation] == 'Orientation':
+                break
 
         ## Create d
         out_dict = {}
         for im in tqdm(dataset):
-            ## Load image
+            ## Load image and rotate if necessary
             image_path = os.path.join(image_base_path, im['path'])
-            image = cv2.imread(image_path)
+            pil_img = Image.open(image_path)
+            if pil_img._getexif():
+                exif = dict(pil_img._getexif().items())
+                # Rotate portrait and upside down images if necessary
+                if orientation in exif:
+                    if exif[orientation] == 3:
+                        pil_img = pil_img.rotate(180,expand=True)
+                    if exif[orientation] == 6:
+                        pil_img = pil_img.rotate(270,expand=True)
+                    if exif[orientation] == 8:
+                        pil_img = pil_img.rotate(90,expand=True)
+            
+            image = np.array(pil_img)
             
             image_id = im['id']
             ## Get image bboxes and labels
@@ -155,12 +169,6 @@ class ObjectProposalGenerator:
             out_dict[str(image_id)] = proposals
         
         return out_dict
-
-
-
-
-
-
 
 if __name__ == "__main__":
 
