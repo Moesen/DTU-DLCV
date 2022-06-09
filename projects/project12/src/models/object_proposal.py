@@ -1,38 +1,26 @@
 """
 Script containing function for object bounding box proposal generation in TF-domain.
 """
-<<<<<<< HEAD:projects/project12/src/models/object_proposal.py
 import json
 import seaborn as sns; sns.set()
-=======
-
-import json
-
-import matplotlib.pyplot as plt
-import numpy as np
-import seaborn as sns
-
->>>>>>> 70c72663bcae78e12ea4634a025862e5de3c5920:projects/project12/src/features/object_proposal.py
 import os
+from projects.utils import get_project12_root
+
+from PIL import Image, ExifTags
+from pycocotools.coco import COCO
+from matplotlib.patches import Polygon, Rectangle
+from matplotlib.collections import PatchCollection
+import colorsys
 import random
-<<<<<<< HEAD:projects/project12/src/models/object_proposal.py
 import pylab
 import numpy as np
 import time
 from selective_search import selective_search
-=======
->>>>>>> 70c72663bcae78e12ea4634a025862e5de3c5920:projects/project12/src/features/object_proposal.py
 
 import cv2
-import pylab
-from matplotlib.collections import PatchCollection
-from matplotlib.patches import Polygon, Rectangle
-from PIL import ExifTags, Image
-from projects.utils import get_project12_root
-from pycocotools.coco import COCO
+
 from tqdm import tqdm
 
-sns.set()
 
 class ObjectProposalGenerator:
     def __init__(self):
@@ -40,7 +28,7 @@ class ObjectProposalGenerator:
         Initialize the ObjectProposalGenerator class.
         """
         print("Loading model...")
-        self.ss = cv2.ximgproc.segmentation.createSelectiveSearchSegmentation() #type: ignore
+        self.ss = cv2.ximgproc.segmentation.createSelectiveSearchSegmentation()
         print("Model loaded.")
 
     def get_iou(self, bb1, bb2):
