@@ -101,7 +101,7 @@ def objective(trial: optuna.trial.Trial) -> float:
     optimizer = keras.optimizers.Adam(learning_rate=c["learning_rate"])
 
     # Callbacks
-    early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=8, verbose=1, mode='min')
+    early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=10, verbose=1, mode='min')
     wandb_callback = WandbCallback(monitor="val_sparse_categorical_accuracy", log_evaluation=False, save_model=False, validation_steps = len(val_ds))
 
     # metrics
@@ -109,7 +109,7 @@ def objective(trial: optuna.trial.Trial) -> float:
 
     # Compiling model with optimizer and loss function
     model.compile(optimizer, loss=loss_fn, metrics=[metric])
-    history = model.fit(train_ds, validation_data=val_ds, epochs=50, callbacks=[early_stopping, wandb_callback])
+    history = model.fit(train_ds, validation_data=val_ds, epochs=100, callbacks=[early_stopping, wandb_callback])
 
 
     run.log({"best validation accuracy": max(history.history["val_sparse_categorical_accuracy"])}) # type: ignore
@@ -132,9 +132,9 @@ if __name__ == "__main__":
 
     sampler = optuna.samplers.TPESampler()
     pruner = optuna.pruners.PercentilePruner(
-        20.0, n_startup_trials=10, n_warmup_steps=10, interval_steps=1
+        25.0, n_startup_trials=20, n_warmup_steps=10, interval_steps=1
     )
     study = optuna.create_study(direction="maximize", sampler=sampler, pruner=pruner)
 
     logger.info("Beginning optuna optimization")
-    study.optimize(objective, n_trials=100)
+    study.optimize(objective, n_trials=300)
