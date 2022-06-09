@@ -6,11 +6,7 @@ import colorlog
 
 
 def init_logger(dunder_name, testing_mode, log_folder=Path("./")) -> logging.Logger:
-    log_format = (
-        "%(asctime)s - "
-        "%(levelname)s - "
-        "%(message)s"
-    )
+    log_format = "%(asctime)s - " "%(levelname)s - " "%(message)s"
     bold_seq = "\033[1m"
     colorlog_format = f"{bold_seq} " "%(log_color)s " f"{log_format}"
     colorlog.basicConfig(format=colorlog_format)
