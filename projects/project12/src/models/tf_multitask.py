@@ -6,7 +6,7 @@ import numpy as np
 import tensorflow as tf
 from keras import backend as K
 from keras import regularizers
-from projects.project12.src.data.dataloader import load_dataset
+from projects.project12.src.data.dataloader import load_dataset_rcnn
 from projects.utils import get_project12_root
 from tensorflow import keras
 from tqdm import tqdm
@@ -34,7 +34,7 @@ base_model = tf.keras.applications.efficientnet_v2.EfficientNetV2S(
     include_preprocessing=True
 )
 
-train_dataset = load_dataset(
+train_dataset = load_dataset_rcnn(
     train=True,
     normalize=False,
     shuffle = True,
@@ -43,7 +43,7 @@ train_dataset = load_dataset(
     use_data_augmentation=True,
     image_size=img_size_loader,
 )
-test_data = load_dataset(
+test_data = load_dataset_rcnn(
     train=False,
     normalize=False,
     batch_size=batch_size,
