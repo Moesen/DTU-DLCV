@@ -103,3 +103,70 @@ plt.savefig(fig_path)
 
 
 
+
+
+
+### Mean average Precision (mAP) 
+
+iou_threshold = tf.convert_to_tensor(0.5,dtype=tf.float32)
+score_threshold = tf.convert_to_tensor(0.2,dtype=tf.float32)
+max_output_size = tf.convert_to_tensor(10,dtype=tf.int32)
+
+batch_size = 2
+img_size = (64,64)
+
+test_data = load_dataset(
+        train=False,
+        normalize=True,
+        batch_size=batch_size,
+        tune_for_perfomance=False,
+        image_size=img_size,
+    )
+
+img_id_now = -1 
+
+
+#### LOOP ####
+for _ in range(1):
+    (bb_img, y) = next(iter(test_data))
+    img_id = 0
+    bb_class = [1,1]
+
+    if img_id_now != img_id:
+        #add GT bbs 
+
+        # NMS post processing 
+        selected_indices = tf.image.non_max_suppression(
+            BB_all_predicted, scores=bb_confidence, max_output_size=max_output_size, iou_threshold=iou_threshold, score_threshold=score_threshold)
+        selected_boxes = tf.gather(BB, selected_indices)
+
+        bb_class[selected_indices]
+
+        #add detected bbs
+        # - selected_boxes
+        # - bb_class 
+        # - bb_confidence
+        # - img_id
+        # - img_size 
+
+        BB_all_predicted = []
+        bb_class = []
+        bb_confidence = []
+        
+    img_id_now = img_id
+
+    #BB = y_bb.numpy()
+    BB = np.array([[30,30,15,15], [32,32,15,15]])
+    #BB = tf.convert_to_tensor(BB,dtype=tf.float32)
+
+    logits = new_model(bb_img, training=False)
+    probs = tf.nn.softmax(logits,axis=1).numpy()
+    predicted = K.cast(K.argmax(logits, axis=1), "uint8").numpy()
+
+    BB_all_predicted.append(BB)
+    bb_confidence.append(probs)
+
+ 
+
+
+

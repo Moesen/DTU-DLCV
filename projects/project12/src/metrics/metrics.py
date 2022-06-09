@@ -26,19 +26,29 @@ import numpy as np
 
 
 
-
-gt_boundingBox_5 = BoundingBox(imageName='000003', classId='bench', x=0.546, y=0.48133333333333334,
+"""gt_boundingBox_5 = BoundingBox(imageName='000003', classId='bench', x=0.546, y=0.48133333333333334,
                                w=0.136, h=0.13066666666666665, typeCoordinates=CoordinatesType.Relative,
                                bbType=BBType.GroundTruth, format=BBFormat.XYWH, imgSize=(500,375))
 # Detected bounding boxes of 000001.jpg
 detected_boundingBox_1 = BoundingBox(imageName='000001', classId='person', classConfidence= 0.893202, 
                                      x=52, y=4, w=352, h=442, typeCoordinates=CoordinatesType.Absolute, 
-                                     bbType=BBType.Detected, format=BBFormat.XYX2Y2, imgSize=(353,500))
+                                     bbType=BBType.Detected, format=BBFormat.XYX2Y2, imgSize=(353,500))"""
+
+
+gt_boundingBox_1 = BoundingBox(imageName='000003', classId='bench', x=100, y=100,
+                               w=30, h=30, typeCoordinates=CoordinatesType.Absolute,
+                               bbType=BBType.GroundTruth, format=BBFormat.XYWH, imgSize=(500,375))
+
+detected_boundingBox_1 = BoundingBox(imageName='000003', classId='bench', x=120, y=120,
+                                    w=30, h=30, typeCoordinates=CoordinatesType.Absolute,
+                                    bbType=BBType.Detected, format=BBFormat.XYWH, imgSize=(500,375))
+
 
 
 myBoundingBoxes = BoundingBoxes()
+
 # Add all bounding boxes to the BoundingBoxes object:
-myBoundingBoxes.addBoundingBox(gt_boundingBox_5)
+myBoundingBoxes.addBoundingBox(gt_boundingBox_1)
 myBoundingBoxes.addBoundingBox(detected_boundingBox_1)
 
 
