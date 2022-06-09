@@ -1,8 +1,8 @@
 import tensorflow as tf
 
 from keras import backend as K, regularizers
-from src.data.dataloader import load_dataset
-from src.utils import get_project_root
+from projects.project12.src.data.dataloader import load_dataset_rcnn
+from projects.utils import get_project12_root
 
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -15,6 +15,25 @@ batch_size = 64
 # REMEBER TO ADD ONE IF THE BACKGROUND IS NOT INCLUDED 
 num_classes = 2
 
+
+train_dataset = load_dataset_rcnn(
+    train=True,
+    normalize=False,
+    shuffle = True,
+    use_data_augmentation=True,
+    batch_size=batch_size,
+    tune_for_perfomance=False,
+    image_size=img_size_loader,
+)
+test_data = load_dataset_rcnn(
+    train=False,
+    normalize=False,
+    batch_size=batch_size,
+    tune_for_perfomance=False,
+    use_data_augmentation=False,
+    image_size=img_size_loader,
+)
+
 base_model = tf.keras.applications.efficientnet_v2.EfficientNetV2S(
     include_top=False,
     weights='imagenet',
@@ -25,23 +44,6 @@ base_model = tf.keras.applications.efficientnet_v2.EfficientNetV2S(
     include_preprocessing=True
 )
 
-train_dataset = load_dataset(
-    train=True,
-    normalize=False,
-    shuffle = True,
-    use_data_augmentation=True,
-    batch_size=batch_size,
-    tune_for_perfomance=False,
-    image_size=img_size_loader,
-)
-test_data = load_dataset(
-    train=False,
-    normalize=False,
-    batch_size=batch_size,
-    tune_for_perfomance=False,
-    use_data_augmentation=False,
-    image_size=img_size_loader,
-)
 
 #batch_imgs = next(iter(train_dataset))
 #feature_batch = base_model(batch_imgs)

@@ -18,10 +18,10 @@ import json
 
 import wandb
 from wandb.keras import WandbCallback
-from src.color_logger import init_logger
-from src.data.dataloader import load_dataset
-from src.models.optuna_model import build_model
-from src.utils import get_project_root
+from projects.color_logger import init_logger
+from projects.project11.src.data.dataloader import load_dataset
+from projects.project11.src.models.optuna_model import build_model
+from projects.utils import get_project11_root
 
 log_path = Path("./log")
 logger = init_logger(__name__, True, log_path)
@@ -123,7 +123,7 @@ if __name__ == "__main__":
     os.environ["WANDB_START_METHOD"] = "thread"
 
     # Get root of project
-    root = get_project_root()
+    root = get_project11_root()
 
     # Checking to see if gpu is available
     avail = len(tf.config.list_physical_devices("GPU")) > 0

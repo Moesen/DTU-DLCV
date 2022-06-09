@@ -10,13 +10,14 @@ from pathlib import Path
 import numpy as np
 import tensorflow as tf
 from keras import backend as K
-from src.data.dataloader import load_dataset
-from src.models import optuna_model
-from src.utils import get_project_root
 #from tensorflow import keras 
 from tensorflow import keras
 from tensorflow.python.client import device_lib
 from tqdm import tqdm
+
+from projects.project11.src.data.dataloader import load_dataset
+from projects.project11.src.models import optuna_model
+from projects.utils import get_project11_root
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -161,7 +162,7 @@ if __name__ == "__main__":
     
     #save last model 
     if save_model:
-        PROJECT_ROOT = get_project_root()
+        PROJECT_ROOT = get_project11_root()
         model_name = 'hotdog_conv_'+datetime.datetime.now().strftime("%Y%m%d%H%M%S")
         model_path = PROJECT_ROOT / "models" / model_name
         model.save(model_path)

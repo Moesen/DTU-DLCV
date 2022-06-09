@@ -6,8 +6,7 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.keras import layers
 import numpy as np
-
-from src.utils import get_project_root
+from projects.utils import get_project11_root
 
 
 def load_dataset(
@@ -29,7 +28,7 @@ def load_dataset(
     # Assert we don't do validation split if dataset is test
     assert validation_split == None or train == True
 
-    proot_path = get_project_root()
+    proot_path = get_project11_root()
     path = proot_path / "data/hotdog_nothotdog"
 
     if not path.is_dir():
