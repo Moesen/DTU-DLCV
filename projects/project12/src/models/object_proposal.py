@@ -32,31 +32,13 @@ from tqdm import tqdm
 
 
 class ObjectProposalGenerator:
-    def __init__(self, fast_selector=False, cv2_model=True):
+    def __init__(self):
         """
         Initialize the ObjectProposalGenerator class.
         """
         print("Loading model...")
-        if not cv2_model:
-            self.detector = hub.load("https://tfhub.dev/tensorflow/efficientdet/lite2/detection/1")
-        else:
-            self.ss = cv2.ximgproc.segmentation.createSelectiveSearchSegmentation()
-            self.fast_selector = fast_selector
+        self.ss = cv2.ximgproc.segmentation.createSelectiveSearchSegmentation()
         print("Model loaded.")
-
-
-    def object_porposal_cv2(self, image):
-        """
-        input: rgb image
-        output: list of bounding box coordinates
-        """
-        self.ss.setBaseImage(image)
-        self.ss.switchToSelectiveSearchFast()
-        print("Running selective search...")
-        proposals = self.ss.process()
-        print("Selective search done.")
-        
-        return proposals
 
 
     def get_iou(self, bb1, bb2):
@@ -94,9 +76,6 @@ class ObjectProposalGenerator:
         return iou
 
 
-
-
-
     def make_proposals_image(self, image, gt_bboxes, labels):
         
         ## Define ground truth bounding boxes
@@ -113,7 +92,7 @@ class ObjectProposalGenerator:
         ## Compute proposals
         print("Computing proposals...")
         self.ss.setBaseImage(image)
-        self.ss.switchToSelectiveSearchQuality()
+        self.ss.switchToSelectiveSearchFast(base_k=1000)
         ssresults = self.ss.process()
 
         ## Loop over proposal in the first 2000 proposals
@@ -122,7 +101,7 @@ class ObjectProposalGenerator:
         subset = random.choices(ssresults, k=2000)
 
         for e, result in tqdm(enumerate(subset)):
-            if e-(len(gtvalues)+1) < 2000:  # Only do for the first 2000 proposals
+            if e < 2000:  # Only do for the first 2000 proposals
                 
                 ## For each proposal, compute the intersection for all gt_bboxes
                 for gtval in gtvalues:
@@ -130,7 +109,6 @@ class ObjectProposalGenerator:
                     x, y, w, h = result
                     iou = self.get_iou(bb1={"x1":gt_x,"x2":gt_x+gt_w,"y1":gt_y,"y2":gt_y+gt_h},bb2={"x1":x,"x2":x+w,"y1":y,"y2":y+h})
 
-                        
                     ## If the iou is greater than 0.5, we assign the label of that gt bbox to the proposal
                     proposal_label = 'Background'
                     iou_temp = 0.0
@@ -155,7 +133,8 @@ class ObjectProposalGenerator:
         with open(annotation_file_path, 'r') as f:
             dataset = json.loads(f.read())['images']
 
-        all_images_proposals = {}
+        ## Create d
+        out_dict = {}
         for im in tqdm(dataset):
             ## Load image
             image_path = os.path.join(image_base_path, im['path'])
@@ -173,11 +152,18 @@ class ObjectProposalGenerator:
                 print("error in "+image_path)
                 continue
             print(len(proposals))
-            all_images_proposals[str(image_id)] = proposals
-        return all_images_proposals
+            out_dict[str(image_id)] = proposals
+        
+        return out_dict
+
+
+
+
+
 
 
 if __name__ == "__main__":
+
     os.chdir(get_project_root())
     dataset_path = 'data/data_wastedetection'
     # anns_file_path = dataset_path + '/' + 'annotations.json'
@@ -187,121 +173,8 @@ if __name__ == "__main__":
 
     all_proposals = OPG.make_all_proposals(image_base_path=dataset_path, annotation_file_path=annotation_file_path, out_path=dataset_path)
     
-    ## Write proposals
-    with open(out_path, 'w') as f:
-        dataset = json.loads(f.read())['images']
+    ## Write proposals to json file
+    with open(f'{dataset_path}/proposals.json', 'w') as fp:
+        json.dump(all_proposals, fp)
 
     
-    
-    # # Read annotations
-    # with open(anns_file_path, 'r') as f:
-    #     dataset = json.loads(f.read())
-
-    # categories = dataset['categories']
-    # anns = dataset['annotations']
-    # imgs = dataset['images']
-
-    # # Load specific image for testing function
-    # image_filepath = 'batch_11/000028.jpg'
-    # # pylab.rcParams['figure.figsize'] = (28,28)
-
-    # # Obtain Exif orientation tag code
-    # for orientation in ExifTags.TAGS.keys():
-    #     if ExifTags.TAGS[orientation] == 'Orientation':
-    #         break
-
-    # # Loads dataset as a coco object
-    # coco = COCO(anns_file_path)
-
-    # # Find image id
-    # img_id = -1
-    # for img in imgs:
-    #     if img['file_name'] == image_filepath:
-    #         img_id = img['id']
-    #         break
-
-    # # Show image and corresponding annotations
-    # if img_id == -1:
-    #     print('Incorrect file name')
-    # else:
-    #     # Load image
-    #     print(image_filepath)
-    #     I = Image.open(dataset_path + '/' + image_filepath)
-
-    #     # Load and process image metadata
-    #     if I._getexif():
-    #         exif = dict(I._getexif().items())
-    #         # Rotate portrait and upside down images if necessary
-    #         if orientation in exif:
-    #             if exif[orientation] == 3:
-    #                 I = I.rotate(180,expand=True)
-    #             if exif[orientation] == 6:
-    #                 I = I.rotate(270,expand=True)
-    #             if exif[orientation] == 8:
-    #                 I = I.rotate(90,expand=True)
-
-    #     # Show image
-    #     fig,ax = plt.subplots(1)
-    #     plt.axis('off')
-    #     plt.imshow(I)
-
-    #     # Load mask ids
-    #     annIds = coco.getAnnIds(imgIds=img_id, catIds=[], iscrowd=None)
-    #     anns_sel = coco.loadAnns(annIds)
-
-    #     # Show annotations
-    #     for ann in anns_sel:
-    #         [x, y, w, h] = ann['bbox']
-    #         rect = Rectangle((x,y),w,h,linewidth=2,edgecolor="red",
-    #                         facecolor='none', alpha=0.7, linestyle = '--')
-    #         ax.add_patch(rect)
-
-    #     # Show image with label rectangle
-    #     # plt.show()
-
-
-
-
-
-    #     ### Now the image is loaded, and the boxes can be generated
-    #     proposal_generator = ObjectProposalGenerator(fast_selector=True, cv2_model=True)
-
-    #     pred_boxes = proposal_generator.object_porposal_cv2(image=np.array(I))
-
-    #     print(pred_boxes)
-    #     # Show annotations
-    #     for box in pred_boxes:
-    #         [x, y, w, h] = box
-    #         rect = Rectangle((x,y),w,h,linewidth=2,edgecolor="green", facecolor='none', alpha=0.7, linestyle = '-')
-    #         ax.add_patch(rect)
-    #     plt.show()
-        
-
-
-
-
-
-
-
-
-    # def object_proposal_hub(self, rgb_tensor):
-    #     """
-    #     input: rgb image tensor
-    #     output: tensor of bounding box coordinates
-    #     """
-
-    #     # Creating prediction
-    #     print("Creating prediction...")
-    #     boxes, scores, classes, num_detections = self.detector(rgb_tensor)
-    #     print(num_detections)
-        
-    #     # Processing outputs
-    #     pred_boxes = boxes.numpy()[0].astype('int')
-    #     proposal = []
-
-    #     # Putting the boxes and labels on the image
-    #     for (ymin,xmin,ymax,xmax) in pred_boxes:
-    #         # img_boxes = cv2.rectangle(rgb_tensor, (xmin, ymax),(xmax, ymin),(0,255,0),2)      
-    #         proposal.append([xmin, ymin, xmax, ymax])
-        
-    #     return proposal
