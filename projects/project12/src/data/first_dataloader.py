@@ -4,7 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns; sns.set()
 import os
-from src.utils import get_project_root
+from projects.utils import get_project12_root
 
 os.chdir(get_project_root())
 

@@ -11,7 +11,7 @@ def conv_block(
     do_dropout: bool,
     dropout_percentage: float = 0.2,
     kernel_size: int = 3,
-    num_kernels: int = 2,
+    num_kernels: int = 1,
     kernel_regularizer_strength: float = 1e-3,
     kernel_initializer: str = "he_normal"
     ):
@@ -28,11 +28,11 @@ def conv_block(
             kernel_initializer=kernel_initializer
         )(layer_input)
 
-        if do_batchnorm:
-            d = layers.BatchNormalization()(d)
-
         if do_dropout:
             d = layers.Dropout(dropout_percentage)(d)
+
+        if do_batchnorm:
+            d = layers.BatchNormalization()(d)
 
     d = layers.MaxPooling2D((2, 2))(d)
     return d

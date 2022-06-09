@@ -127,7 +127,8 @@ bb_class = [1,1]
 
 if img_id_now != img_id:
     confidence = []
-
+    GT_bb = GT_bb_batch
+    
 
 BB = np.array([[30,30,15,15], [32,32,15,15]])
 BB = tf.convert_to_tensor(BB,dtype=tf.float32)

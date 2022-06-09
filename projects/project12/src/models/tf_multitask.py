@@ -1,8 +1,8 @@
 import tensorflow as tf
 
 from keras import backend as K, regularizers
-from src.data.dataloader import load_dataset
-from src.utils import get_project_root
+from projects.project12.src.data.dataloader import load_dataset
+from projects.utils import get_project12_root
 from tensorflow import keras
 from collections import defaultdict
 from pathlib import Path

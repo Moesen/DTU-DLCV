@@ -4,8 +4,8 @@ import tensorflow as tf
 from keras import backend as K
 from keras import regularizers
 
-from src.data.dataloader import load_dataset
-from src.utils import get_project_root
+from projects.project11.src.data.dataloader import load_dataset
+from projects.utils import get_project11_root
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
