@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.keras import layers
 import numpy as np
-
-from src.utils import get_project_root
+from projects.project11.src.utils import get_project_root
+# from src.utils import get_project_root
 
 
 def load_dataset(
