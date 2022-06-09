@@ -1,6 +1,6 @@
 from __future__ import annotations
 import tensorflow as tf
-from tensorflow.keras import layers
+from keras import layers
 from projects.utils import get_project12_root
 import matplotlib.pyplot as plt
 import numpy as np
@@ -95,12 +95,12 @@ def load_dataset_rcnn(
     box_batch_size: int = 64,
     pct_not_background: float = 0.25,
     **kwargs,
-) -> tf.data.Dataset:
+) -> tf.data.Dataset | tf.raw_ops.MapDataset:
     """
     Small note: To get class_names do dataset._input_dataset.class_names
     unless normalize = False, then just do dataset.class_names
     """
-    proot_path = get_project_root()
+    proot_path = get_project12_root()
     path = proot_path / "data/data_wastedetection"
 
     with open(path / f"{split}_data.json", 'r') as f:
@@ -121,8 +121,8 @@ def load_dataset_rcnn(
 
     def make_img_batch(img_path, img_boxes, img_labels):
         pil_img = Image.open(str(path) + "/" + img_path)
-        if pil_img._getexif():
-            exif = dict(pil_img._getexif().items())
+        if pil_img._getexif(): #type: ignore
+            exif = dict(pil_img._getexif().items()) #type: ignore
             # Rotate portrait and upside down images if necessary
             if orientation in exif:
                 if exif[orientation] == 3:
@@ -187,7 +187,7 @@ def load_dataset_rcnn(
 
 
 if __name__ == "__main__":
-    proot_path = get_project_root()
+    proot_path = get_project12_root()
     path = proot_path / "data/data_wastedetection"
 
     with open(path / "annotations.json", 'r') as f:

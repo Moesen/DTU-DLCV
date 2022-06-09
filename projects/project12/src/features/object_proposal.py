@@ -2,37 +2,25 @@
 Script containing function for object bounding box proposal generation in TF-domain.
 """
 
-
-import tensorflow as tf
-import tensorflow_hub as hub
-import numpy as np
-
-# # import cv2
-import matplotlib.pyplot as plt
-
-
 import json
-import numpy as np
-import pandas as pd
+
 import matplotlib.pyplot as plt
+import numpy as np
 import seaborn as sns
 
-sns.set()
 import os
-from projects.utils import get_project12_root
-
-from PIL import Image, ExifTags
-from pycocotools.coco import COCO
-from matplotlib.patches import Polygon, Rectangle
-from matplotlib.collections import PatchCollection
-import colorsys
 import random
-import pylab
 
 import cv2
-
+import pylab
+from matplotlib.collections import PatchCollection
+from matplotlib.patches import Polygon, Rectangle
+from PIL import ExifTags, Image
+from projects.utils import get_project12_root
+from pycocotools.coco import COCO
 from tqdm import tqdm
 
+sns.set()
 
 class ObjectProposalGenerator:
     def __init__(self):
@@ -40,7 +28,7 @@ class ObjectProposalGenerator:
         Initialize the ObjectProposalGenerator class.
         """
         print("Loading model...")
-        self.ss = cv2.ximgproc.segmentation.createSelectiveSearchSegmentation()
+        self.ss = cv2.ximgproc.segmentation.createSelectiveSearchSegmentation() #type: ignore
         print("Model loaded.")
 
     def get_iou(self, bb1, bb2):
@@ -169,7 +157,7 @@ class ObjectProposalGenerator:
 
 if __name__ == "__main__":
 
-    os.chdir(get_project_root())
+    os.chdir(get_project12_root())
     dataset_path = "data/data_wastedetection"
     # anns_file_path = dataset_path + '/' + 'annotations.json'
     annotation_file_path = dataset_path + "/" + "testing_proposal_data.json"
