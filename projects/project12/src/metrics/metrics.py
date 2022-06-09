@@ -35,12 +35,36 @@ detected_boundingBox_1 = BoundingBox(imageName='000001', classId='person', class
                                      bbType=BBType.Detected, format=BBFormat.XYX2Y2, imgSize=(353,500))"""
 
 
-gt_boundingBox_1 = BoundingBox(imageName='000003', classId='bench', x=100, y=100,
-                               w=30, h=30, typeCoordinates=CoordinatesType.Absolute,
+gt_boundingBox_1 = BoundingBox(imageName='000003', classId='person', 
+                                x=100, y=100, w=30, h=30, typeCoordinates=CoordinatesType.Absolute,
                                bbType=BBType.GroundTruth, format=BBFormat.XYWH, imgSize=(500,375))
 
-detected_boundingBox_1 = BoundingBox(imageName='000003', classId='bench', x=120, y=120,
-                                    w=30, h=30, typeCoordinates=CoordinatesType.Absolute,
+gt_boundingBox_2 = BoundingBox(imageName='000003', classId='bench', 
+                                x=150, y=150, w=30, h=30, typeCoordinates=CoordinatesType.Absolute,
+                               bbType=BBType.GroundTruth, format=BBFormat.XYWH, imgSize=(500,375))
+
+
+
+detected_boundingBox_0 = BoundingBox(imageName='000003', classId='bench', classConfidence= 0.901,
+                                    x=150, y=150, w=27, h=27, typeCoordinates=CoordinatesType.Absolute,
+                                    bbType=BBType.Detected, format=BBFormat.XYWH, imgSize=(500,375))
+
+detected_boundingBox_01 = BoundingBox(imageName='000003', classId='bench', classConfidence= 0.91,
+                                    x=300, y=300, w=25, h=25, typeCoordinates=CoordinatesType.Absolute,
+                                    bbType=BBType.Detected, format=BBFormat.XYWH, imgSize=(500,375))
+
+
+
+detected_boundingBox_1 = BoundingBox(imageName='000003', classId='person', classConfidence= 0.7,
+                                    x=100, y=100, w=28, h=28, typeCoordinates=CoordinatesType.Absolute,
+                                    bbType=BBType.Detected, format=BBFormat.XYWH, imgSize=(500,375))
+
+detected_boundingBox_2 = BoundingBox(imageName='000003', classId='person', classConfidence= 0.8,
+                                    x=10, y=10, w=9, h=9, typeCoordinates=CoordinatesType.Absolute,
+                                    bbType=BBType.Detected, format=BBFormat.XYWH, imgSize=(500,375))
+
+detected_boundingBox_3 = BoundingBox(imageName='000003', classId='person', classConfidence= 0.9,
+                                    x=300, y=300, w=25, h=25, typeCoordinates=CoordinatesType.Absolute,
                                     bbType=BBType.Detected, format=BBFormat.XYWH, imgSize=(500,375))
 
 
@@ -49,7 +73,13 @@ myBoundingBoxes = BoundingBoxes()
 
 # Add all bounding boxes to the BoundingBoxes object:
 myBoundingBoxes.addBoundingBox(gt_boundingBox_1)
+myBoundingBoxes.addBoundingBox(gt_boundingBox_2)
+
+myBoundingBoxes.addBoundingBox(detected_boundingBox_0)
+myBoundingBoxes.addBoundingBox(detected_boundingBox_01)
 myBoundingBoxes.addBoundingBox(detected_boundingBox_1)
+myBoundingBoxes.addBoundingBox(detected_boundingBox_2)
+myBoundingBoxes.addBoundingBox(detected_boundingBox_3)
 
 
 boundingboxes = myBoundingBoxes
@@ -80,6 +110,8 @@ metricsPerClass = evaluator.GetPascalVOCMetrics(
 print("Average precision values per class:\n")
 
 
+AP = []
+
 #  Loop through classes to obtain their metrics
 for mc in metricsPerClass:
     # Get metric values per each class
@@ -92,3 +124,8 @@ for mc in metricsPerClass:
     # Print AP per class
     print('%s: %f' % (c, average_precision))
 
+    AP.append(average_precision)
+
+mAP = np.array(AP).mean()
+
+print('Mean Average Precison: %f' % (mAP))

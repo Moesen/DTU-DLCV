@@ -1,5 +1,5 @@
-from BoundingBox import *
-from utils import *
+from projects.project12.src.metrics.BoundingBox import *
+from projects.project12.src.metrics.utils import *
 
 
 class BoundingBoxes:

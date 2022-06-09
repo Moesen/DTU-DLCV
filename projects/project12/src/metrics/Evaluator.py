@@ -15,9 +15,9 @@ from collections import Counter
 import matplotlib.pyplot as plt
 import numpy as np
 
-from BoundingBox import *
-from BoundingBoxes import *
-from utils import *
+from projects.project12.src.metrics.BoundingBox import *
+from projects.project12.src.metrics.BoundingBoxes import *
+from projects.project12.src.metrics.utils import *
 
 
 class Evaluator:
@@ -62,15 +62,16 @@ class Evaluator:
             if bb.getBBType() == BBType.GroundTruth:
                 groundTruths.append([
                     bb.getImageName(),
-                    bb.getClassId(), 1,
-                    bb.getAbsoluteBoundingBox(BBFormat.XYX2Y2)
+                    bb.getClassId(), 
+                    1,
+                    bb.getAbsoluteBoundingBox(BBFormat.XYX2Y2) #bb.getAbsoluteBoundingBox(BBFormat.XYWH)
                 ])
             else:
                 detections.append([
                     bb.getImageName(),
                     bb.getClassId(),
                     bb.getConfidence(),
-                    bb.getAbsoluteBoundingBox(BBFormat.XYX2Y2)
+                    bb.getAbsoluteBoundingBox(BBFormat.XYX2Y2) #bb.getAbsoluteBoundingBox(BBFormat.XYWH)
                 ])
             # get class
             if bb.getClassId() not in classes:
