@@ -5,10 +5,10 @@ import numpy as np
 import tensorflow as tf
 from keras import backend as K
 import matplotlib.patches as patches
-from src.data.dataloader import load_dataset
-from src.utils import get_project_root
+from projects.project12.src.data.dataloader import load_dataset_rcnn
+from projects.utils import get_project12_root
 
-PROJECT_ROOT = get_project_root()
+PROJECT_ROOT = get_project12_root()
 model_name = 'hotdog_conv_20220604214318' #'hotdog_conv_20220604190940'
 #model_path = PROJECT_ROOT / "models" / model_name
 model_path = "/Users/simonyamazaki/Documents/2_M/DTU-DLCV/projects/project1/models/hotdog_conv_20220604214318"
@@ -21,7 +21,7 @@ new_model.summary()
 batch_size=1
 img_size = (64,64)
 
-test_data = load_dataset(
+test_data = load_dataset_rcnn(
         train=False,
         normalize=True,
         batch_size=batch_size,
@@ -109,7 +109,7 @@ plt.savefig(fig_path)
 batch_size = 2
 img_size = (64,64)
 
-test_data = load_dataset(
+test_data = load_dataset_rcnn(
         train=False,
         normalize=True,
         batch_size=batch_size,
