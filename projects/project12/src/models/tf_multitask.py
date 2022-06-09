@@ -1,14 +1,16 @@
-import tensorflow as tf
-
-from keras import backend as K, regularizers
-from projects.project12.src.data.dataloader import load_dataset
-from projects.utils import get_project12_root
-from tensorflow import keras
+import ssl
 from collections import defaultdict
 from pathlib import Path
+
+import numpy as np
+import tensorflow as tf
+from keras import backend as K
+from keras import regularizers
+from projects.project12.src.data.dataloader import load_dataset_rcnn
+from projects.utils import get_project12_root
+from tensorflow import keras
 from tqdm import tqdm
-import numpy as np 
-import ssl
+
 ssl._create_default_https_context = ssl._create_unverified_context
 
 img_size_loader = (128,128)
@@ -32,7 +34,7 @@ base_model = tf.keras.applications.efficientnet_v2.EfficientNetV2S(
     include_preprocessing=True
 )
 
-train_dataset = load_dataset(
+train_dataset = load_dataset_rcnn(
     train=True,
     normalize=False,
     shuffle = True,
@@ -41,7 +43,7 @@ train_dataset = load_dataset(
     use_data_augmentation=True,
     image_size=img_size_loader,
 )
-test_data = load_dataset(
+test_data = load_dataset_rcnn(
     train=False,
     normalize=False,
     batch_size=batch_size,

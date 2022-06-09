@@ -1,10 +1,11 @@
-import tensorflow as tf
+import ssl
 
-from keras import backend as K, regularizers
+import tensorflow as tf
+from keras import backend as K
+from keras import regularizers
 from projects.project12.src.data.dataloader import load_dataset_rcnn
 from projects.utils import get_project12_root
 
-import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
