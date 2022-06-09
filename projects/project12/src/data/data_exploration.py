@@ -174,50 +174,64 @@ for img in imgs:
         break
 
 # Show image and corresponding annotations
-if img_id == -1:
-    print('Incorrect file name')
-else:
+img_ids_rotated = []
+for img in imgs:
+    rotated = False
+    image_filepath = img["file_name"]
+    img_id = img["id"]
+    img_ano = [i for i in anns if i["image_id"] == img_id]
+    if img_id == -1:
+        print('Incorrect file name')
+    else:
 
-    # Load image
-    print(image_filepath)
-    I = Image.open(dataset_path + '/' + image_filepath)
+        # Load image
+        print(image_filepath)
+        I = Image.open(dataset_path + '/' + image_filepath)
 
-    # Load and process image metadata
-    if I._getexif():
-        exif = dict(I._getexif().items())
-        # Rotate portrait and upside down images if necessary
-        if orientation in exif:
-            if exif[orientation] == 3:
-                I = I.rotate(180,expand=True)
-            if exif[orientation] == 6:
-                I = I.rotate(270,expand=True)
-            if exif[orientation] == 8:
-                I = I.rotate(90,expand=True)
+        # Load and process image metadata
+        if I._getexif():
+            exif = dict(I._getexif().items())
+            # Rotate portrait and upside down images if necessary
+            if orientation in exif:
+                if exif[orientation] == 3:
+                    I = I.rotate(180,expand=True)
+                    img_ids_rotated.append(img_id)
+                    rotated = True
+                if exif[orientation] == 6:
+                    I = I.rotate(270,expand=True)
+                    img_ids_rotated.append(img_id)
+                    rotated = True
+                if exif[orientation] == 8:
+                    I = I.rotate(90,expand=True)
+                    img_ids_rotated.append(img_id)
+                    rotated = True
 
-    # Show image
-    fig,ax = plt.subplots(1)
-    plt.axis('off')
-    plt.imshow(I)
+    if rotated:
+        # Show image
+        fig,ax = plt.subplots(1)
+        plt.axis('off')
+        plt.imshow(I)
 
-    # Load mask ids
-    annIds = coco.getAnnIds(imgIds=img_id, catIds=[], iscrowd=None)
-    anns_sel = coco.loadAnns(annIds)
+        # Load mask ids
+        annIds = coco.getAnnIds(imgIds=img_id, catIds=[], iscrowd=None)
+        anns_sel = coco.loadAnns(annIds)
 
-    # Show annotations
-    for ann in anns_sel:
-        color = colorsys.hsv_to_rgb(np.random.random(),1,1)
-        for seg in ann['segmentation']:
-            poly = Polygon(np.array(seg).reshape((int(len(seg)/2), 2)))
-            p = PatchCollection([poly], facecolor=color, edgecolors=color,linewidths=0, alpha=0.4)
-            ax.add_collection(p)
-            p = PatchCollection([poly], facecolor='none', edgecolors=color, linewidths=2)
-            ax.add_collection(p)
-        [x, y, w, h] = ann['bbox']
-        rect = Rectangle((x,y),w,h,linewidth=2,edgecolor=color,
-                         facecolor='none', alpha=0.7, linestyle = '--')
-        ax.add_patch(rect)
+        # Show annotations
+        for ann in anns_sel:
+            color = colorsys.hsv_to_rgb(np.random.random(),1,1)
+            for seg in ann['segmentation']:
+                poly = Polygon(np.array(seg).reshape((int(len(seg)/2), 2)))
+                p = PatchCollection([poly], facecolor=color, edgecolors=color,linewidths=0, alpha=0.4)
+                ax.add_collection(p)
+                p = PatchCollection([poly], facecolor='none', edgecolors=color, linewidths=2)
+                ax.add_collection(p)
+            [x, y, w, h] = ann['bbox']
+            rect = Rectangle((x,y),w,h,linewidth=2,edgecolor=color,
+                            facecolor='none', alpha=0.7, linestyle = '--')
+            ax.add_patch(rect)
 
-    plt.show()
+        plt.show()
+        print("test")
 
 """
 Show images by category
