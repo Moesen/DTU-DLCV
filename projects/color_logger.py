@@ -5,7 +5,7 @@ from pathlib import Path
 import colorlog
 
 
-def init_logger(dunder_name, testing_mode, log_folder=Path("./")) -> logging.Logger:
+def init_logger(dunder_name, testing_mode, log_folder: Path = Path("./log")) -> logging.Logger:
     log_format = "%(asctime)s - " "%(levelname)s - " "%(message)s"
     bold_seq = "\033[1m"
     colorlog_format = f"{bold_seq} " "%(log_color)s " f"{log_format}"
@@ -17,7 +17,7 @@ def init_logger(dunder_name, testing_mode, log_folder=Path("./")) -> logging.Log
     else:
         logger.setLevel(logging.INFO)
 
-    if "log" not in os.listdir():
+    if not log_folder.is_dir():
         os.mkdir("log")
         logger.info("log folder not found, creating new one in current folder")
 

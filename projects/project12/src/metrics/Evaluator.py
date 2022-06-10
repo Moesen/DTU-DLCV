@@ -14,7 +14,6 @@ from collections import Counter
 
 import matplotlib.pyplot as plt
 import numpy as np
-
 from projects.project12.src.metrics.BoundingBox import *
 from projects.project12.src.metrics.BoundingBoxes import *
 from projects.project12.src.metrics.utils import *

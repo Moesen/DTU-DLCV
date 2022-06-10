@@ -1,25 +1,27 @@
 """
 Script containing function for object bounding box proposal generation in TF-domain.
 """
-import json
-import seaborn as sns; sns.set()
-import os
-from projects.utils import get_project12_root
-
-from PIL import Image, ExifTags
-from pycocotools.coco import COCO
-from matplotlib.patches import Polygon, Rectangle
-from matplotlib.collections import PatchCollection
 import colorsys
+import json
+import os
 import random
-import pylab
-import numpy as np
 import time
-from selective_search import selective_search
 
 import cv2
-
+import numpy as np
+import pylab
+from matplotlib.collections import PatchCollection
+from matplotlib.patches import Polygon, Rectangle
+from PIL import ExifTags, Image
+from projects.utils import get_project12_root
+from pycocotools.coco import COCO
+from selective_search import selective_search
 from tqdm import tqdm
+
+import seaborn as sns; sns.set()
+
+
+
 
 
 class ObjectProposalGenerator:

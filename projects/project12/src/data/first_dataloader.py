@@ -1,10 +1,12 @@
 import json
+import os
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns; sns.set()
-import os
 from projects.utils import get_project12_root
+
+import seaborn as sns; sns.set()
 
 os.chdir(get_project_root())
 
@@ -48,13 +50,14 @@ print('Number of images:', nr_images)
 
 
 
-from PIL import Image, ExifTags
-from pycocotools.coco import COCO
-from matplotlib.patches import Polygon, Rectangle
-from matplotlib.collections import PatchCollection
 import colorsys
 import random
+
 import pylab
+from matplotlib.collections import PatchCollection
+from matplotlib.patches import Polygon, Rectangle
+from PIL import ExifTags, Image
+from pycocotools.coco import COCO
 
 # User settings
 image_filepath = 'batch_11/000028.jpg'

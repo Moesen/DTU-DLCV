@@ -1,9 +1,12 @@
 from ctypes.wintypes import PLARGE_INTEGER
+
 import matplotlib as mpl
+import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 from keras import backend as K
+
 import matplotlib.patches as patches
 from projects.project11.src.data.dataloader import load_dataset
 from projects.project12.src.models.post_processing import NMS
