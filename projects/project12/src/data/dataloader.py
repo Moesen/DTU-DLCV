@@ -364,10 +364,10 @@ if __name__ == "__main__":
 
     rotate_and_save_images(data_json, path)
     make_data_splits(data_json, 0.7, 0.15, 0.15, path)
-    find_n_ground_truths()
-    ts = load_dataset_rcnn(
-        train=True, batch_size=40, shuffle=True, image_size=(128, 128)
-    )
+    #find_n_ground_truths()
+    #ts = load_dataset_rcnn(
+    #    train=True, batch_size=40, shuffle=True, image_size=(128, 128)
+    #)
 
     # ts_iter = iter(ts)
 

@@ -118,10 +118,8 @@ def fast_bb_proposals(
             or max_iou <= iou_object_threshold
             or len(gt_bboxes) != 0
         ):
-            continue
-
-        if proposed_label != "Background" or max_iou < iou_background_treshold:
-            samples.append([*map(int, proposed_xywh), proposed_label])
+            if proposed_label != "Background" or max_iou < iou_background_treshold:
+                samples.append([*map(int, proposed_xywh), proposed_label])
 
         if max_iou > iou_object_threshold:
             iou_count += 1
@@ -149,20 +147,29 @@ def proposal_mp_task(
         logger.debug(f"Computing proposals for {img_id = }")
         proposals = fast_bb_proposals(img, bboxs, labels)
 
-        num_ious_found = sum([x[-1] != "Background" for x in proposals])
+        num_ious_found = sum([x[-1] == "Background" for x in proposals])
+
         if num_ious_found < 16:
             logger.warning(
                 f"Did not find 16 iou's > .5 in {img_id = }. Found {num_ious_found} iou's in total"
             )
+        else:
+            logger.info(
+                f"Found 16 <= iou's for iou_treshold = .5 in {img_id = }. Found {num_ious_found} iou's in total"
+            )
+        logger.info(f"Found total {len(proposals) = }")
+
     return proposals, img_id
 
 
 def generate_proposals(imgs_folder: Path, annot_path: Path):
     with open(annot_path, "r") as f:
         img_info = json.load(f)["images"]
-
+    
+    logger = getLogger(__file__)
     proposal_dict = {}
     with mp.Pool(processes=mp.cpu_count() - 1) as pool:
+        logger.info(f"Spawned pool with {mp.cpu_count()} workers")	
         results = [
             pool.apply_async(proposal_mp_task, (info, imgs_folder))
             for info in tqdm(img_info, desc="jobs applied: ")
