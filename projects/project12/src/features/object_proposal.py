@@ -3,7 +3,6 @@ from __future__ import annotations
 """
 Script containing function for object bounding box proposal generation in TF-domain.
 """
-
 # TODO Add timing module around different functions
 
 import json
@@ -45,12 +44,14 @@ class ObjectProposalGenerator:
             iou: float
         """
         # Assert that coordinates are not wrong
-        assert all([
-            bb1["x1"] < bb1["x2"],
-            bb1["y1"] < bb1["y2"],
-            bb2["x1"] < bb2["x2"],
-            bb2["y1"] < bb2["y2"],
-        ])
+        assert all(
+            [
+                bb1["x1"] < bb1["x2"],
+                bb1["y1"] < bb1["y2"],
+                bb2["x1"] < bb2["x2"],
+                bb2["y1"] < bb2["y2"],
+            ]
+        )
 
         # Compute intersection areas
         x_left = max(bb1["x1"], bb2["x1"])
@@ -126,7 +127,7 @@ class ObjectProposalGenerator:
                 len(proposal_list) < n_proposals - min_high_iou_proposals + count_iou
                 or max_iou > 0.5
             ):
-                proposal_list.append([x, y, w, h, proposal_label])
+                proposal_list.append([*map(int, [x, y, w, h]), proposal_label])
 
             count_iou += 1 if proposal_label != "Background" else 0
 
@@ -188,21 +189,22 @@ class ObjectProposalGenerator:
 if __name__ == "__main__":
     logger = init_logger(__file__, True)
 
-    os.chdir(get_project12_root())
-    dataset_path = "data/data_wastedetection"
+    data_path = get_project12_root() / "data"
+    dataset_path = data_path / "data_wastedetection"
     split = "train"
 
-    annotation_file_path = dataset_path + f"/{split}_data.json"
-    out_path = dataset_path + "/" + split + "_proposals.json"
+    annot_file_path = dataset_path / f"/{split}_data.json"
+    out_path = dataset_path / f"{split}_proposals.json"
+
     OPG = ObjectProposalGenerator(logger)
 
     all_proposals = OPG.make_all_proposals(
         image_base_path=dataset_path,
-        annotation_file_path=annotation_file_path,
+        annotation_file_path=annot_file_path,
         out_path=dataset_path,
     )
 
     ## Write proposals to json file
-    with open(f"{dataset_path}/proposals.json", "w") as fp:
-        # TODO error with wrong types (cant serialize int32)
+    with open(dataset_path / "proposals.json", "w") as fp:
         json.dump(all_proposals, fp)
+
