@@ -127,8 +127,14 @@ class Evaluator:
             # compute precision, recall and average precision
             acc_FP = np.cumsum(FP)
             acc_TP = np.cumsum(TP)
-            rec = acc_TP / npos
-            prec = np.divide(acc_TP, (acc_FP + acc_TP))
+
+            if npos < 1:
+                rec = [1.0]
+                prec = [1.0]
+            else:
+                rec = acc_TP / npos
+                prec = np.divide(acc_TP, (acc_FP + acc_TP))
+
             # Depending on the method, call the right implementation
             if method == MethodAveragePrecision.EveryPointInterpolation:
                 [ap, mpre, mrec, ii] = Evaluator.CalculateAveragePrecision(rec, prec)
@@ -285,7 +291,7 @@ class Evaluator:
             #                 arrowprops=dict(arrowstyle="->", connectionstyle="arc3"),
             #                 bbox=box)
             if savePath is not None:
-                plt.savefig(os.path.join(savePath, str(classId) + '.png'))
+                plt.savefig(os.path.join(savePath, "AP_" + str(classId) + '.png'))
             if showGraphic is True:
                 plt.show()
                 # plt.waitforbuttonpress()

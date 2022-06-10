@@ -10,7 +10,9 @@ from projects.utils import get_project11_root
 
 PROJECT_ROOT = get_project11_root()
 model_name = "hotdog_conv_20220604214318"  #'hotdog_conv_20220604190940'
-model_path = PROJECT_ROOT / "models" / model_name
+#model_path = PROJECT_ROOT / "models" / model_name
+model_path = "/Users/simonyamazaki/Documents/2_M/DTU-DLCV/projects/project1/models/hotdog_conv_20220604214318"
+
 
 new_model = tf.keras.models.load_model(model_path)
 
@@ -85,35 +87,35 @@ class_idx = 0
 smap = get_saliency_map(new_model, img, class_idx)
 
 # raw saliency map
-plt.subplot(1, 2, 1)
-plt.imshow(img.numpy().squeeze())
+fig, axs = plt.subplots(1,2,figsize=(15,8))
+axs[0].imshow(img.numpy().squeeze())
 pred_prob = np.max(probs[img_idx, ...])
 pred_label = labels[int(predicted[img_idx, ...])]
-plt.title(f"Pred: {pred_label}, p={pred_prob:.2f}")
+axs[0].title.set_text(f"Pred: {pred_label}, p={pred_prob:.2f}")
 
-plt.subplot(1, 2, 2)
-plt.imshow(smap.squeeze(), cmap="jet")
-plt.title(f"Saliency of P(img=class {class_idx})")
+axs[1].imshow(smap.squeeze(), cmap="jet")
+axs[1].title.set_text(f"Saliency of P(img=class {class_idx})")
 
 saliency_fig_path = PROJECT_ROOT / "reports/figures/raw_saliency.png"
 plt.savefig(saliency_fig_path)
 
 
 # saliency map on top
-plt.subplot(1, 2, 1)
-plt.imshow(img.numpy().squeeze())
+fig, axs = plt.subplots(1,2,figsize=(15,8))
+
+axs[0].imshow(img.numpy().squeeze())
 pred_prob = np.max(probs[img_idx, ...])
 pred_label = labels[int(predicted[img_idx, ...])]
-plt.title(f"Pred: {pred_label}, p={pred_prob:.2f}")
-plt.subplot(1, 2, 2)
-plt.imshow(img.numpy().squeeze())
+axs[0].title.set_text(f"Pred: {pred_label}, p={pred_prob:.2f}")
+
+axs[1].imshow(img.numpy().squeeze())
 
 blurred = gaussian_filter(smap, sigma=3)
 # blurred[blurred<0.4] = np.NaN ### use 0.5 for non blurred
 
 cmap = mpl.cm.jet
 cmap.set_bad("white")
-plt.imshow(blurred.squeeze(), cmap=cmap, alpha=0.5)
+axs[1].imshow(blurred.squeeze(), cmap=cmap, alpha=0.5)
 saliency_fig_path = PROJECT_ROOT / "reports/figures/raw_saliency_smooth.png"
 plt.savefig(saliency_fig_path)
 
@@ -138,10 +140,12 @@ saliency_map = saliency(
     smooth_samples=20,  # The number of calculating gradients iterations.
     smooth_noise=0.20,
 )  # noise spread level.
-plt.subplot(1, 2, 1)
-plt.imshow(img.numpy().squeeze())
-plt.subplot(1, 2, 2)
-plt.imshow(img.numpy().squeeze())
-plt.imshow(saliency_map.squeeze(), cmap=cmap, alpha=0.5)
+
+fig, axs = plt.subplots(1,2,figsize=(15,8))
+
+axs[0].imshow(img.numpy().squeeze())
+
+axs[1].imshow(img.numpy().squeeze())
+axs[1].imshow(saliency_map.squeeze(), cmap=cmap, alpha=0.5)
 saliency_fig_path = PROJECT_ROOT / "reports/figures/smoothgrad_saliency.png"
 plt.savefig(saliency_fig_path)
