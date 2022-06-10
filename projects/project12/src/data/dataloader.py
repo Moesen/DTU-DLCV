@@ -11,14 +11,14 @@ from pathlib import Path
 
 def make_data_splits(
     dataset_json: dict,
-    train_data_amount: int,
-    validation_data_amount: int,
-    test_data_amount: int,
+    train_data_amount: float,
+    validation_data_amount: float,
+    test_data_amount: float,
     datapath: Path,
     seed: int = 800,
 ) -> None:
     """
-    Creates random split to train, test and test datasets based on 
+    Creates random split to train, test and test datasets based on
     *_amount parameters and seed
     """
     np.random.seed(seed)
@@ -140,7 +140,7 @@ def make_data_splits(
     split_name = ["train", "validation", "test"]
     for i, split in enumerate([train_images, validation_images, test_images]):
         with open(f"{datapath}/{split_name[i]}_data.json", "w") as fp:
-            json.dump(split, fp)
+            json.dump(split, fp, indent=2)
 
 
 def load_dataset_rcnn(
@@ -271,17 +271,18 @@ if __name__ == "__main__":
     with open(path / "annotations.json", "r") as f:
         data_json = json.loads(f.read())
 
-    # make_data_splits(data_json, 0.7, 0.15, 0.15, path)
-    ts = load_dataset_rcnn(
-        train=True, batch_size=64, shuffle=True, image_size=(128, 128)
-    )
-    class_names = ts._input_dataset.class_names  # type: ignore
+    make_data_splits(data_json, 0.7, 0.15, 0.15, path)
+    # ts = load_dataset_rcnn(
+        # train=True, batch_size=64, shuffle=True, image_size=(128, 128)
+    # )
 
-    img_batch, label = next(iter(ts))
-    fig = plt.figure(figsize=(10, 10))
-    for i in range(9):
-        ax = plt.subplot(3, 3, i + 1)
-        ax.imshow(img_batch[i])
-        if type(class_names) == list:
-            ax.set_title(class_names[label[i]])  # type: ignore
-    plt.show()
+    # class_names = ts._input_dataset.class_names  # type: ignore
+
+    # img_batch, label = next(iter(ts))
+    # fig = plt.figure(figsize=(10, 10))
+    # for i in range(9):
+    #     ax = plt.subplot(3, 3, i + 1)
+    #     ax.imshow(img_batch[i])
+    #     if type(class_names) == list:
+    #         ax.set_title(class_names[label[i]])  # type: ignore
+    # plt.show()
