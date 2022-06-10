@@ -1,12 +1,14 @@
 from __future__ import annotations
-import tensorflow as tf
-from keras import layers
-from projects.utils import get_project12_root
+
+import json
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
-import json
-from PIL import Image, ExifTags
-from pathlib import Path
+import tensorflow as tf
+from keras import layers
+from PIL import ExifTags, Image
+from projects.utils import get_project12_root
 
 
 def make_data_splits(
