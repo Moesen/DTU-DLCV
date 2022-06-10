@@ -32,28 +32,27 @@ class ObjectProposalGenerator:
         """
         self.logger = logger
 
-        self.logger.info("Loading model...")
         self.ss = cv2.ximgproc.segmentation.createSelectiveSearchSegmentation()  # type: ignore
-        self.logger.info("Model loaded.")
+        self.logger.info(f"Model loaded:\n\t {type(self.ss) = }")
 
-    def get_iou(self, bb1: dict, bb2: dict) -> float:
+    def calc_iou(self, bb1: dict[str, int], bb2: dict[str, int]) -> float:
         """
         Compute the intersection-over-union of two sets of bounding boxes.
         Args:
-            bb1: (N, 4) array of bounding boxes for N detections.
-            bb2: (M, 4) array of bounding boxes for M detections.
+            bb1: (N, 4) dict of bounding boxes for N detections.
+            bb2: (M, 4) dict of bounding boxes for M detections.
         Returns:
-            iou: (N, M) array of IoU for N detections in `bb1` and M detections in `bb2`.
+            iou: float
         """
+        # Assert that coordinates are not wrong
+        assert all([
+            bb1["x1"] < bb1["x2"],
+            bb1["y1"] < bb1["y2"],
+            bb2["x1"] < bb2["x2"],
+            bb2["y1"] < bb2["y2"],
+        ])
 
         # Compute intersection areas
-        assert (
-            bb1["x1"] < bb1["x2"]
-            and bb1["y1"] < bb1["y2"]
-            and bb2["x1"] < bb2["x2"]
-            and bb2["y1"] < bb2["y2"]
-        )
-
         x_left = max(bb1["x1"], bb2["x1"])
         y_top = max(bb1["y1"], bb2["y1"])
         x_right = min(bb1["x2"], bb2["x2"])
@@ -69,12 +68,11 @@ class ObjectProposalGenerator:
         iou = intersection_area / float(bb1_area + bb2_area - intersection_area)
 
         assert iou >= 0.0 and iou <= 1.0
-
         return iou
 
     def make_proposals_image(
-        self, image: np.ndarray, gt_bboxes: list, labels: list, verbose=False
-    ):
+        self, image: np.ndarray, gt_bboxes: list, labels: list
+    ) -> list[list]:
         ## Define ground truth bounding boxes
         assert len(gt_bboxes) == len(labels)
 
@@ -83,14 +81,10 @@ class ObjectProposalGenerator:
             gtvalues.append([x, y, w, h, gt_label])
 
         ## Compute proposals
-        if verbose:
-            self.logger.debug("Computing proposals...")
+        self.logger.debug("Computing proposals...")
 
         self.ss.setBaseImage(image)
         self.ss.switchToSelectiveSearchFast(inc_k=150)
-
-        if verbose:
-            self.logger.debug("Starting compute of proposals")
         ssresults = self.ss.process()
 
         ## Loop over proposal in the first 2000 proposals
@@ -104,8 +98,6 @@ class ObjectProposalGenerator:
 
         count_iou = 0
         for i, [x, y, w, h] in enumerate(ssresults):
-            if i >= n_proposals or count_iou >= min_high_iou_proposals:
-                break  # Only do for the first 2000 proposals
 
             ## For each proposal, compute the intersection for all gt_bboxes
             max_iou = 0
@@ -120,7 +112,7 @@ class ObjectProposalGenerator:
                 }
                 bb2 = {"x1": x, "x2": x + w, "y1": y, "y2": y + h}
 
-                iou = self.get_iou(bb1, bb2)
+                iou = self.calc_iou(bb1, bb2)
 
                 ## If the iou is greater than 0.5, we assign the label of that gt bbox to the proposal
                 # iou_temp = 0.0
@@ -130,31 +122,30 @@ class ObjectProposalGenerator:
                     max_iou = iou
                     proposal_label = gt_label
 
-            if len(proposal_list) < n_proposals - min_high_iou_proposals + count_iou:
+            if (
+                len(proposal_list) < n_proposals - min_high_iou_proposals + count_iou
+                or max_iou > 0.5
+            ):
                 proposal_list.append([x, y, w, h, proposal_label])
 
-            elif max_iou > 0.5:
-                proposal_list.append([x, y, w, h, proposal_label])
+            count_iou += 1 if proposal_label != "Background" else 0
 
-            elif proposal_label != "Background":
-                count_iou += 1
-
-            else:
-                self.logger.warning("Sample has somehow escaped our if-statements!!")
+            if i >= n_proposals and count_iou >= min_high_iou_proposals:
+                break  # Only do for the first 2000 proposals
 
         proposal_list.extend(gtvalues)
 
         return proposal_list
 
     def make_all_proposals(self, image_base_path, annotation_file_path, out_path):
-
         ## Read annotations
         with open(annotation_file_path, "r") as f:
             dataset = json.loads(f.read())["images"]
 
-        for orientation in ExifTags.TAGS.keys():
-            if ExifTags.TAGS[orientation] == "Orientation":
-                break
+        # for orientation in ExifTags.TAGS.keys():
+        #     if ExifTags.TAGS[orientation] == "Orientation":
+        #         break
+        orientation_flag = 0x0112
 
         ## Create d
         out_dict = {}
@@ -165,18 +156,18 @@ class ObjectProposalGenerator:
             if pil_img._getexif():
                 exif = dict(pil_img._getexif().items())
                 # Rotate portrait and upside down images if necessary
-                if orientation in exif:
-                    if exif[orientation] == 3:
+                if orientation_flag in exif:
+                    if exif[orientation_flag] == 3:
                         pil_img = pil_img.rotate(180, expand=True)
-                    if exif[orientation] == 6:
+                    if exif[orientation_flag] == 6:
                         pil_img = pil_img.rotate(270, expand=True)
-                    if exif[orientation] == 8:
+                    if exif[orientation_flag] == 8:
                         pil_img = pil_img.rotate(90, expand=True)
 
             image = np.array(pil_img)
 
-            image_id = im["id"]
             ## Get image bboxes and labels
+            image_id = im["id"]
             bboxes = im["bboxs"]
             labels = im["labels"]
 
@@ -184,11 +175,11 @@ class ObjectProposalGenerator:
                 proposals = self.make_proposals_image(
                     image=image, gt_bboxes=bboxes, labels=labels
                 )
-            except Exception as e:
-                print(e)
-                print("error in " + image_path)
+            except Exception as err:
+                self.logger.debug(f"error in {image_path}\n{err = }")
                 continue
-            print(len(proposals))
+
+            self.logger.debug(f"{len(proposals) = }")
             out_dict[str(image_id)] = proposals
 
         return out_dict
