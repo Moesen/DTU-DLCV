@@ -24,14 +24,29 @@ def make_data_splits(
     *_amount parameters and seed
     """
     np.random.seed(seed)
+    #Getting all image paths and ids
     image_paths = [i["file_name"] for i in dataset_json["images"]]
     image_ids = [i["id"] for i in dataset_json["images"]]
+
+    #Initializing arrays to save annotations and attributes for annotations
     image_annotations_bbox = []
     image_annotations_label = []
     image_annotations_paths = []
     image_annotations_id = []
+
+    #Finding supercategories
     catid2supercat = {i["id"]: i["supercategory"] for i in dataset_json["categories"]}
     all_super_cat = list(set(i["supercategory"] for i in dataset_json["categories"]))
+
+    #Saving dictionaries to map index and category
+    cat2id = {cat:i for i, cat in enumerate(all_super_cat)}
+    id2cat = {value:key for key, value in cat2id.items()}
+    with open(f"{datapath}/cat2id.json", "w") as fp:
+        json.dump(cat2id, fp, indent=2)
+    with open(f"{datapath}/id2cat.json", "w") as fp:
+        json.dump(id2cat, fp, indent=2)
+
+    #Saving annotations and their attributes
     for a in dataset_json["annotations"]:
         image_id = a["image_id"]
         image_id_idx = image_ids.index(image_id)
@@ -50,6 +65,7 @@ def make_data_splits(
         image_annotations_label[image_annotations_paths == i] for i in image_paths
     ]
 
+    #Initializing train, val, test splits
     train_images = {"images": []}
     validation_images = {"images": []}
     test_images = {"images": []}
@@ -60,6 +76,8 @@ def make_data_splits(
 
     dist_weight = 3
 
+    #Distirbuting images so that the distribution of categories is as good as possible while having the splits defined at start. 
+    #This is done by scores which is calculated from the current length and current amount of the classes already in the split.
     for i, img in enumerate(image_paths):
         scores = np.zeros(3)
         categories = image_categories[i]
@@ -139,10 +157,35 @@ def make_data_splits(
                     }
                 )
 
+    #Saving the splits
     split_name = ["train", "validation", "test"]
     for i, split in enumerate([train_images, validation_images, test_images]):
         with open(f"{datapath}/{split_name[i]}_data.json", "w") as fp:
             json.dump(split, fp, indent=2)
+
+def rotate_and_save_images(dataset_json, base_path):
+    for orientation in ExifTags.TAGS.keys():
+        if ExifTags.TAGS[orientation] == "Orientation":
+            break
+    
+    #Getting all image paths and ids
+    image_paths = [i["file_name"] for i in dataset_json["images"]]
+
+    for path in image_paths:
+        pil_img = Image.open(str(base_path) + "/" + path)
+        if pil_img._getexif():  # type: ignore
+            exif = dict(pil_img._getexif().items())  # type: ignore
+            # Rotate portrait and upside down images if necessary
+            if orientation in exif:
+                if exif[orientation] == 3:
+                    pil_img = pil_img.rotate(180, expand=True)
+                    pil_img.save(str(base_path) + "/" + path) 
+                if exif[orientation] == 6:
+                    pil_img = pil_img.rotate(270, expand=True)
+                    pil_img.save(str(base_path) + "/" + path) 
+                if exif[orientation] == 8:
+                    pil_img = pil_img.rotate(90, expand=True)
+                    pil_img.save(str(base_path) + "/" + path)        
 
 
 def load_dataset_rcnn(
@@ -166,75 +209,71 @@ def load_dataset_rcnn(
     proot_path = get_project12_root()
     path = proot_path / "data/data_wastedetection"
 
-    with open(path / f"{split}_data.json", "r") as f:
+    with open(path / f"{split}_proposals.json", "r") as f:
         data_json = json.loads(f.read())
+    
+    with open(path / f"{split}_data.json", "r") as f:
+        images_json = json.loads(f.read())
 
-    data = data_json["images"]
-
-    image_paths = [i["path"] for i in data]
-    image_boxes = [i["bboxs"] for i in data]
-    image_labels = [i["labels"] for i in data]
+    proposals = list(data_json.values())
+    proposal_labels = []
+    proposal_boxes = []
+    for p in proposals:
+        proposal_labels.append([i[-1] for i in p])
+        proposal_boxes.append([i[:-1] for i in p])
+        
+    images = images_json["images"]
+    images_ids = [i["id"] for i in images]
+    images_paths = [i["path"] for i in images]
+    images_paths_proposals = [[images_paths[images_ids.index(int(i))]] for i in data_json.keys()]
 
     dataset = tf.data.Dataset.from_tensor_slices(
-        (image_paths, image_boxes, image_labels)
+        (images_paths_proposals, proposal_boxes, proposal_labels)
     )
 
-    # Obtain Exif orientation tag code
-    for orientation in ExifTags.TAGS.keys():
-        if ExifTags.TAGS[orientation] == "Orientation":
-            break
-
+    @tf.function
     def make_img_batch(img_path, img_boxes, img_labels):
-        pil_img = Image.open(str(path) + "/" + img_path)
-        if pil_img._getexif():  # type: ignore
-            exif = dict(pil_img._getexif().items())  # type: ignore
-            # Rotate portrait and upside down images if necessary
-            if orientation in exif:
-                if exif[orientation] == 3:
-                    pil_img = pil_img.rotate(180, expand=True)
-                if exif[orientation] == 6:
-                    pil_img = pil_img.rotate(270, expand=True)
-                if exif[orientation] == 8:
-                    pil_img = pil_img.rotate(90, expand=True)
-        base_img = tf.keras.preprocessing.image.img_to_array(pil_img)
-        tensor_batch = tf.zeros([box_batch_size, 3, image_size[0], image_size[1]])
-        tensor_labels = tf.zeros([box_batch_size])
-        n_not_background = int(box_batch_size / pct_not_background)
+        # img_path = img_path.numpy()[0].decode("UTF-8")
+        base_img = tf.io.read_file(str(path) + "/" + tf.squeeze(img_path))
+        base_img = tf.image.decode_image(base_img, channels=3, dtype=tf.float32)
+        tensor_batch = []
+        tensor_labels = []
+        n_not_background = int(box_batch_size * pct_not_background)
         n_background = box_batch_size - n_not_background
-        not_background_choices = np.random.choice(
-            np.where(img_labels != "Background")[0], n_not_background
-        )
-        background_choices = np.random.choice(
-            np.where(img_labels == "Background")[0], n_background
-        )
-        for i, choice in enumerate(not_background_choices):
+        not_background_idx = tf.squeeze(tf.where(img_labels != "Background"))
+        background_idx = tf.squeeze(tf.where(img_labels == "Background"))
+        not_background_choices = tf.random.shuffle(not_background_idx)
+        background_choices = tf.random.shuffle(background_idx)
+        # not_background_choices = np.random.choice(
+        #     tf.make_ndarray(tf.squeeze(tf.where(img_labels != "Background"))), n_not_background, replace=False
+        # )
+        # background_choices = np.random.choice(
+        #     tf.make_ndarray(tf.squeeze(tf.where(img_labels == "Background"))), n_background, replace=False
+        # )
+        for i in range(n_not_background):
+            choice = not_background_choices[i]
             bbox = img_boxes[choice]
             label = img_labels[choice]
             img_crop = tf.image.crop_to_bounding_box(
                 base_img, int(bbox[1]), int(bbox[0]), int(bbox[3]), int(bbox[2])
             )
-            img_crop = tf.image.resize(img_crop, img_crop)
-            tensor_batch[i] = img_crop
-            tensor_labels[i] = label
-        for i, choice in enumerate(background_choices):
+            img_crop = tf.image.resize(img_crop, [image_size[0], image_size[1]])
+            tensor_batch.append(img_crop)
+            tensor_labels.append(label)
+        for i in range(n_background):
+            choice = background_choices[i]
             bbox = img_boxes[choice]
             label = img_labels[choice]
             img_crop = tf.image.crop_to_bounding_box(
                 base_img, int(bbox[1]), int(bbox[0]), int(bbox[3]), int(bbox[2])
             )
-            img_crop = tf.image.resize(img_crop, img_crop)
-            tensor_batch[i + n_not_background] = img_crop
-            tensor_labels[i + n_not_background] = label
-        return tensor_batch, tensor_labels
-
-    def read_image(image_file, bbox, labels):
-        image = tf.io.read_file(str(path) + "/" + image_file)
-        image = tf.image.decode_image(image, channels=3, dtype=tf.float32)
-        image = tf.image.crop_to_bounding_box(
-            image, int(bbox[1]), int(bbox[0]), int(bbox[3]), int(bbox[2])
-        )
-        image = tf.image.resize(image, image_size)
-        return image, labels
+            img_crop = tf.image.resize(img_crop, [image_size[0], image_size[1]])
+            tensor_batch.append(img_crop)
+            tensor_labels.append(label)
+        
+        tensor_batch = tf.convert_to_tensor(tensor_batch)
+        tensor_labels = tf.convert_to_tensor(tensor_labels)
+        return tensor_batch, tensor_labels, img_path
 
     map_layers = tf.keras.Sequential()
 
@@ -254,9 +293,7 @@ def load_dataset_rcnn(
         map_layers.add(augmentation_layer)
 
     dataset = (
-        dataset.map(read_image)
-        .map(lambda x, y: (map_layers(x), y))
-        .batch(batch_size=batch_size)
+        dataset.map(lambda x, y, z: make_img_batch(x, y, z))
     )
 
     if tune_for_perfomance:
@@ -273,18 +310,21 @@ if __name__ == "__main__":
     with open(path / "annotations.json", "r") as f:
         data_json = json.loads(f.read())
 
+    rotate_and_save_images(data_json, path)
     make_data_splits(data_json, 0.7, 0.15, 0.15, path)
-    # ts = load_dataset_rcnn(
-        # train=True, batch_size=64, shuffle=True, image_size=(128, 128)
-    # )
+    ts = load_dataset_rcnn(
+        train=True, batch_size=64, shuffle=True, image_size=(128, 128)
+    )
 
-    # class_names = ts._input_dataset.class_names  # type: ignore
+    ts_iter = iter(ts)
 
-    # img_batch, label = next(iter(ts))
-    # fig = plt.figure(figsize=(10, 10))
-    # for i in range(9):
-    #     ax = plt.subplot(3, 3, i + 1)
-    #     ax.imshow(img_batch[i])
-    #     if type(class_names) == list:
-    #         ax.set_title(class_names[label[i]])  # type: ignore
-    # plt.show()
+    img_batch, label, img_path = next(ts_iter)
+    batch_size = len(label)
+    label = list(label)
+    fig = plt.figure(figsize=(10, 10))
+    for i,j in enumerate(range(int(batch_size/9),batch_size,int(batch_size/9))):
+        ax = plt.subplot(3, 3, i + 1)
+        ax.imshow(img_batch[j])
+        if type(label) == list:
+            ax.set_title(label[j].numpy().decode("UTF-8"))  # type: ignore
+    plt.show()

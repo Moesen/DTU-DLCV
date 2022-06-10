@@ -119,16 +119,17 @@ class ObjectProposalGenerator:
                     max_iou = iou
                     proposal_label = gt_label
 
+            if i >= n_proposals - len(gtvalues) and count_iou >= min_high_iou_proposals:
+                break  # Only do for the first 2000 proposals
+
             if (
-                len(proposal_list) < n_proposals - min_high_iou_proposals + count_iou
+                len(proposal_list) < n_proposals - len(gtvalues) - min_high_iou_proposals + count_iou
                 or max_iou > 0.5
+                or len(gtvalues) == 0
             ):
                 proposal_list.append([*map(int, [x, y, w, h]), proposal_label])
 
             count_iou += 1 if proposal_label != "Background" else 0
-
-            if i >= n_proposals and count_iou >= min_high_iou_proposals:
-                break  # Only do for the first 2000 proposals
 
         proposal_list.extend(gtvalues)
 
@@ -146,7 +147,7 @@ class ObjectProposalGenerator:
 
         ## Create d
         out_dict = {}
-        for im in tqdm(dataset[:1]):
+        for im in tqdm(dataset[:3]):
             ## Load image and rotate if necessary
             image_path = os.path.join(image_base_path, im["path"])
             pil_img = Image.open(image_path)
