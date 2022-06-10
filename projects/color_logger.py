@@ -18,7 +18,7 @@ def init_logger(dunder_name, testing_mode, log_folder: Path = Path("./log")) -> 
         logger.setLevel(logging.INFO)
 
     if not log_folder.is_dir():
-        os.mkdir("log")
+        os.mkdir(log_folder)
         logger.info("log folder not found, creating new one in current folder")
 
     # Output full log
