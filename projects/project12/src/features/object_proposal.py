@@ -3,7 +3,6 @@ from __future__ import annotations
 """
 Script containing function for object bounding box proposal generation in TF-domain.
 """
-# TODO Add timing module around different functions
 
 import json
 import os

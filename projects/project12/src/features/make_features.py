@@ -72,6 +72,8 @@ def fast_bb_proposals(
     gt_bboxes,
     gt_labels,
     n_proposals: int = 2000,
+    iou_object_threshold: float = 0.5,
+    iou_background_treshold: float = 0.2,
     min_iou_proposals: int = 16,
     inc_k: int = 150,
     logger: Logger = getLogger(__file__),
@@ -84,7 +86,6 @@ def fast_bb_proposals(
             f"Not same length of gt_boxes and labels {len(gt_bboxes) = }, {len(gt_labels) = }"
         )
 
-    logger.debug("Computing proposals")
     ss = cv2.ximgproc.segmentation.createSelectiveSearchSegmentation()  # type: ignore
 
     ss.setBaseImage(image)
@@ -96,6 +97,9 @@ def fast_bb_proposals(
     iou_count = 0
 
     for i, proposed_xywh in enumerate(proposals):
+        if i >= n_proposals and iou_count >= min_iou_proposals:
+            break
+
         proposed_label = "Background"
         max_iou = 0
 
@@ -109,14 +113,18 @@ def fast_bb_proposals(
                 max_iou = iou
                 proposed_label = gt_label
 
-        if len(samples) < random_threshold + iou_count or max_iou > 0.5:
+        if (
+            len(samples) > random_threshold + iou_count
+            or max_iou <= iou_object_threshold
+            or len(gt_bboxes) != 0
+        ):
+            continue
+
+        if proposed_label != "Background" or max_iou < iou_background_treshold:
             samples.append([*map(int, proposed_xywh), proposed_label])
 
-        if max_iou > 0.5:
+        if max_iou > iou_object_threshold:
             iou_count += 1
-
-        if i >= n_proposals and iou_count >= min_iou_proposals:
-            break
 
     samples.extend([[*gt_xywh, label] for gt_xywh, label in zip(gt_bboxes, gt_labels)])
     return samples
@@ -134,10 +142,11 @@ def proposal_mp_task(
     with Image.open(img_path) as file:
         ori_flag = file.getexif().get(ORIENTATION_FLAG, None)
         rot = orientation_switch.get(ori_flag, 0)
-
+        
         img = file.rotate(rot, expand=True)
         img = np.array(img)
-
+        
+        logger.debug(f"Computing proposals for {img_id = }")
         proposals = fast_bb_proposals(img, bboxs, labels)
 
         num_ious_found = sum([x[-1] != "Background" for x in proposals])
@@ -156,13 +165,13 @@ def generate_proposals(imgs_folder: Path, annot_path: Path):
     with mp.Pool(processes=mp.cpu_count() - 1) as pool:
         results = [
             pool.apply_async(proposal_mp_task, (info, imgs_folder))
-            for info in tqdm(img_info[:20], desc="jobs applied: ")
+            for info in tqdm(img_info, desc="jobs applied: ")
         ]
         for proposals, img_id in [
             r.get() for r in tqdm(results, desc="jobs processed: ")
         ]:
             proposal_dict[img_id] = proposals
-    
+
     breakpoint()
     return proposal_dict
 
@@ -170,21 +179,21 @@ def generate_proposals(imgs_folder: Path, annot_path: Path):
 if __name__ == "__main__":
     # Logging
     log_path = get_project12_root() / "log"
-    logger = init_logger(__file__, False, log_path)
+    logger = init_logger(__file__, True, log_path)
 
-    # Datasplit (train, validation, test)
-    split = "train"
+    for split in ["train", "validation", "test"]:
+        logger.info(f"Beginning to propose for: {split}")
 
-    data_path = get_project12_root() / "data"
-    dataset_path = data_path / "data_wastedetection"
+        data_path = get_project12_root() / "data"
+        dataset_path = data_path / "data_wastedetection"
 
-    # Annotation file path with bboxes and labels
-    annot_file_path = dataset_path / f"{split}_data.json"
+        # Annotation file path with bboxes and labels
+        annot_file_path = dataset_path / f"{split}_data.json"
 
-    all_proposals = generate_proposals(
-        imgs_folder=dataset_path, annot_path=annot_file_path
-    )
+        proposals = generate_proposals(
+            imgs_folder=dataset_path, annot_path=annot_file_path
+        )
 
-    ## Write proposals to json file
-    with open(dataset_path / f"{split}_proposals.json", "w") as fp:
-        json.dump(all_proposals, fp, indent=4)
+        ## Write proposals to json file
+        with open(dataset_path / f"{split}_proposals.json", "w") as fp:
+            json.dump(proposals, fp, indent=2)
