@@ -15,16 +15,14 @@
 #import _init_paths
 #import cv2
 
+import glob
+import os
+
+import numpy as np
 from projects.project12.src.metrics.BoundingBox import BoundingBox
 from projects.project12.src.metrics.BoundingBoxes import BoundingBoxes
 from projects.project12.src.metrics.Evaluator import *
 from projects.project12.src.metrics.utils import *
-import glob
-import os
-import numpy as np
-
-
-
 
 """gt_boundingBox_5 = BoundingBox(imageName='000003', classId='bench', x=0.546, y=0.48133333333333334,
                                w=0.136, h=0.13066666666666665, typeCoordinates=CoordinatesType.Relative,

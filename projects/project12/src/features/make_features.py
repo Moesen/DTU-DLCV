@@ -1,9 +1,16 @@
 from __future__ import annotations
 
+import logging
+import multiprocessing
 from logging import Logger, getLogger
 
 import cv2
+import multiprocessing_logging
 import numpy as np
+from projects.color_logger import init_logger
+from projects.project12.src.features import \
+    object_proposal_multi_lib as multi_lib
+from projects.utils import get_project12_root
 
 ###############################################################################
 #                                                                             #
@@ -13,9 +20,8 @@ import numpy as np
 # ██║╚██╔╝██║██║   ██║██║     ██║   ██║    ██║     ██║   ██║██║   ██║██║      #
 # ██║ ╚═╝ ██║╚██████╔╝███████╗██║   ██║    ╚██████╗╚██████╔╝╚██████╔╝███████╗ #
 # ╚═╝     ╚═╝ ╚═════╝ ╚══════╝╚═╝   ╚═╝     ╚═════╝ ╚═════╝  ╚═════╝ ╚══════╝ #
-#                                                                             #
+# this do be pretty cool ___                                                  #
 ###############################################################################
-
 
 
 
@@ -90,7 +96,7 @@ def make_bb_proposals(
 
     count_iou = 0
     for i, [x, y, w, h] in enumerate(ssresults):
-        # For each proposal, 
+        # For each proposal,
         # compute the intersection for all gt_bboxes
         max_iou = 0
         proposal_label = "Background"
@@ -106,7 +112,7 @@ def make_bb_proposals(
 
             iou = calc_iou(bb1, bb2)
 
-            # If the iou is greater than 0.5, 
+            # If the iou is greater than 0.5,
             # we assign the label of that gt bbox to the proposal
             # iou_temp = 0.0
             if iou > 0.50 and iou > max_iou:
@@ -129,3 +135,9 @@ def make_bb_proposals(
     proposal_list.extend(gtvalues)
 
     return proposal_list
+
+
+if __name__ == "__main__":
+    log_path = get_project12_root() / "log"
+    logger = init_logger(__file__, True, log_path)
+    multiprocessing_logging.install_mp_handler(logger)

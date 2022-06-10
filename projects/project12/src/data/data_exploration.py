@@ -1,10 +1,12 @@
 import json
+import os
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns; sns.set()
 from projects.utils import get_project12_root
-import os
+
+import seaborn as sns; sns.set()
 
 os.chdir(get_project_root())
 
@@ -126,6 +128,7 @@ plt.show()
 """
 
 from graphviz import Digraph
+
 # Note: graphviz may require more than pip installation due to path issue: e.g. brew install graphviz for mac
 
 #g = Digraph('G', filename='hello.gv')
@@ -145,13 +148,14 @@ dot
 """
 3 Visualize annotated images
 """
-from PIL import Image, ExifTags
-from pycocotools.coco import COCO
-from matplotlib.patches import Polygon, Rectangle
-from matplotlib.collections import PatchCollection
 import colorsys
 import random
+
 import pylab
+from matplotlib.collections import PatchCollection
+from matplotlib.patches import Polygon, Rectangle
+from PIL import ExifTags, Image
+from pycocotools.coco import COCO
 
 # User settings
 image_filepath = 'batch_11/000028.jpg'
@@ -237,13 +241,14 @@ for img in imgs:
 Show images by category
 """
 
-from PIL import Image, ExifTags
-from pycocotools.coco import COCO
-from matplotlib.patches import Polygon, Rectangle
-from matplotlib.collections import PatchCollection
 import colorsys
 import random
+
 import pylab
+from matplotlib.collections import PatchCollection
+from matplotlib.patches import Polygon, Rectangle
+from PIL import ExifTags, Image
+from pycocotools.coco import COCO
 
 # User settings
 nr_img_2_display = 10
