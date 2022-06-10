@@ -1,16 +1,17 @@
 from __future__ import annotations
-
-import logging
-import multiprocessing
+from ctypes import resize
 from logging import Logger, getLogger
 
 import cv2
-import multiprocessing_logging
 import numpy as np
 from projects.color_logger import init_logger
-from projects.project12.src.features import \
-    object_proposal_multi_lib as multi_lib
 from projects.utils import get_project12_root
+from pathlib import Path
+import json
+from PIL import Image
+from tqdm import tqdm
+
+import multiprocessing as mp
 
 ###############################################################################
 #                                                                             #
@@ -24,7 +25,6 @@ from projects.utils import get_project12_root
 ###############################################################################
 
 
-
 def calc_iou(bb1: dict[str, int], bb2: dict[str, int]) -> float:
     """
     Compute the intersection-over-union of two sets of bounding boxes.
@@ -35,14 +35,15 @@ def calc_iou(bb1: dict[str, int], bb2: dict[str, int]) -> float:
         iou: float
     """
     # Assert that coordinates are not wrong
-    assert all(
+    if any(
         [
-            bb1["x1"] < bb1["x2"],
-            bb1["y1"] < bb1["y2"],
-            bb2["x1"] < bb2["x2"],
-            bb2["y1"] < bb2["y2"],
+            bb1["x1"] > bb1["x2"],
+            bb1["y1"] > bb1["y2"],
+            bb2["x1"] > bb2["x2"],
+            bb2["y1"] > bb2["y2"],
         ]
-    )
+    ):
+        return 0
 
     # Compute intersection areas
     x_left = max(bb1["x1"], bb2["x1"])
@@ -59,85 +60,131 @@ def calc_iou(bb1: dict[str, int], bb2: dict[str, int]) -> float:
 
     iou = intersection_area / float(bb1_area + bb2_area - intersection_area)
 
-    assert iou >= 0.0 and iou <= 1.0
-    return iou
+    return iou if 0.0 <= iou <= 1.0 else 0
 
 
-def make_bb_proposals(
+def xyhw_2_bbox(x, y, h, w) -> dict[str, int]:
+    return {"x1": x, "x2": x + w, "y1": y, "y2": y + h}
+
+
+def fast_bb_proposals(
     image: np.ndarray,
-    gt_bboxes: list,
-    labels: list,
+    gt_bboxes,
+    gt_labels,
     n_proposals: int = 2000,
-    min_high_iou_proposals: int = 16,
-    logger: Logger = getLogger(),
-) -> list[list]:
-    ## Define ground truth bounding boxes
-    assert len(gt_bboxes) == len(labels)
+    min_iou_proposals: int = 16,
+    inc_k: int = 150,
+    logger: Logger = getLogger(__file__),
+) -> list:
 
-    gtvalues = []
-    for gt_label, [x, y, w, h] in zip(labels, [map(int, x) for x in gt_bboxes]):
-        gtvalues.append([x, y, w, h, gt_label])
+    random_threshold = n_proposals - len(gt_labels) - min_iou_proposals
 
-    logger.debug("Constructing ss")
+    if len(gt_bboxes) != len(gt_labels):
+        raise ValueError(
+            f"Not same length of gt_boxes and labels {len(gt_bboxes) = }, {len(gt_labels) = }"
+        )
+
+    logger.debug("Computing proposals")
     ss = cv2.ximgproc.segmentation.createSelectiveSearchSegmentation()  # type: ignore
 
-    ## Compute proposals
-    logger.debug("Computing proposals...")
-
     ss.setBaseImage(image)
-    ss.switchToSelectiveSearchFast(inc_k=100)
-    ssresults = ss.process()
+    ss.switchToSelectiveSearchFast(inc_k=inc_k)
+    proposals = ss.process()
+    np.random.shuffle(proposals)
 
-    ## Loop over proposal in the first 2000 proposals
-    logger.debug("Computing IoU's...")
+    samples = []
+    iou_count = 0
 
-    proposal_list = []
-    np.random.shuffle(ssresults)
-
-    count_iou = 0
-    for i, [x, y, w, h] in enumerate(ssresults):
-        # For each proposal,
-        # compute the intersection for all gt_bboxes
+    for i, proposed_xywh in enumerate(proposals):
+        proposed_label = "Background"
         max_iou = 0
-        proposal_label = "Background"
 
-        for [gt_x, gt_y, gt_w, gt_h, gt_label] in gtvalues:
-            bb1 = {
-                "x1": gt_x,
-                "x2": gt_x + gt_w,
-                "y1": gt_y,
-                "y2": gt_y + gt_h,
-            }
-            bb2 = {"x1": x, "x2": x + w, "y1": y, "y2": y + h}
+        for gt_xywh, gt_label in zip(gt_bboxes, gt_labels):
+            proposed_bbox = xyhw_2_bbox(*proposed_xywh)
+            gt_bbox = xyhw_2_bbox(*gt_xywh)
 
-            iou = calc_iou(bb1, bb2)
+            iou = calc_iou(proposed_bbox, gt_bbox)
 
-            # If the iou is greater than 0.5,
-            # we assign the label of that gt bbox to the proposal
-            # iou_temp = 0.0
-            if iou > 0.50 and iou > max_iou:
-                # logger.debug(i)
-                # logger.debug("IoU:", iou)
+            if iou > 0.5 and iou > max_iou:
                 max_iou = iou
-                proposal_label = gt_label
+                proposed_label = gt_label
 
-        if (
-            len(proposal_list) < n_proposals - min_high_iou_proposals + count_iou
-            or max_iou > 0.5
-        ):
-            proposal_list.append([*map(int, [x, y, w, h]), proposal_label])
+        if len(samples) < random_threshold + iou_count or max_iou > 0.5:
+            samples.append([*map(int, proposed_xywh), proposed_label])
 
-        count_iou += 1 if proposal_label != "Background" else 0
+        if max_iou > 0.5:
+            iou_count += 1
 
-        if i >= n_proposals and count_iou >= min_high_iou_proposals:
-            break  # Only do for the first 2000 proposals
+        if i >= n_proposals and iou_count >= min_iou_proposals:
+            break
 
-    proposal_list.extend(gtvalues)
+    samples.extend([[*gt_xywh, label] for gt_xywh, label in zip(gt_bboxes, gt_labels)])
+    return samples
 
-    return proposal_list
+
+def proposal_mp_task(
+    info: dict, imgs_folder: Path, logger: Logger = getLogger(__file__)
+) -> tuple[list, str]:
+    orientation_switch = {3: 180, 6: 270, 8: 90}
+    ORIENTATION_FLAG = 274
+
+    [img_path, img_id, bboxs, labels] = info.values()
+    img_path = imgs_folder / img_path
+
+    with Image.open(img_path) as file:
+        ori_flag = file.getexif().get(ORIENTATION_FLAG, None)
+        rot = orientation_switch.get(ori_flag, 0)
+
+        img = file.rotate(rot, expand=True)
+        img = np.array(img)
+
+        proposals = fast_bb_proposals(img, bboxs, labels)
+
+        num_ious_found = sum([x[-1] != "Background" for x in proposals])
+        if num_ious_found < 16:
+            logger.warning(
+                f"Did not find 16 iou's > .5 in {img_id = }. Found {num_ious_found} iou's in total"
+            )
+    return proposals, img_id
+
+
+def generate_proposals(imgs_folder: Path, annot_path: Path):
+    with open(annot_path, "r") as f:
+        img_info = json.load(f)["images"]
+
+    proposal_dict = {}
+    with mp.Pool(processes=mp.cpu_count() - 1) as pool:
+        results = [
+            pool.apply_async(proposal_mp_task, (info, imgs_folder))
+            for info in tqdm(img_info[:20], desc="jobs applied: ")
+        ]
+        for proposals, img_id in [
+            r.get() for r in tqdm(results, desc="jobs processed: ")
+        ]:
+            proposal_dict[img_id] = proposals
+    
+    breakpoint()
+    return proposal_dict
 
 
 if __name__ == "__main__":
+    # Logging
     log_path = get_project12_root() / "log"
-    logger = init_logger(__file__, True, log_path)
-    multiprocessing_logging.install_mp_handler(logger)
+    logger = init_logger(__file__, False, log_path)
+
+    # Datasplit (train, validation, test)
+    split = "train"
+
+    data_path = get_project12_root() / "data"
+    dataset_path = data_path / "data_wastedetection"
+
+    # Annotation file path with bboxes and labels
+    annot_file_path = dataset_path / f"{split}_data.json"
+
+    all_proposals = generate_proposals(
+        imgs_folder=dataset_path, annot_path=annot_file_path
+    )
+
+    ## Write proposals to json file
+    with open(dataset_path / f"{split}_proposals.json", "w") as fp:
+        json.dump(all_proposals, fp, indent=4)
