@@ -6,20 +6,16 @@ Script containing function for object bounding box proposal generation in TF-dom
 # TODO Add timing module around different functions
 
 import json
-
-import numpy as np
-import seaborn as sns
-
 import os
-import numpy as np
-import time
+from logging import Logger
 
 import cv2
-from PIL import ExifTags, Image
+import numpy as np
+import seaborn as sns
+from PIL import Image
+from projects.color_logger import init_logger
 from projects.utils import get_project12_root
 from tqdm import tqdm
-from logging import Logger
-from projects.color_logger import init_logger
 
 sns.set()
 
@@ -138,7 +134,7 @@ class ObjectProposalGenerator:
 
         return proposal_list
 
-    def make_all_proposals(self, image_base_path, annotation_file_path, out_path):
+    def make_all_proposals(self, image_base_path, annotation_file_path):
         ## Read annotations
         with open(annotation_file_path, "r") as f:
             dataset = json.loads(f.read())["images"]
@@ -187,13 +183,16 @@ class ObjectProposalGenerator:
 
 
 if __name__ == "__main__":
-    logger = init_logger(__file__, True)
+    logger = init_logger(
+        __file__,
+        True,
+    )
 
     data_path = get_project12_root() / "data"
     dataset_path = data_path / "data_wastedetection"
     split = "train"
 
-    annot_file_path = dataset_path / f"/{split}_data.json"
+    annot_file_path = dataset_path / f"{split}_data.json"
     out_path = dataset_path / f"{split}_proposals.json"
 
     OPG = ObjectProposalGenerator(logger)
@@ -201,10 +200,8 @@ if __name__ == "__main__":
     all_proposals = OPG.make_all_proposals(
         image_base_path=dataset_path,
         annotation_file_path=annot_file_path,
-        out_path=dataset_path,
     )
 
     ## Write proposals to json file
-    with open(dataset_path / "proposals.json", "w") as fp:
+    with open(dataset_path / f"{split}_proposals.json", "w") as fp:
         json.dump(all_proposals, fp)
-
