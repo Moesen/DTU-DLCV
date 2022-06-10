@@ -14,3 +14,9 @@ tf_keras_vis==0.8.1
 tqdm==4.63.1
 wandb==0.12.17
 
+graphviz==0.20
+opencv_contrib_python==4.6.0.66
+pandas==1.4.2
+pycocotools==2.0.4
+seaborn==0.11.2
+selective_search==1.1.0
