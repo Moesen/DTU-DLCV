@@ -1,3 +1,4 @@
+from xml.sax.saxutils import prepare_input_source
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
@@ -19,7 +20,7 @@ new_model = tf.keras.models.load_model(model_path)
 # Check its architecture
 new_model.summary()
 
-batch_size = 4
+batch_size = 100
 img_size = (64, 64)
 
 test_data = load_dataset(
@@ -30,29 +31,45 @@ test_data = load_dataset(
     image_size=img_size,
 )
 
-(test_img, y) = next(iter(test_data))
+(test_img, y) = list(iter(test_data))[2]
 
 logits = new_model(test_img, training=False).numpy()
 
-predicted = K.cast(K.argmax(logits, axis=1), "uint8").numpy()  # one dimensional
+predicted = K.cast(K.argmax(logits, axis=1), "uint8").numpy()
 y_targets = tf.cast(y, tf.uint8).numpy()
+probs = tf.nn.softmax(logits, axis=1).numpy()
+
+
+hotdog_certain_idx = np.argmax( probs[:,0] )
+nothotdog_certain_idx = np.argmax( probs[:,1] )
+
+confidences = np.max(probs,1)
+uncertain_idx = np.argpartition(np.abs(confidences-0.5), 2)[:2]
+#uncertain_idx = np.argmin( np.abs(confidences-0.5) )
+
+idx2plot = K.cast(np.concatenate((hotdog_certain_idx, nothotdog_certain_idx, uncertain_idx), axis=None), tf.int32)
+
+test_img_plot = tf.gather(test_img, idx2plot)
+
+probs_plot = probs[idx2plot.numpy().tolist(),:]
+predicted_plot = predicted[idx2plot.numpy().tolist()]
+
 
 labels = test_data._input_dataset.class_names
 
-probs = tf.nn.softmax(logits, axis=1)
+fig, axs = plt.subplots(2,2, figsize=(15,15))
 
-for n, (img, pred, prob) in enumerate(zip(test_img.numpy(), predicted, probs)):
-    plt.subplot(2, 2, n + 1)
-    plt.imshow(img)
+for (img, pred, prob, ax) in zip(test_img_plot.numpy(), predicted_plot, probs_plot,axs.ravel()):
+    ax.imshow(img)
     pred_prob = np.max(prob)
     pred_label = labels[int(pred)]
-    plt.title(f"Pred: {pred_label}, p={pred_prob:.2f}")
-    # plt.show()
+    ax.title.set_text(f"Pred: {pred_label}, p={pred_prob:.2f}")
 
-plt.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.9, wspace=0.4, hspace=0.4)
+plt.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.9, wspace=0.2, hspace=0.2)
 
 fig_path = PROJECT_ROOT / "reports/figures/test.png"
 plt.savefig(fig_path)
+
 
 
 # Vanilla Saliency map
@@ -100,19 +117,17 @@ saliency_fig_path = PROJECT_ROOT / "reports/figures/raw_saliency.png"
 plt.savefig(saliency_fig_path)
 
 
-# saliency map on top
+# smoothed saliency maps 
 fig, axs = plt.subplots(1,2,figsize=(15,8))
-
 axs[0].imshow(img.numpy().squeeze())
+
 pred_prob = np.max(probs[img_idx, ...])
 pred_label = labels[int(predicted[img_idx, ...])]
+
 axs[0].title.set_text(f"Pred: {pred_label}, p={pred_prob:.2f}")
-
 axs[1].imshow(img.numpy().squeeze())
-
 blurred = gaussian_filter(smap, sigma=3)
 # blurred[blurred<0.4] = np.NaN ### use 0.5 for non blurred
-
 cmap = mpl.cm.jet
 cmap.set_bad("white")
 axs[1].imshow(blurred.squeeze(), cmap=cmap, alpha=0.5)
@@ -120,12 +135,12 @@ saliency_fig_path = PROJECT_ROOT / "reports/figures/raw_saliency_smooth.png"
 plt.savefig(saliency_fig_path)
 
 
+
+### Smooth-grad Saliency maps 
+
 from keras import backend as K
 from tf_keras_vis.saliency import Saliency
 from tf_keras_vis.utils.scores import CategoricalScore
-
-# from tf_keras_vis.gradcam import Gradcam
-
 
 logits = new_model(img)
 class_pred = predicted[0]

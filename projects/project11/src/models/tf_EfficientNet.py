@@ -63,6 +63,7 @@ inputs = tf.keras.Input(shape=img_size)
 x = base_model(inputs)
 x = tf.keras.layers.GlobalAveragePooling2D()(x) ## 
 x = tf.keras.layers.Dense(200,kernel_regularizer=regularizers.l2(1e-3), kernel_initializer='he_normal')(x) ## 
+x = tf.keras.layers.Dropout(0.2)(x)
 predictions = tf.keras.layers.Dense(1)(x)
 model = tf.keras.Model(inputs, predictions)
 
@@ -79,7 +80,7 @@ model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4),
 model.summary()
 
 history = model.fit(train_dataset,
-                    epochs=50,
+                    epochs=100,
                     validation_data=test_data)
 
 #loss0, accuracy0 = model.evaluate(test_data)

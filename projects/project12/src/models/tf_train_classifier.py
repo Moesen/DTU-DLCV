@@ -2,16 +2,17 @@ import ssl
 
 import tensorflow as tf
 from keras import backend as K
-from keras import regularizers
+#from keras import regularizers
 from projects.project12.src.data.dataloader import load_dataset_rcnn
 from projects.utils import get_project12_root
+import datetime
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
-
+save_model = False
 img_size_loader = (128,128)
 img_size = (128,128,3)
-batch_size = 64
+batch_size = 20
 
 # REMEBER TO ADD ONE IF THE BACKGROUND IS NOT INCLUDED 
 num_classes = 2
@@ -49,7 +50,6 @@ base_model = tf.keras.applications.efficientnet_v2.EfficientNetV2S(
 #batch_imgs = next(iter(train_dataset))
 #feature_batch = base_model(batch_imgs)
 
-
 base_model.trainable = False
 
 inputs = tf.keras.Input(shape=img_size)
@@ -58,7 +58,6 @@ x = tf.keras.layers.GlobalAveragePooling2D()(x) ##
 x = tf.keras.layers.Dense(200)(x) ## 
 logits = tf.keras.layers.Dense(num_classes)(x)
 model = tf.keras.Model(inputs, logits)
-
 
 model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4),
               loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
@@ -70,4 +69,9 @@ history = model.fit(train_dataset,
                     epochs=50,
                     validation_data=test_data)
 
+if save_model:
+    PROJECT_ROOT = get_project12_root()
+    model_name = 'hotdog_conv_'+datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    model_path = PROJECT_ROOT / "models" / model_name
+    model.save(model_path)
 
