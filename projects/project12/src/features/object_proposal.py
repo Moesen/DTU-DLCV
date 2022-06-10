@@ -113,7 +113,7 @@ class ObjectProposalGenerator:
 
                 ## If the iou is greater than 0.5, we assign the label of that gt bbox to the proposal
                 # iou_temp = 0.0
-                if iou > 0.50 and iou > max_iou:
+                if iou > 0.4 and iou > max_iou:
                     # self.logger.debug(i)
                     # self.logger.debug("IoU:", iou)
                     max_iou = iou
@@ -124,10 +124,13 @@ class ObjectProposalGenerator:
 
             if (
                 len(proposal_list) < n_proposals - len(gtvalues) - min_high_iou_proposals + count_iou
-                or max_iou > 0.5
+                or max_iou > 0.4
                 or len(gtvalues) == 0
             ):
-                proposal_list.append([*map(int, [x, y, w, h]), proposal_label])
+                if proposal_label == "Background" and max_iou < 0.2:
+                    proposal_list.append([*map(int, [x, y, w, h]), proposal_label])
+                elif proposal_label != "Background":
+                    proposal_list.append([*map(int, [x, y, w, h]), proposal_label])
 
             count_iou += 1 if proposal_label != "Background" else 0
 
@@ -191,7 +194,7 @@ if __name__ == "__main__":
 
     data_path = get_project12_root() / "data"
     dataset_path = data_path / "data_wastedetection"
-    split = "train"
+    split = "test"
 
     annot_file_path = dataset_path / f"{split}_data.json"
     out_path = dataset_path / f"{split}_proposals.json"

@@ -12,25 +12,25 @@ ssl._create_default_https_context = ssl._create_unverified_context
 save_model = False
 img_size_loader = (128,128)
 img_size = (128,128,3)
-batch_size = 20
+train_batch_size = 64
+test_batch_size = 40
 
 # REMEBER TO ADD ONE IF THE BACKGROUND IS NOT INCLUDED 
-num_classes = 2
+num_classes = 29
 
 
 train_dataset = load_dataset_rcnn(
-    train=True,
+    split="train",
     normalize=False,
-    shuffle = True,
-    use_data_augmentation=True,
-    batch_size=batch_size,
+    use_data_augmentation=False,
+    batch_size=train_batch_size,
     tune_for_perfomance=False,
     image_size=img_size_loader,
 )
 test_data = load_dataset_rcnn(
-    train=False,
+    split="test",
     normalize=False,
-    batch_size=batch_size,
+    batch_size=test_batch_size,
     tune_for_perfomance=False,
     use_data_augmentation=False,
     image_size=img_size_loader,
@@ -60,14 +60,13 @@ logits = tf.keras.layers.Dense(num_classes)(x)
 model = tf.keras.Model(inputs, logits)
 
 model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4),
-              loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
+              loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
               metrics=['accuracy'])
 
 model.summary()
 
 history = model.fit(train_dataset,
-                    epochs=50,
-                    validation_data=test_data)
+                    epochs=50)
 
 if save_model:
     PROJECT_ROOT = get_project12_root()
