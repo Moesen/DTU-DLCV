@@ -1,5 +1,5 @@
 from __future__ import annotations
-from ctypes import resize
+import os
 from logging import Logger, getLogger
 
 import cv2
@@ -63,11 +63,11 @@ def calc_iou(bb1: dict[str, int], bb2: dict[str, int]) -> float:
     return iou if 0.0 <= iou <= 1.0 else 0
 
 
-def xyhw_2_bbox(x, y, h, w) -> dict[str, int]:
+def xyhw2bbox(x, y, h, w) -> dict[str, int]:
     return {"x1": x, "x2": x + w, "y1": y, "y2": y + h}
 
 
-def fast_bb_proposals(
+def make_bb_proposals(
     image: np.ndarray,
     gt_bboxes,
     gt_labels,
@@ -85,7 +85,6 @@ def fast_bb_proposals(
         )
 
     rand_thresh = n_proposals - len(gt_labels) - min_iou_proposals
-
     ss = cv2.ximgproc.segmentation.createSelectiveSearchSegmentation()  # type: ignore
 
     ss.setBaseImage(image)
@@ -104,8 +103,8 @@ def fast_bb_proposals(
         max_iou = 0
 
         for gt_xywh, gt_label in zip(gt_bboxes, gt_labels):
-            proposed_bbox = xyhw_2_bbox(*proposed_xywh)
-            gt_bbox = xyhw_2_bbox(*gt_xywh)
+            proposed_bbox = xyhw2bbox(*proposed_xywh)
+            gt_bbox = xyhw2bbox(*gt_xywh)
             iou = calc_iou(proposed_bbox, gt_bbox)
 
             if iou > iou_object_thresh and iou > max_iou:
@@ -126,14 +125,85 @@ def fast_bb_proposals(
     return samples
 
 
-def proposal_mp_task(
-    info: dict, imgs_folder: Path, logger: Logger = getLogger(__file__)
-) -> int:
-    orientation_switch = {3: 180, 6: 270, 8: 90}
-    ORIENTATION_FLAG = 274
+def make_bb_proposals_np(
+    image: np.ndarray,
+    gt_bboxes,
+    gt_labels,
+    img_id: int,
+    n_proposals: int = 2000,
+    iou_object_thresh: float = 0.4,
+    iou_bg_tresh: float = 0.2,
+    min_iou_proposals: int = 16,
+    inc_k: int = 150,
+    logger: Logger = getLogger(__file__),
+) -> list:
 
+    if len(gt_bboxes) != len(gt_labels):
+        logger.error(
+            f"Not same length of gt_boxes and labels {len(gt_bboxes) = }, {len(gt_labels) = }"
+        )
+        return []
+
+    ss = cv2.ximgproc.segmentation.createSelectiveSearchSegmentation()  # type: ignore
+    ss.setBaseImage(image)
+    ss.switchToSelectiveSearchFast(inc_k=inc_k)
+    proposals = ss.process()
+
+    idxs = np.array(
+        np.meshgrid(range(len(proposals)), range(len(gt_bboxes)))
+    ).T.reshape(-1, 2)
+
+    ious = np.hstack([idxs, np.zeros((idxs.shape[0], 1))])
+    for idx, [p_idx, gt_idx] in tqdm(enumerate(idxs), total=idxs.shape[0]):
+        p_bbox = xyhw2bbox(*proposals[p_idx])
+        gt_bbox = xyhw2bbox(*gt_bboxes[gt_idx])
+        ious[idx, 2] = calc_iou(p_bbox, gt_bbox)
+
+    ious_above_thresh = ious[ious[:, 2] > iou_object_thresh]
+    ious_below_treshold = ious[ious[:, 2] < iou_bg_tresh]
+
+    if ious_above_thresh.shape[0] < min_iou_proposals:
+        logger.warning(
+            f"img: {img_id} found {ious_above_thresh.shape[0]} ious above threshold = {iou_object_thresh}"
+        )
+
+    rand_above_idx = np.random.choice(ious_above_thresh.shape[0], min_iou_proposals)
+
+    # Finding the the remaining samples below
+    num_fills = n_proposals - min_iou_proposals - len(gt_bboxes)
+    rand_below_idx = np.random.choice(ious_below_treshold.shape[0], num_fills)
+
+    # Putting it all into a list
+    return_list = []
+    for idx in rand_above_idx:  # type: ignore
+        p_idx, gt_idx, _ = ious[idx]
+        proposal_xywh = proposals[int(p_idx)]
+        gt_label = gt_labels[int(gt_idx)]
+        return_list.append([*map(int, proposal_xywh), gt_label])
+
+    for idx in rand_below_idx:  # type: ignore
+        p_idx, gt_idx, _ = ious[idx]
+        proposal_xywh = proposals[int(p_idx)]
+        gt_label = "Background"
+        return_list.append([*map(int, proposal_xywh), gt_label])
+
+    for gt_xywh, gt_label in zip(gt_bboxes, gt_labels):
+        return_list.append([*gt_xywh, gt_label])
+
+    return return_list
+
+
+orientation_switch = {3: 180, 6: 270, 8: 90}
+ORIENTATION_FLAG = 274
+
+
+def proposal_mp_task(
+        info: dict, imgs_folder: Path, out_path: Path,logger: Logger = getLogger(__file__)
+) -> None:
     [img_path, img_id, bboxs, labels] = info.values()
     img_path = imgs_folder / img_path
+
+    logger.debug(f"Computing proposals for {img_id = }")
 
     with Image.open(img_path) as file:
         ori_flag = file.getexif().get(ORIENTATION_FLAG, None)
@@ -142,29 +212,15 @@ def proposal_mp_task(
         img = file.rotate(rot, expand=True)
         img = np.array(img)
 
-        logger.debug(f"Computing proposals for {img_id = }")
-        proposals = fast_bb_proposals(img, bboxs, labels)
-
-        num_ious_found = sum([x[-1] != "Background" for x in proposals])
-
-        if num_ious_found < 16:
-            logger.warning(
-                f"Did not find 16 iou's > .5\n\t{img_id = }\n\tFound {num_ious_found} iou's in total"
-            )
-        else:
-            logger.info(
-                f"Found 16 <= iou's for iou_treshold = .5\n\t{img_id = }\n\tFound {num_ious_found} iou's in total"
-            )
+        proposals = make_bb_proposals(img, bboxs, labels)
 
         ## Write proposals to json file
         with open(out_path / f"{img_id}_proposal.json", "w") as fp:
             logger.info(f"Saving proposals for {img_id = }")
             json.dump(proposals, fp, indent=2)
 
-    return 1
 
-
-def generate_proposals(out_folder: Path, annot_path: Path):
+def generate_proposals(img_folder: Path, out_folder: Path, annot_path: Path):
     with open(annot_path, "r") as f:
         img_info = json.load(f)["images"]
 
@@ -172,22 +228,32 @@ def generate_proposals(out_folder: Path, annot_path: Path):
     with mp.Pool(processes=mp.cpu_count() - 1) as pool:
         logger.info(f"Spawned pool with {mp.cpu_count()} workers")
         results = [
-            pool.apply_async(proposal_mp_task, (info, out_folder))
+            pool.apply_async(proposal_mp_task, (info, img_folder, out_folder))
             for info in tqdm(img_info[:10], desc="jobs applied: ")
         ]
         [r.get() for r in tqdm(results, desc="jobs processed: ")]
+
 
 if __name__ == "__main__":
     # Logging
     log_path = get_project12_root() / "log"
     logger = init_logger(__file__, True, log_path)
 
+    data_path = get_project12_root() / "data/data_wastedetection"
     out_path = get_project12_root() / "proposals"
-    annot_file_path = out_path / "annotations.json"
 
     if not out_path.is_dir():
-        yn = input("Did not find a folder with name proposals in ")
+        yn = input(
+            "Did not find a folder with name proposals in. Do you want me to create one? (y/n)"
+        )
+        if yn == "y":
+            os.mkdir(out_path)
+        else:
+            raise Exception(
+                f"No dir created, can't continue, please make sure {out_path = } exists"
+            )
 
-    proposals = generate_proposals(
-        out_folder=out_path, annot_path=annot_file_path
-    )
+    for split in ["train", "validation", "test"]:
+        logger.info(f"Beginning to find proposals for {split = }")
+        annot_file_path = data_path / f"{split}_data.json"
+        generate_proposals(data_path, out_path, annot_file_path)
