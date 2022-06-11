@@ -50,18 +50,6 @@ labels = all_super_cat
 b, classes = np.unique(labels, return_inverse=True)
 
 
-#(test_img, y) = next(iter(test_data))
-#val_iterator = list(iter(val_data))
-
-#for val_batch in range(len(val_iterator)):
-#test_img, tensor_labels, img_path, BB = list(iter(val_data))[0]
-
-#logits = new_model(test_img, training=False)
-#probs = tf.nn.softmax(logits,axis=1)
-#predicted = K.cast(K.argmax(logits, axis=1), "uint8")
-#all_selected_boxes, all_selected_probs, all_selected_preds = NMS(BB, predicted, probs, classes, iout = 0.5, st = 0.2, max_out = 10)
-
-
 BB_all_predicted = []
 bb_class = []
 bb_confidence = []
@@ -111,13 +99,12 @@ BB_all_predicted = tf.convert_to_tensor(np.array(BB_all_predicted),dtype=tf.floa
 bb_confidence = tf.convert_to_tensor(np.array(bb_confidence),dtype=tf.float32)
 bb_class = tf.convert_to_tensor(np.array(bb_class),dtype=tf.float32)
 
-
-
 #remove background objects 
 idx = K.cast(np.where(bb_class.numpy()!=28)[0], tf.int32)
 bb_class = tf.gather(bb_class, idx)
 bb_confidence = tf.gather(bb_confidence, idx)
 BB_all_predicted = tf.gather(BB_all_predicted, idx)
+
 
 # NMS post processing
 print("Running NMS post-processing")
@@ -136,7 +123,7 @@ BBs = [BB_all_predicted,all_selected_boxes]
 probss = [bb_confidence,all_selected_probs]
 predss = [bb_class,all_selected_preds]
 
-tits = ["before NMS", "after NMS"]
+tits = ["Before NMS", "After NMS"]
 
 for m in range(2):
     axs[m].imshow(base_img)
@@ -147,9 +134,10 @@ for m in range(2):
 
     for n, (bb,pred,prob) in enumerate(zip(BB_plot.numpy(),pred_plot.numpy().squeeze(),prob_plot.numpy())):
         
-        rgba = cmap(n/prob_plot.shape[0])
+        #rgba = cmap(n/prob_plot.shape[0])
+        rgba = cmap(pred/len(classes[:-1]))
 
-        rect = patches.Rectangle((bb[0],bb[1]), bb[2], bb[3], linewidth=1,
+        rect = patches.Rectangle((bb[0],bb[1]), bb[2], bb[3], linewidth=1.5,
                             edgecolor=rgba, facecolor="none")
         axs[m].add_patch(rect)
 
@@ -159,10 +147,9 @@ for m in range(2):
         object_text = f"{pred_label}, p={pred_prob:.2f}"
 
         axs[m].text(bb[0],bb[1], object_text, color='red', 
-            bbox=dict(facecolor='white', edgecolor='black'))
+            bbox=dict(facecolor='white', edgecolor='black'),fontsize=10)
 
-        axs[m].title.set_text(tits[m])
-
+        axs[m].set_title(tits[m],fontsize=15,x=0.5, y=1.1)
 
 
 fig_path = PROJECT_ROOT.parent / "project12/reports/figures/Objects_detected.png" 

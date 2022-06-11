@@ -27,15 +27,12 @@ if __name__ == "__main__":
     train_dict = {}
     val_dict = {}
     test_dict = {}
-    pattern = re.compile(r"(\d+)\_.*\.json")
+    # pattern = re.compile(r"(\d+)_.*\.json")
     for file in map(str, proposal_path.iterdir()):
-        pats = pattern.findall(file)
-        if len(pats) == 0:
-            continue
-        if len(pats) > 1:
-            print(file)
-
-        img_id = int(pats[0])
+        if ".gitkeep" in file:
+              continue
+        img_id = int(file.split("/")[-1].split("_")[0])
+        print(img_id)
         if img_id in train_ids:
             train_dict[str(img_id)] = json.load(open(file))  
         elif img_id in val_ids:
