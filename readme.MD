@@ -1,3 +1,13 @@
+```
+____     ______  __  __                   ____     __       ____     __  __    
+/\  _`\  /\__  _\/\ \/\ \                 /\  _`\  /\ \     /\  _`\  /\ \/\ \   
+\ \ \/\ \\/_/\ \/\ \ \ \ \                \ \ \/\ \\ \ \    \ \ \/\_\\ \ \ \ \  
+ \ \ \ \ \  \ \ \ \ \ \ \ \      _______   \ \ \ \ \\ \ \  __\ \ \/_/_\ \ \ \ \ 
+  \ \ \_\ \  \ \ \ \ \ \_\ \    /\______\   \ \ \_\ \\ \ \L\ \\ \ \L\ \\ \ \_/ \
+   \ \____/   \ \_\ \ \_____\   \/______/    \ \____/ \ \____/ \ \____/ \ `\___/
+    \/___/     \/_/  \/_____/                 \/___/   \/___/   \/___/   `\/__/ 
+```
+
 ## Notes
 ### **Link to overview of optuna and wandb integration for creating cool sweep plots**
 [https://www.h4pz.co/blog/2020/10/3/optuna-and-wandb](Link)
@@ -17,5 +27,5 @@ The package specifics is placed in the `setup.py` file, and to install run
 
 Both are listed, but its proberbly best only to use venv or conda, so choose one ;)
 
-# TODO
-Add makes for root makefile to make things faster
+### **TODO**
+- [x] Add makes for root makefile to make things faster
