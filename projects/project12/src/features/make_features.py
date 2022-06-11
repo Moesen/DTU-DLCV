@@ -72,7 +72,7 @@ def fast_bb_proposals(
     gt_bboxes,
     gt_labels,
     n_proposals: int = 2000,
-    iou_object_thresh: float = 0.5,
+    iou_object_thresh: float = 0.4,
     iou_bg_tresh: float = 0.2,
     min_iou_proposals: int = 16,
     inc_k: int = 150,
@@ -108,7 +108,7 @@ def fast_bb_proposals(
             gt_bbox = xyhw_2_bbox(*gt_xywh)
             iou = calc_iou(proposed_bbox, gt_bbox)
 
-            if iou > 0.5 and iou > max_iou:
+            if iou > iou_object_thresh and iou > max_iou:
                 max_iou = iou
                 proposed_label = gt_label
 
@@ -169,7 +169,7 @@ def generate_proposals(imgs_folder: Path, annot_path: Path):
         logger.info(f"Spawned pool with {mp.cpu_count()} workers")
         results = [
             pool.apply_async(proposal_mp_task, (info, imgs_folder))
-            for info in tqdm(img_info, desc="jobs applied: ")
+            for info in tqdm(img_info[:100], desc="jobs applied: ")
         ]
 
         for proposals, img_id in [
