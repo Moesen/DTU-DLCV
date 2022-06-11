@@ -9,11 +9,11 @@ import datetime
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
-save_model = False
+save_model = True
 img_size_loader = (128,128)
 img_size = (128,128,3)
 train_batch_size = 64
-test_batch_size = 40
+test_batch_size = 10
 
 # REMEBER TO ADD ONE IF THE BACKGROUND IS NOT INCLUDED 
 num_classes = 29
@@ -28,7 +28,7 @@ train_dataset = load_dataset_rcnn(
     image_size=img_size_loader,
 )
 test_data = load_dataset_rcnn(
-    split="test",
+    split="validation",
     normalize=False,
     batch_size=test_batch_size,
     tune_for_perfomance=False,
@@ -66,11 +66,12 @@ model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4),
 model.summary()
 
 history = model.fit(train_dataset,
-                    epochs=50)
+                    epochs=10,)
+                    #validation_data=test_data)
 
 if save_model:
     PROJECT_ROOT = get_project12_root()
-    model_name = 'hotdog_conv_'+datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    model_name = 'trash_conv_'+datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     model_path = PROJECT_ROOT / "models" / model_name
     model.save(model_path)
 
