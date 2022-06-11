@@ -27,5 +27,5 @@ The package specifics is placed in the `setup.py` file, and to install run
 
 Both are listed, but its proberbly best only to use venv or conda, so choose one ;)
 
-# TODO
+### **TODO**
 - [x] Add makes for root makefile to make things faster
