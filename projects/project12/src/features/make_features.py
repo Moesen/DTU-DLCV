@@ -169,7 +169,7 @@ def generate_proposals(imgs_folder: Path, annot_path: Path):
         logger.info(f"Spawned pool with {mp.cpu_count()} workers")
         results = [
             pool.apply_async(proposal_mp_task, (info, imgs_folder))
-            for info in tqdm(img_info[:100], desc="jobs applied: ")
+            for info in tqdm(img_info[:10], desc="jobs applied: ")
         ]
 
         for proposals, img_id in [
