@@ -116,7 +116,7 @@ def fast_bb_proposals(
         obj_check = max_iou > iou_object_thresh and proposed_label != "Background"
         # Checking if iou < background threshold
         # and if there is room in samples list
-        bg_check = len(samples) < rand_thresh + iou_count and max_iou < iou_bg_tresh 
+        bg_check = len(samples) < rand_thresh + iou_count and max_iou < iou_bg_tresh
         if obj_check or bg_check:
             samples.append([*map(int, proposed_xywh), proposed_label])
         if obj_check:
@@ -128,7 +128,7 @@ def fast_bb_proposals(
 
 def proposal_mp_task(
     info: dict, imgs_folder: Path, logger: Logger = getLogger(__file__)
-) -> tuple[list, str]:
+) -> int:
     orientation_switch = {3: 180, 6: 270, 8: 90}
     ORIENTATION_FLAG = 274
 
@@ -156,48 +156,38 @@ def proposal_mp_task(
                 f"Found 16 <= iou's for iou_treshold = .5\n\t{img_id = }\n\tFound {num_ious_found} iou's in total"
             )
 
-    return proposals, img_id
+        ## Write proposals to json file
+        with open(out_path / f"{img_id}_proposal.json", "w") as fp:
+            logger.info(f"Saving proposals for {img_id = }")
+            json.dump(proposals, fp, indent=2)
+
+    return 1
 
 
-def generate_proposals(imgs_folder: Path, annot_path: Path):
+def generate_proposals(out_folder: Path, annot_path: Path):
     with open(annot_path, "r") as f:
         img_info = json.load(f)["images"]
 
     logger = getLogger(__file__)
-    proposal_dict = {}
     with mp.Pool(processes=mp.cpu_count() - 1) as pool:
         logger.info(f"Spawned pool with {mp.cpu_count()} workers")
         results = [
-            pool.apply_async(proposal_mp_task, (info, imgs_folder))
+            pool.apply_async(proposal_mp_task, (info, out_folder))
             for info in tqdm(img_info[:10], desc="jobs applied: ")
         ]
-
-        for proposals, img_id in [
-            r.get() for r in tqdm(results, desc="jobs processed: ")
-        ]:
-            proposal_dict[img_id] = proposals
-
-    return proposal_dict
-
+        [r.get() for r in tqdm(results, desc="jobs processed: ")]
 
 if __name__ == "__main__":
     # Logging
     log_path = get_project12_root() / "log"
     logger = init_logger(__file__, True, log_path)
 
-    for split in ["train", "validation", "test"]:
-        logger.info(f"Beginning to propose for: {split}")
+    out_path = get_project12_root() / "proposals"
+    annot_file_path = out_path / "annotations.json"
 
-        data_path = get_project12_root() / "data"
-        dataset_path = data_path / "data_wastedetection"
+    if not out_path.is_dir():
+        yn = input("Did not find a folder with name proposals in ")
 
-        # Annotation file path with bboxes and labels
-        annot_file_path = dataset_path / f"{split}_data.json"
-
-        proposals = generate_proposals(
-            imgs_folder=dataset_path, annot_path=annot_file_path
-        )
-
-        ## Write proposals to json file
-        with open(dataset_path / f"{split}_proposals.json", "w") as fp:
-            json.dump(proposals, fp, indent=2)
+    proposals = generate_proposals(
+        out_folder=out_path, annot_path=annot_file_path
+    )
