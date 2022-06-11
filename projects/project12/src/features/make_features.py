@@ -171,7 +171,7 @@ def make_bb_proposals_np(
 
     # Finding the the remaining samples below
     num_fills = n_proposals - min_iou_proposals - len(gt_bboxes)
-    rand_below_idx = np.random.choice(ious_below_treshold.shape[0], num_fills)
+    rand_idx = np.random.choice(ious.shape[0], num_fills)
 
     # Putting it all into a list
     return_list = []
@@ -181,7 +181,7 @@ def make_bb_proposals_np(
         gt_label = gt_labels[int(gt_idx)]
         return_list.append([*map(int, proposal_xywh), gt_label])
 
-    for idx in rand_below_idx:  # type: ignore
+    for idx in rand_idx:  # type: ignore
         p_idx, gt_idx, _ = ious[idx]
         proposal_xywh = proposals[int(p_idx)]
         gt_label = "Background"
@@ -229,7 +229,7 @@ def generate_proposals(img_folder: Path, out_folder: Path, annot_path: Path):
         logger.info(f"Spawned pool with {mp.cpu_count()} workers")
         results = [
             pool.apply_async(proposal_mp_task, (info, img_folder, out_folder))
-            for info in tqdm(img_info[:10], desc="jobs applied: ")
+            for info in tqdm(img_info, desc="jobs applied: ")
         ]
         [r.get() for r in tqdm(results, desc="jobs processed: ")]
 
