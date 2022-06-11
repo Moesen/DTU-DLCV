@@ -1,11 +1,14 @@
 
-import matplotlib as mpl
-import matplotlib.pyplot as plt
+
+from typing import List
 import numpy as np
 import tensorflow as tf
 from keras import backend as K
-import matplotlib.patches as patches
-from projects.project11.src.data.dataloader import load_dataset
+
+import matplotlib.image as img
+import json
+
+from projects.project12.src.data.dataloader import load_dataset_rcnn
 from projects.project12.src.models.post_processing import NMS
 
 from projects.utils import get_project12_root
@@ -17,9 +20,8 @@ from projects.project12.src.metrics.utils import *
 
 
 PROJECT_ROOT = get_project12_root()
-model_name = 'hotdog_conv_20220604214318' #'hotdog_conv_20220604190940'
-#model_path = PROJECT_ROOT / "models" / model_name
-model_path = "/Users/simonyamazaki/Documents/2_M/DTU-DLCV/projects/project1/models/hotdog_conv_20220604214318"
+model_name = "trash_conv_20220611135130" #'hotdog_conv_20220604214318' #'hotdog_conv_20220604190940'
+model_path = PROJECT_ROOT / "models" / model_name
 
 new_model = tf.keras.models.load_model(model_path)
 
@@ -29,18 +31,26 @@ new_model.summary()
 
 ### Mean average Precision (mAP) 
 
-batch_size = 2
-img_size = (64,64)
+batch_size = 100
+img_size = (128,128)
 
-test_data = load_dataset(
-        train=False,
-        normalize=True,
-        batch_size=batch_size,
-        tune_for_perfomance=False,
-        image_size=img_size,
-    )
+val_data = load_dataset_rcnn(
+    split="validation",
+    normalize=False,
+    use_data_augmentation=False,
+    batch_size=batch_size,
+    tune_for_perfomance=False,
+    image_size=img_size,
+    validation_mode = "object"
+)
 
-labels = test_data._input_dataset.class_names
+path = PROJECT_ROOT / "data/data_wastedetection"
+with open(path / "annotations.json", "r") as f:
+    dataset_json = json.loads(f.read())
+catid2supercat = {i["id"]: i["supercategory"] for i in dataset_json["categories"]}
+all_super_cat = list(set(i["supercategory"] for i in dataset_json["categories"]))
+all_super_cat.append("Background")
+labels = all_super_cat
 b, classes = np.unique(labels, return_inverse=True)
 
 
@@ -48,37 +58,64 @@ BB_all_predicted = []
 bb_class = []
 bb_confidence = []
 
-img_id_now = -1 
-
 myBoundingBoxes = BoundingBoxes()
 
-#### LOOP ####
-for _ in range(1):
-    (bb_img, y) = next(iter(test_data))
 
-    img_id = 0
-    GT_bb = np.array([[30,30,15,15], [32,32,15,15]])
-    GT_class = ["hotdog","hotdog"] #[1,1]
+test_img, tensor_labels, img_path0, BB = next(iter(val_data))
+img_path0 = img_path0[0].numpy().decode("UTF-8")
 
-    imgSize = tuple(bb_img.shape[1:3])
+with open(path / f"validation_data.json", "r") as f:
+    val_json = json.loads(f.read())  
 
-    #predicted proposal bounding boxes in the current batch
-    BB = np.array([[30,30,15,15], [32,32,15,15]])
+img_path_json = val_json["images"]
+
+with open(path / f"annotations.json", "r") as f:
+    anno_json = json.loads(f.read())  
+
+anno_json_dict = anno_json["images"]
+
+
+print("Predicting all batches for all images")
+
+n_batches = 1000/batch_size
+from tqdm import tqdm
+
+for n,(bb_img, tensor_labels, img_path, BB) in tqdm(
+        enumerate(val_data), total=len(val_data)
+    ):
+    
+    #print('Processing image batch: %i' % n)
 
     #compute classification predictions on the bb cropped images with bounding boxes = BB
     logits = new_model(bb_img, training=False)
     probs = tf.nn.softmax(logits,axis=1)
     predicted = K.cast(K.argmax(logits, axis=1), "uint8")
 
-    BB_all_predicted.append(BB)
+    BB_all_predicted.append( BB.numpy() )
     bb_confidence.append( probs.numpy().max(1) )
     bb_class.append( predicted.numpy() )
-
+    
     #only perform the below if all bounding boxes are predicted in a single image
-    if True: #img_id_now != img_id:
+    if (n+1) % n_batches == 0:
+        #print("Adding bounding boxes")
+
+        img_path = img_path[0].numpy().decode("UTF-8")
+
+        for im in img_path_json:
+            if im["path"] == img_path:
+                GT_bb = np.array(im["bboxs"])
+                GT_class = im["labels"]
+
+        for im in anno_json_dict:
+            if im["file_name"] == img_path:
+                imgSize = (im["width"], im["height"])
+
+        #GT_bb = np.array([[30,30,15,15], [32,32,15,15]])
+        #GT_class = ["hotdog","hotdog"] #[1,1]
+
         #add GT bbs 
         for gtb,gtc in zip(GT_bb,GT_class):
-            gt_boundingBox = BoundingBox(imageName=img_id, classId=gtc,#'person', 
+            gt_boundingBox = BoundingBox(imageName=img_path, classId=gtc, 
                                     x=gtb[0], y=gtb[1], w=gtb[2], h=gtb[3], typeCoordinates=CoordinatesType.Absolute,
                                 bbType=BBType.GroundTruth, format=BBFormat.XYWH, imgSize=imgSize)
             myBoundingBoxes.addBoundingBox(gt_boundingBox)
@@ -89,25 +126,25 @@ for _ in range(1):
 
         #reformat from shape (n_batches, batch_size, 1) -> (n_batches*batch_size, 1) = (2000,1)
         bb_class = np.array(bb_class)
-        bb_class = bb_class.reshape((-1,bb_class.shape[-1]))
+        bb_class = bb_class.flatten()[:,np.newaxis]
 
         #reformat from shape (n_batches, batch_size, 1) -> (n_batches*batch_size, 1) = (2000,1)
         bb_confidence = np.array(bb_confidence)
-        bb_confidence = bb_confidence.reshape((-1,bb_confidence.shape[-1]))
+        bb_confidence = bb_confidence.flatten()[:,np.newaxis]
 
         #cast to tensorflow tensors
-        BB_all_predicted = tf.convert_to_tensor(np.array(BB_all_predicted),dtype=tf.float32)
-        bb_confidence = tf.convert_to_tensor(np.array(bb_confidence),dtype=tf.float32)
-        bb_class = tf.convert_to_tensor(np.array(bb_class),dtype=tf.float32)
+        BB_all_predicted = tf.convert_to_tensor(BB_all_predicted,dtype=tf.float32)
+        bb_confidence = tf.convert_to_tensor(bb_confidence,dtype=tf.float32)
+        bb_class = tf.convert_to_tensor(bb_class,dtype=tf.float32)
 
         # NMS post processing
-        bb_selected, bb_confidence_selected, bb_class_selected = NMS(BB_all_predicted, bb_class, bb_confidence, classes, iout = 0.5, st = 0.2, max_out = 10)
+        bb_selected, bb_confidence_selected, bb_class_selected = NMS(BB_all_predicted, bb_class, bb_confidence, classes, iout = 0.5, st = 0.4, max_out = 10)
 
         bb_labels_selected = [labels[int(i)] for i in bb_class_selected.numpy().squeeze().tolist()]
 
         #add detected bbs
         for db,dc,conf in zip(bb_selected, bb_labels_selected, bb_confidence_selected):
-            detected_boundingBox = BoundingBox(imageName=img_id, classId=dc, classConfidence=conf,
+            detected_boundingBox = BoundingBox(imageName=img_path, classId=dc, classConfidence=conf,
                                     x=db[0], y=db[1], w=db[2], h=db[3], typeCoordinates=CoordinatesType.Absolute,
                                     bbType=BBType.Detected, format=BBFormat.XYWH, imgSize=imgSize)
 
@@ -117,7 +154,7 @@ for _ in range(1):
         bb_class = []
         bb_confidence = []
         
-    #img_id_now = img_id
+        
 
 
 boundingboxes = myBoundingBoxes

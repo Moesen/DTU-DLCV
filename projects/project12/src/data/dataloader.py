@@ -209,6 +209,7 @@ def load_dataset_rcnn(
     normalize: bool = True,
     image_size: tuple = (32, 32),
     split: str = "train",
+    validation_mode: str = None,
     tune_for_perfomance: bool = False,
     use_data_augmentation: bool = False,
     augmentation_flip: str = "horizontal_and_vertical",
@@ -221,6 +222,10 @@ def load_dataset_rcnn(
     Small note: To get class_names do dataset._input_dataset.class_names
     unless normalize = False, then just do dataset.class_names
     """
+
+    ##
+    TAKE_LAST_N = 1000
+
     proot_path = get_project12_root()
     path = proot_path / "data/data_wastedetection"
 
@@ -240,14 +245,13 @@ def load_dataset_rcnn(
         proposal_labels = []
         proposal_boxes = []
         for p in proposals:
-            proposal_labels.append([cat2id_json[i[-1]] for i in p])
-            proposal_boxes.append([i[:-1] for i in p])
+            proposal_labels.append([cat2id_json[i[-1]] for i in p][-2000:])
+            proposal_boxes.append([i[:-1] for i in p][-2000:])
             
         images = images_json["images"]
         images_ids = [i["id"] for i in images]
         images_paths = [i["path"] for i in images]
         images_paths_proposals = [[images_paths[images_ids.index(int(i))]] for i in data_json.keys()]
-
         dataset = tf.data.Dataset.from_tensor_slices(
             (images_paths_proposals, proposal_boxes, proposal_labels)
         )
@@ -294,14 +298,14 @@ def load_dataset_rcnn(
         )
 
     else:
-        assert 2000 % batch_size == 0, "When split is train/test 2000 needs to be divideable by batch_size to make sure that one batch only corresponds to one image"
-        one_image_n_batches = 2000 // batch_size
+        assert TAKE_LAST_N % batch_size == 0, "When split is train/test 2000 needs to be divideable by batch_size to make sure that one batch only corresponds to one image"
+        one_image_n_batches = TAKE_LAST_N // batch_size
         proposals = list(data_json.values())
         proposal_labels = []
         proposal_boxes = []
         for p in proposals:
-            proposal_labels.append([cat2id_json[i[-1]] for i in p])
-            proposal_boxes.append([i[:-1] for i in p])
+            proposal_labels.append([cat2id_json[i[-1]] for i in p][-TAKE_LAST_N:])
+            proposal_boxes.append([i[:-1] for i in p][-TAKE_LAST_N:])
 
         images = images_json["images"]
         images_ids = [i["id"] for i in images]
@@ -316,7 +320,7 @@ def load_dataset_rcnn(
             boxes = proposal_boxes[i]
             labels = proposal_labels[i]
             for j in range(one_image_n_batches):
-                new_batches_images.append([img[0]])
+                new_batches_images.append([img[0]] * int(TAKE_LAST_N/one_image_n_batches))
                 new_batches_proposals_boxes.append(boxes[j*batch_size:j*batch_size+batch_size])
                 new_batches_proposals_labels.append(labels[j*batch_size:j*batch_size+batch_size])
 
@@ -326,7 +330,7 @@ def load_dataset_rcnn(
 
         @tf.function
         def make_img_batch_test(img_path, img_boxes, img_labels):
-            base_img = tf.io.read_file(str(path) + "/" + tf.squeeze(img_path))
+            base_img = tf.io.read_file(str(path) + "/" + tf.squeeze(img_path[0]))
             base_img = tf.image.decode_image(base_img, channels=3, dtype=tf.float32)
             tensor_batch = []
             tensor_labels = []
@@ -345,8 +349,13 @@ def load_dataset_rcnn(
             tensor_batch = tf.convert_to_tensor(tensor_batch)
             tensor_labels = tf.convert_to_tensor(tensor_labels)
             tensor_boxes = tf.convert_to_tensor(tensor_boxes)
-
-            return tensor_batch, tensor_labels, img_path, tensor_boxes
+            
+            if validation_mode == "object":
+                print("Object validation evaluation mode")
+                return tensor_batch, tensor_labels, img_path, tensor_boxes
+            else:
+                print("Object validation classification mode")
+                return tensor_batch, tensor_labels
         
         dataset = (
             dataset.map(lambda x, y, z: make_img_batch_test(x, y, z))
