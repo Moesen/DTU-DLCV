@@ -9,6 +9,7 @@ from keras import backend as K
 
 import matplotlib.patches as patches
 from projects.project11.src.data.dataloader import load_dataset
+from projects.project12.src.data.dataloader import load_dataset_rcnn
 from projects.project12.src.models.post_processing import NMS
 
 from projects.utils import get_project12_root
@@ -31,29 +32,35 @@ new_model = tf.keras.models.load_model(model_path)
 # Check its architecture
 new_model.summary()
 
-batch_size=1
-img_size = (64,64)
+batch_size = 2
+img_size = (128,128)
 
-test_data = load_dataset(
+"""test_data = load_dataset(
         train=False,
         normalize=True,
         batch_size=batch_size,
         tune_for_perfomance=False,
         image_size=img_size,
-    )
+    )"""
 
-(test_img, y) = next(iter(test_data))
 
-test_img = test_img[0,:,:,:]
-test_img = tf.expand_dims(test_img, axis=0)
-test_img = tf.concat([test_img,test_img], axis=0)
+test_data = load_dataset_rcnn(
+    batch_size = batch_size
+    normalize = False,
+    image_size = img_size,
+    split: str = "test",
+    pct_not_background: float = 0.25
+)
 
-#proposal BB cropped images 
-#yield: prop_imgs, BB
-# with the first dimension as the number of proposals 
+#(test_img, y) = next(iter(test_data))
+test_img, tensor_labels, img_path = next(iter(test_data))
 
-BB = np.array([[30,30,15,15], [32,32,15,15]])
-BB = tf.convert_to_tensor(BB,dtype=tf.float32)
+#test_img = test_img[0,:,:,:]
+#test_img = tf.expand_dims(test_img, axis=0)
+#test_img = tf.concat([test_img,test_img], axis=0)
+
+#BB = np.array([[30,30,15,15], [32,32,15,15]])
+#BB = tf.convert_to_tensor(BB,dtype=tf.float32)
 
 
 logits = new_model(test_img, training=False)

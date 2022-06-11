@@ -302,7 +302,7 @@ def load_dataset_rcnn(
         for p in proposals:
             proposal_labels.append([cat2id_json[i[-1]] for i in p])
             proposal_boxes.append([i[:-1] for i in p])
-            
+
         images = images_json["images"]
         images_ids = [i["id"] for i in images]
         images_paths = [i["path"] for i in images]
@@ -330,6 +330,7 @@ def load_dataset_rcnn(
             base_img = tf.image.decode_image(base_img, channels=3, dtype=tf.float32)
             tensor_batch = []
             tensor_labels = []
+            tensor_boxes = []
             for i in range(img_boxes.shape[0]):
                 bbox = img_boxes[i]
                 label = img_labels[i]
@@ -339,10 +340,13 @@ def load_dataset_rcnn(
                 img_crop = tf.image.resize(img_crop, [image_size[0], image_size[1]])
                 tensor_batch.append(img_crop)
                 tensor_labels.append(label)
+                tensor_boxes.append(bbox)
             
             tensor_batch = tf.convert_to_tensor(tensor_batch)
             tensor_labels = tf.convert_to_tensor(tensor_labels)
-            return tensor_batch, tensor_labels, img_path
+            tensor_boxes = tf.convert_to_tensor(tensor_boxes)
+
+            return tensor_batch, tensor_labels, img_path, tensor_boxes
         
         dataset = (
             dataset.map(lambda x, y, z: make_img_batch_test(x, y, z))
