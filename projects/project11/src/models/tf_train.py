@@ -51,15 +51,19 @@ out_dict = defaultdict(list)
 
 if __name__ == "__main__":
     save_model = True
-    img_size = (32, 32)
+    img_size = (160, 160)
     batch_size = 64
 
     train_dataset = load_dataset(
         train=True,
         normalize=True,
+        shuffle=True,
         batch_size=batch_size,
         tune_for_perfomance=False,
         use_data_augmentation=True,
+        augmentation_rotation= 0.1,
+        augmentation_contrast= 0.55,
+        augmentation_flip = "vertical",
         image_size=img_size,
     )
 
@@ -72,11 +76,11 @@ if __name__ == "__main__":
         image_size=img_size,
     )
 
-    model = optuna_model.build_model(32, 3, 2, (*img_size, 3), do_batchnorm=True, do_dropout=True)
+    model = optuna_model.build_model(46, 5, 2, (*img_size, 3), num_kernels=2, dropout_percentage=0.3, kernel_regularizer_strength=5e-9,do_batchnorm=False, do_dropout=True)
     model.summary()
 
     # Instantiate an optimizer to train the model.
-    optimizer = keras.optimizers.Adam(learning_rate=1e-3)
+    optimizer = keras.optimizers.Adam(learning_rate=1.2e-4)
 
     # Instantiate a loss function.
     loss_fn = keras.losses.SparseCategoricalCrossentropy(from_logits=True)
@@ -85,7 +89,7 @@ if __name__ == "__main__":
     train_acc_metric = keras.metrics.SparseCategoricalAccuracy()
     val_acc_metric = keras.metrics.SparseCategoricalAccuracy()
 
-    epochs = 50
+    epochs = 15
     # for epoch in range(epochs):
     for epoch in tqdm(range(epochs), unit="epoch"):
         print("\nStart of epoch %d" % (epoch,))

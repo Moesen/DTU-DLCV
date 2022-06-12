@@ -186,7 +186,6 @@ bb_confidence = []
 
 #tits = ["Something 1", "Something 2", "Something 3", "Something 4"]
 
-
 for gg, (ii, ax) in enumerate(zip(good_b,axs.ravel())):
     _, _, img_path0, BB = list(iter(val_data))[ii] #31=cans, 41=cans in fence, 51=redbull, 61=can with leaves, 71=wash bottle not trash, 
     img_path0 = img_path0[0].numpy().decode("UTF-8")
