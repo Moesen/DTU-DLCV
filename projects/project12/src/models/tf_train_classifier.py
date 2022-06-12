@@ -12,7 +12,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 save_model = True
 img_size_loader = (128,128)
 img_size = (128,128,3)
-train_batch_size = 64
+train_batch_size = 12
 test_batch_size = 10
 
 # REMEBER TO ADD ONE IF THE BACKGROUND IS NOT INCLUDED 
@@ -77,7 +77,7 @@ model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4),
 model.summary()
 
 history = model.fit(train_dataset,
-                    epochs=5,
+                    epochs=100,
                     validation_data=validation_dataset)
 
 #history = model.fit(validation_dataset,

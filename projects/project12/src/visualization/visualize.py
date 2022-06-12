@@ -16,9 +16,8 @@ from projects.utils import get_project12_root
 
 
 PROJECT_ROOT = get_project12_root()
-model_name = "trash_conv_20220611230431" #"trash_conv_20220611135130" #'hotdog_conv_20220604214318' #'hotdog_conv_20220604190940'
+model_name = "trash_conv_20220612223034" #"trash_conv_20220611135130" #'hotdog_conv_20220604214318' #'hotdog_conv_20220604190940'
 model_path = PROJECT_ROOT / "models" / model_name
-#model_path = "/Users/simonyamazaki/Documents/2_M/DTU-DLCV/projects/project1/models/hotdog_conv_20220604214318"
 
 new_model = tf.keras.models.load_model(model_path)
 
@@ -65,7 +64,8 @@ BB_all_predicted = []
 bb_class = []
 bb_confidence = []
 
-test_img, tensor_labels, img_path0, BB = list(iter(val_data))[nms_idx]#[11] #31=cans, 41=cans in fence, 51=redbull, 61=can with leaves, 71=wash bottle, not trash
+et_eller_andet = list(iter(val_data))
+test_img, tensor_labels, img_path0, BB = et_eller_andet[nms_idx] #[11] #31=cans, 41=cans in fence, 51=redbull, 61=can with leaves, 71=wash bottle, not trash
 img_path0 = img_path0[0].numpy().decode("UTF-8")
 
 #### LOOP ####
@@ -185,11 +185,11 @@ bb_class = []
 bb_confidence = []
 
 #tits = ["Something 1", "Something 2", "Something 3", "Something 4"]
+#test = list(iter(val_data))[ii] #31=cans, 41=cans in fence, 51=redbull, 61=can with leaves, 71=wash bottle not trash, 
 
 for gg, (ii, ax) in enumerate(zip(good_b,axs.ravel())):
-    _, _, img_path0, BB = list(iter(val_data))[ii] #31=cans, 41=cans in fence, 51=redbull, 61=can with leaves, 71=wash bottle not trash, 
+    _, _, img_path0, BB = et_eller_andet[ii] 
     img_path0 = img_path0[0].numpy().decode("UTF-8")
-
     print(gg)
 
     #### LOOP ####
