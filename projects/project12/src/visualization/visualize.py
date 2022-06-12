@@ -25,7 +25,7 @@ new_model = tf.keras.models.load_model(model_path)
 # Check its architecture
 new_model.summary()
 
-score_t = 0.2
+score_t = 0.25
 batch_size = 100
 img_size = (128,128)
 
@@ -126,7 +126,7 @@ base_img = img.imread(base_img_path)
 
 fig, axs = plt.subplots(1,2, figsize=(15,8))
 
-cmap = mpl.cm.get_cmap('Spectral')
+cmap = mpl.cm.get_cmap('jet')
 
 BBs = [BB_all_predicted,all_selected_boxes]
 probss = [bb_confidence,all_selected_probs]
@@ -155,7 +155,7 @@ for m in range(2):
         object_text = f"{pred_label}, p={pred_prob:.2f}"
 
         axs[m].text(bb[0],bb[1], object_text, color='red', 
-            bbox=dict(facecolor='white', edgecolor='black'),fontsize=10)
+            bbox=dict(facecolor='white', edgecolor='black'),fontsize=8)
 
         axs[m].set_title(tits[m],fontsize=15,x=0.5, y=1.1)
 
