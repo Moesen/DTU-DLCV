@@ -39,9 +39,15 @@ def NMS(BB, predicted, probs, classes, iout = 0.5, st = 0.2, max_out = 10):
             bb_c, scores=scores_c, max_output_size=max_output_size, 
             iou_threshold=iou_threshold, score_threshold=score_threshold)
         
-        selected_boxes = tf.gather(bb_c, selected_indices).numpy()
-        selected_probs = tf.gather(scores_c, selected_indices).numpy()
-        selected_preds = tf.gather(pred_c, selected_indices).numpy()
+        if len(idx.numpy())>1:
+            selected_boxes = tf.gather(bb_c, selected_indices).numpy()
+            selected_probs = tf.gather(scores_c, selected_indices).numpy()
+            selected_preds = tf.gather(pred_c, selected_indices).numpy()
+        else:
+            selected_boxes = []
+            selected_probs = []
+            selected_preds = []
+
 
         c_selected_boxes.append(selected_boxes)
         c_selected_probs.append(selected_probs)
