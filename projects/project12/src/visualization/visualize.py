@@ -26,6 +26,9 @@ new_model = tf.keras.models.load_model(model_path)
 new_model.summary()
 
 score_t = 0.25
+good_b = [11, 21, 41, 61]
+
+
 batch_size = 100
 img_size = (128,128)
 
@@ -116,7 +119,7 @@ BB_all_predicted = tf.gather(BB_all_predicted, idx)
 
 # NMS post processing
 print("Running NMS post-processing")
-all_selected_boxes, all_selected_probs, all_selected_preds = NMS(BB_all_predicted, bb_class, bb_confidence, classes[:-1], iout = 0.5, st = 0.4, max_out = 10)
+all_selected_boxes, all_selected_probs, all_selected_preds = NMS(BB_all_predicted, bb_class, bb_confidence, classes[:-1], iout = 0.5, st = scores_t, max_out = 10)
 #all_selected_preds = [labels[int(i)] for i in all_selected_preds.numpy().squeeze().tolist()]
 
 
@@ -178,7 +181,6 @@ BB_all_predicted = []
 bb_class = []
 bb_confidence = []
 
-good_b = [11, 21, 41, 61]
 #tits = ["Something 1", "Something 2", "Something 3", "Something 4"]
 
 
