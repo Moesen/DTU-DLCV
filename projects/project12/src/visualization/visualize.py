@@ -167,7 +167,7 @@ fig_path = PROJECT_ROOT.parent / "project12/reports/figures/Objects_detected.png
 
 plt.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.9, wspace=0.2, hspace=0.2)
 
-plt.savefig(fig_path)
+plt.savefig(fig_path,bbox_inches='tight')
 
 
 
@@ -278,4 +278,4 @@ for gg, (ii, ax) in enumerate(zip(good_b,axs.ravel())):
 fig_path = PROJECT_ROOT.parent / "project12/reports/figures/Objects_detected2.png" 
 plt.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.9, wspace=0.2, hspace=0.2)
 
-plt.savefig(fig_path)
+plt.savefig(fig_path,bbox_inches='tight')
