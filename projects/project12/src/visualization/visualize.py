@@ -27,7 +27,7 @@ new_model.summary()
 
 score_t = 0.25
 good_b = [11, 21, 41, 61]
-
+nms_idx = 41
 
 batch_size = 100
 img_size = (128,128)
@@ -65,7 +65,7 @@ BB_all_predicted = []
 bb_class = []
 bb_confidence = []
 
-test_img, tensor_labels, img_path0, BB = list(iter(val_data))[41]#[11] #31=cans, 41=cans in fence, 51=redbull, 61=can with leaves, 71=wash bottle, not trash
+test_img, tensor_labels, img_path0, BB = list(iter(val_data))[nms_idx]#[11] #31=cans, 41=cans in fence, 51=redbull, 61=can with leaves, 71=wash bottle, not trash
 img_path0 = img_path0[0].numpy().decode("UTF-8")
 
 #### LOOP ####
