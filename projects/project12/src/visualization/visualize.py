@@ -25,6 +25,7 @@ new_model = tf.keras.models.load_model(model_path)
 # Check its architecture
 new_model.summary()
 
+score_t = 0.2
 batch_size = 100
 img_size = (128,128)
 
@@ -177,8 +178,8 @@ BB_all_predicted = []
 bb_class = []
 bb_confidence = []
 
-good_b = [1, 31, 41, 61]
-tits = ["Something 1", "Something 2", "Something 3", "Something 4"]
+good_b = [11, 21, 41, 61]
+#tits = ["Something 1", "Something 2", "Something 3", "Something 4"]
 
 
 for gg, (ii, ax) in enumerate(zip(good_b,axs.ravel())):
@@ -236,7 +237,7 @@ for gg, (ii, ax) in enumerate(zip(good_b,axs.ravel())):
 
     # NMS post processing
     print("Running NMS post-processing")
-    all_selected_boxes, all_selected_probs, all_selected_preds = NMS(BB_all_predicted, bb_class, bb_confidence, classes[:-1], iout = 0.5, st = 0.4, max_out = 10)
+    all_selected_boxes, all_selected_probs, all_selected_preds = NMS(BB_all_predicted, bb_class, bb_confidence, classes[:-1], iout = 0.5, st = score_t, max_out = 20)
 
     BB_all_predicted = []
     bb_class = []
@@ -249,7 +250,7 @@ for gg, (ii, ax) in enumerate(zip(good_b,axs.ravel())):
     prob_plot = all_selected_probs
     pred_plot = all_selected_preds
     
-    ax.set_title(tits[gg],fontsize=15,x=0.5, y=1.1)
+    #ax.set_title(tits[gg],fontsize=15,x=0.5, y=1.1)
     ax.imshow(base_img)
 
     for m, (bb,pred,prob) in enumerate(zip(BB_plot.numpy(),pred_plot.numpy().squeeze(),prob_plot.numpy())):
