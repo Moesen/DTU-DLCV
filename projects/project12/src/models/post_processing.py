@@ -26,9 +26,14 @@ def NMS(BB, predicted, probs, classes, iout = 0.5, st = 0.2, max_out = 10):
 
         idx = K.cast(np.where(predicted.numpy()==c)[0], tf.int32)
 
-        pred_c = tf.gather(predicted, idx)
-        bb_c = tf.gather(BB, idx)
-        scores_c = tf.gather(scores,idx)
+        if len(idx.numpy())>1:
+            pred_c = tf.gather(predicted, idx)
+            bb_c = tf.gather(BB, idx)
+            scores_c = tf.gather(scores,idx)
+        else:
+            pred_c = predicted
+            bb_c = BB
+            scores_c = scores
 
         selected_indices = tf.image.non_max_suppression(
             bb_c, scores=scores_c, max_output_size=max_output_size, 

@@ -306,7 +306,7 @@ def load_dataset_rcnn(
             return tensor_batch, tensor_labels
         
         dataset = (
-            dataset.map(lambda x, y, z: make_img_batch_train(x, y, z))
+            dataset.map(lambda x, y, z: make_img_batch_train(x, y, z)  )
         )
 
     else:
