@@ -62,7 +62,7 @@ BB_all_predicted = []
 bb_class = []
 bb_confidence = []
 
-test_img, tensor_labels, img_path0, BB = list(iter(val_data))[11] #31=cans, 41=cans in fence, 51=redbull, 61=can with leaves, 71=wash bottle, not trash
+test_img, tensor_labels, img_path0, BB = list(iter(val_data))[41]#[11] #31=cans, 41=cans in fence, 51=redbull, 61=can with leaves, 71=wash bottle, not trash
 img_path0 = img_path0[0].numpy().decode("UTF-8")
 
 #### LOOP ####
@@ -155,7 +155,7 @@ for m in range(2):
         object_text = f"{pred_label}, p={pred_prob:.2f}"
 
         axs[m].text(bb[0],bb[1], object_text, color='red', 
-            bbox=dict(facecolor='white', edgecolor='black'),fontsize=8)
+            bbox=dict(facecolor='white', edgecolor='black'),fontsize=6)
 
         axs[m].set_title(tits[m],fontsize=15,x=0.5, y=1.1)
 
@@ -171,7 +171,7 @@ plt.savefig(fig_path)
 
 ########### OTHER 
 fig, axs = plt.subplots(2,2, figsize=(15,15))
-cmap = mpl.cm.get_cmap('Spectral')
+cmap = mpl.cm.get_cmap('jet')
 
 
 BB_all_predicted = []
