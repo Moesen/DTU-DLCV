@@ -26,7 +26,7 @@ new_model = tf.keras.models.load_model(model_path)
 new_model.summary()
 
 score_t = 0.25
-good_b = [11, 21, 41, 61]
+good_b = [11, 21, 61, 41]
 nms_idx = 41
 
 batch_size = 100
@@ -157,8 +157,8 @@ for m in range(2):
         pred_label = labels[int(pred)]
         object_text = f"{pred_label}, p={pred_prob:.2f}"
 
-        axs[m].text(bb[0],bb[1], object_text, color='red', 
-            bbox=dict(facecolor='white', edgecolor='black'),fontsize=6)
+        axs[m].text(bb[0],bb[1], object_text, color=rgba, 
+            bbox=dict(facecolor='white', edgecolor='black'),fontsize=10)
 
         axs[m].set_title(tits[m],fontsize=15,x=0.5, y=1.1)
 
@@ -270,7 +270,7 @@ for gg, (ii, ax) in enumerate(zip(good_b,axs.ravel())):
         pred_label = labels[int(pred)]
         object_text = f"{pred_label}, p={pred_prob:.2f}"
 
-        ax.text(bb[0],bb[1], object_text, color=rgba, 
+        ax.text(bb[0],bb[1], object_text, color="black", 
             bbox=dict(facecolor='white', edgecolor='black'),fontsize=10)
 
 
