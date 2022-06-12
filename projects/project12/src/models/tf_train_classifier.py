@@ -19,14 +19,25 @@ test_batch_size = 10
 num_classes = 29
 
 
-train_dataset = load_dataset_rcnn(
-    split="train",
+# train_dataset = load_dataset_rcnn(
+#     split="train",
+#     normalize=False,
+#     use_data_augmentation=False,
+#     batch_size=train_batch_size,
+#     tune_for_perfomance=False,
+#     image_size=img_size_loader,
+# )
+
+validation_dataset = load_dataset_rcnn(
+    split="validation",
+    sample_batch_from_proposals=True,
     normalize=False,
     use_data_augmentation=False,
     batch_size=train_batch_size,
     tune_for_perfomance=False,
     image_size=img_size_loader,
 )
+
 """test_data = load_dataset_rcnn(
     split="validation",
     normalize=False,
@@ -65,9 +76,14 @@ model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4),
 
 model.summary()
 
-history = model.fit(train_dataset,
+# history = model.fit(train_dataset,
+#                     epochs=5,)
+#                     #validation_data=test_data)
+
+history = model.fit(validation_dataset,
                     epochs=5,)
                     #validation_data=test_data)
+
 
 if save_model:
     PROJECT_ROOT = get_project12_root()

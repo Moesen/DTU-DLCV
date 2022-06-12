@@ -206,6 +206,7 @@ def find_n_ground_truths():
 
 def load_dataset_rcnn(
     batch_size: int = 64,
+    sample_batch_from_proposals: bool = False,
     normalize: bool = True,
     image_size: tuple = (32, 32),
     split: str = "train",
@@ -241,7 +242,7 @@ def load_dataset_rcnn(
 
     background_class_idx = cat2id_json["Background"]
 
-    if split == "train":
+    if split == "train" or sample_batch_from_proposals:
         proposals = list(data_json.values())
         proposal_labels = []
         proposal_boxes = []
