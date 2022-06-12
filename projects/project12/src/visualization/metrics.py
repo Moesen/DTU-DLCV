@@ -146,7 +146,10 @@ for n,(bb_img, tensor_labels, img_path, BB) in tqdm(
         # NMS post processing
         bb_selected, bb_confidence_selected, bb_class_selected = NMS(BB_all_predicted, bb_class, bb_confidence, classes[:-1], iout = 0.5, st = 0.4, max_out = 10)
 
-        class_pred = bb_class_selected.numpy().squeeze()
+        class_pred = bb_class_selected.numpy().squeeze().tolist()
+
+        if isinstance(class_pred, int):
+            class_pred = [class_pred]
 
         if len(class_pred)>0:
             bb_labels_selected = [labels[int(i)] for i in class_pred]

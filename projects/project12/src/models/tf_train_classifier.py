@@ -19,14 +19,14 @@ test_batch_size = 10
 num_classes = 29
 
 
-# train_dataset = load_dataset_rcnn(
-#     split="train",
-#     normalize=False,
-#     use_data_augmentation=False,
-#     batch_size=train_batch_size,
-#     tune_for_perfomance=False,
-#     image_size=img_size_loader,
-# )
+train_dataset = load_dataset_rcnn(
+    split="train",
+    normalize=False,
+    use_data_augmentation=False,
+    batch_size=train_batch_size,
+    tune_for_perfomance=False,
+    image_size=img_size_loader,
+)
 
 validation_dataset = load_dataset_rcnn(
     split="validation",
@@ -76,12 +76,12 @@ model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4),
 
 model.summary()
 
-# history = model.fit(train_dataset,
-#                     epochs=5,)
-#                     #validation_data=test_data)
+history = model.fit(train_dataset,
+                    epochs=5,
+                    validation_data=validation_dataset)
 
-history = model.fit(validation_dataset,
-                    epochs=5,)
+#history = model.fit(validation_dataset,
+                    #epochs=5,)
                     #validation_data=test_data)
 
 

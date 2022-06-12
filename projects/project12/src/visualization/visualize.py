@@ -25,6 +25,10 @@ new_model = tf.keras.models.load_model(model_path)
 # Check its architecture
 new_model.summary()
 
+score_t = 0.25
+good_b = [11, 21, 41, 61]
+nms_idx = 41
+
 batch_size = 100
 img_size = (128,128)
 
@@ -61,7 +65,7 @@ BB_all_predicted = []
 bb_class = []
 bb_confidence = []
 
-test_img, tensor_labels, img_path0, BB = list(iter(val_data))[11] #31=cans, 41=cans in fence, 51=redbull, 61=can with leaves, 71=wash bottle, not trash
+test_img, tensor_labels, img_path0, BB = list(iter(val_data))[nms_idx]#[11] #31=cans, 41=cans in fence, 51=redbull, 61=can with leaves, 71=wash bottle, not trash
 img_path0 = img_path0[0].numpy().decode("UTF-8")
 
 #### LOOP ####
@@ -115,7 +119,7 @@ BB_all_predicted = tf.gather(BB_all_predicted, idx)
 
 # NMS post processing
 print("Running NMS post-processing")
-all_selected_boxes, all_selected_probs, all_selected_preds = NMS(BB_all_predicted, bb_class, bb_confidence, classes[:-1], iout = 0.5, st = 0.4, max_out = 10)
+all_selected_boxes, all_selected_probs, all_selected_preds = NMS(BB_all_predicted, bb_class, bb_confidence, classes[:-1], iout = 0.5, st = score_t, max_out = 10)
 #all_selected_preds = [labels[int(i)] for i in all_selected_preds.numpy().squeeze().tolist()]
 
 
@@ -125,7 +129,7 @@ base_img = img.imread(base_img_path)
 
 fig, axs = plt.subplots(1,2, figsize=(15,8))
 
-cmap = mpl.cm.get_cmap('Spectral')
+cmap = mpl.cm.get_cmap('jet')
 
 BBs = [BB_all_predicted,all_selected_boxes]
 probss = [bb_confidence,all_selected_probs]
@@ -154,13 +158,16 @@ for m in range(2):
         object_text = f"{pred_label}, p={pred_prob:.2f}"
 
         axs[m].text(bb[0],bb[1], object_text, color='red', 
-            bbox=dict(facecolor='white', edgecolor='black'),fontsize=10)
+            bbox=dict(facecolor='white', edgecolor='black'),fontsize=6)
 
         axs[m].set_title(tits[m],fontsize=15,x=0.5, y=1.1)
 
 
 fig_path = PROJECT_ROOT.parent / "project12/reports/figures/Objects_detected.png" 
-plt.savefig(fig_path)
+
+plt.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.9, wspace=0.2, hspace=0.2)
+
+plt.savefig(fig_path,bbox_inches='tight')
 
 
 
@@ -170,15 +177,14 @@ plt.savefig(fig_path)
 
 ########### OTHER 
 fig, axs = plt.subplots(2,2, figsize=(15,15))
-cmap = mpl.cm.get_cmap('Spectral')
+cmap = mpl.cm.get_cmap('jet')
 
 
 BB_all_predicted = []
 bb_class = []
 bb_confidence = []
 
-good_b = [11, 41, 71, 31]
-tits = ["Something 1", "Something 2", "Something 3", "Something 4"]
+#tits = ["Something 1", "Something 2", "Something 3", "Something 4"]
 
 
 for gg, (ii, ax) in enumerate(zip(good_b,axs.ravel())):
@@ -236,7 +242,7 @@ for gg, (ii, ax) in enumerate(zip(good_b,axs.ravel())):
 
     # NMS post processing
     print("Running NMS post-processing")
-    all_selected_boxes, all_selected_probs, all_selected_preds = NMS(BB_all_predicted, bb_class, bb_confidence, classes[:-1], iout = 0.5, st = 0.4, max_out = 10)
+    all_selected_boxes, all_selected_probs, all_selected_preds = NMS(BB_all_predicted, bb_class, bb_confidence, classes[:-1], iout = 0.5, st = score_t, max_out = 20)
 
     BB_all_predicted = []
     bb_class = []
@@ -249,7 +255,7 @@ for gg, (ii, ax) in enumerate(zip(good_b,axs.ravel())):
     prob_plot = all_selected_probs
     pred_plot = all_selected_preds
     
-    ax.set_title(tits[gg],fontsize=15,x=0.5, y=1.1)
+    #ax.set_title(tits[gg],fontsize=15,x=0.5, y=1.1)
     ax.imshow(base_img)
 
     for m, (bb,pred,prob) in enumerate(zip(BB_plot.numpy(),pred_plot.numpy().squeeze(),prob_plot.numpy())):
@@ -264,10 +270,12 @@ for gg, (ii, ax) in enumerate(zip(good_b,axs.ravel())):
         pred_label = labels[int(pred)]
         object_text = f"{pred_label}, p={pred_prob:.2f}"
 
-        ax.text(bb[0],bb[1], object_text, color='red', 
+        ax.text(bb[0],bb[1], object_text, color=rgba, 
             bbox=dict(facecolor='white', edgecolor='black'),fontsize=10)
 
 
 
 fig_path = PROJECT_ROOT.parent / "project12/reports/figures/Objects_detected2.png" 
-plt.savefig(fig_path)
+plt.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.9, wspace=0.2, hspace=0.2)
+
+plt.savefig(fig_path,bbox_inches='tight')
