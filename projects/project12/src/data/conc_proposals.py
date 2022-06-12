@@ -23,10 +23,10 @@ if __name__ == "__main__":
     test_ids = {x["id"] for x in test_annot}
 
     proposal_path = proot / "proposals"
-    data_path = proot / "data"
+    data_path = proot / "data/data_wastedetection"
 
-    keys = ["train", "val", "test"]
-    out_dict = {k: [] for k in keys}
+    keys = ["train", "validation", "test"]
+    out_dict = {k: {} for k in keys}
 
     for fn in tqdm(map(str, proposal_path.iterdir()), total=1500, disable=False):
         if ".gitkeep" in fn:
@@ -55,7 +55,7 @@ if __name__ == "__main__":
             print(k, img_id)
         
         k = k[0]
-        out_dict[k].append(file)
+        out_dict[k][str(img_id)] = file
     
     for fn, k in zip(["train_proposals.json", "val_proposals.json", "test_proposals.json"], keys):
         with open(data_path / fn, "w") as f:
