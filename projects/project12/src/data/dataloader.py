@@ -224,7 +224,8 @@ def load_dataset_rcnn(
     """
 
     ##
-    TAKE_LAST_N = 1000
+    TAKE_N_SAMPLES = int(1000)
+    n_half = int(TAKE_N_SAMPLES/2)
 
     proot_path = get_project12_root()
     path = proot_path / "data/data_wastedetection"
@@ -245,13 +246,22 @@ def load_dataset_rcnn(
         proposal_labels = []
         proposal_boxes = []
         for p in proposals:
-            proposal_labels.append([cat2id_json[i[-1]] for i in p][-2000:])
-            proposal_boxes.append([i[:-1] for i in p][-2000:])
+            prop_lab = [cat2id_json[i[-1]] for i in p]
+            prop_box = [i[:-1] for i in p]
+            #proposal_labels.append( prop_lab[:n_half] + prop_lab[-n_half:])
+            #proposal_boxes.append( prop_box[:n_half] + prop_box[-n_half:] )
+            if len(p) == 2000:
+                proposal_labels.append(prop_lab)
+                proposal_boxes.append(prop_box)
+
+            #proposal_labels.append([cat2id_json[i[-1]] for i in p])
+            #proposal_boxes.append([i[:-1] for i in p])
             
         images = images_json["images"]
         images_ids = [i["id"] for i in images]
         images_paths = [i["path"] for i in images]
-        images_paths_proposals = [[images_paths[images_ids.index(int(i))]] for i in data_json.keys()]
+        images_paths_proposals = [[images_paths[images_ids.index(int(i))]] for i,p in zip(data_json.keys(), proposals) if len(p) == 2000] #*TAKE_N_SAMPLES]
+        
         dataset = tf.data.Dataset.from_tensor_slices(
             (images_paths_proposals, proposal_boxes, proposal_labels)
         )
@@ -291,6 +301,7 @@ def load_dataset_rcnn(
             
             tensor_batch = tf.convert_to_tensor(tensor_batch)
             tensor_labels = tf.convert_to_tensor(tensor_labels)
+
             return tensor_batch, tensor_labels
         
         dataset = (
@@ -298,14 +309,18 @@ def load_dataset_rcnn(
         )
 
     else:
-        assert TAKE_LAST_N % batch_size == 0, "When split is train/test 2000 needs to be divideable by batch_size to make sure that one batch only corresponds to one image"
-        one_image_n_batches = TAKE_LAST_N // batch_size
+        assert TAKE_N_SAMPLES % batch_size == 0, "When split is train/test 2000 needs to be divideable by batch_size to make sure that one batch only corresponds to one image"
+        one_image_n_batches = TAKE_N_SAMPLES // batch_size
         proposals = list(data_json.values())
         proposal_labels = []
         proposal_boxes = []
         for p in proposals:
-            proposal_labels.append([cat2id_json[i[-1]] for i in p][-TAKE_LAST_N:])
-            proposal_boxes.append([i[:-1] for i in p][-TAKE_LAST_N:])
+            prop_lab = [cat2id_json[i[-1]] for i in p]
+            prop_box = [i[:-1] for i in p]
+            proposal_labels.append( prop_lab[:n_half] + prop_lab[-n_half:])
+            proposal_boxes.append( prop_box[:n_half] + prop_box[-n_half:] )
+            #proposal_labels.append([cat2id_json[i[-1]] for i in p])
+            #proposal_boxes.append([i[:-1] for i in p])
 
         images = images_json["images"]
         images_ids = [i["id"] for i in images]
@@ -320,7 +335,7 @@ def load_dataset_rcnn(
             boxes = proposal_boxes[i]
             labels = proposal_labels[i]
             for j in range(one_image_n_batches):
-                new_batches_images.append([img[0]] * int(TAKE_LAST_N/one_image_n_batches))
+                new_batches_images.append([img[0]] * int(TAKE_N_SAMPLES/one_image_n_batches))
                 new_batches_proposals_boxes.append(boxes[j*batch_size:j*batch_size+batch_size])
                 new_batches_proposals_labels.append(labels[j*batch_size:j*batch_size+batch_size])
 

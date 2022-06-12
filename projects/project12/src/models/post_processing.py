@@ -5,12 +5,9 @@ from pathlib import Path
 import numpy as np
 import tensorflow as tf
 from keras import backend as K
-from projects.project12.src.data.dataloader import load_dataset_rcnn
 from projects.utils import get_project12_root
 from tensorflow import keras
-from tqdm import tqdm
 
-ssl._create_default_https_context = ssl._create_unverified_context
 
 def NMS(BB, predicted, probs, classes, iout = 0.5, st = 0.2, max_out = 10):
 
@@ -48,20 +45,27 @@ def NMS(BB, predicted, probs, classes, iout = 0.5, st = 0.2, max_out = 10):
 
     #all NMS processed bb
     c_selected_boxes_filtered = [y for y in c_selected_boxes if 0 not in y.shape]
-    c_selected_boxes_filtered = np.vstack(c_selected_boxes_filtered)
-    #all_selected_boxes = np.array(c_selected_boxes_filtered)
-    #all_selected_boxes = all_selected_boxes.reshape((-1,all_selected_boxes.shape[-1]))
-    #all_selected_boxes = K.cast(all_selected_boxes, tf.float32)
+    if len(c_selected_boxes_filtered) > 0:
+        c_selected_boxes_filtered = np.vstack(c_selected_boxes_filtered)
+    else:
+        c_selected_boxes_filtered = np.array(c_selected_boxes_filtered)
+
     all_selected_boxes = K.cast(tf.convert_to_tensor(c_selected_boxes_filtered), tf.float32)
 
     #all NMS processed probs
     c_selected_probs_filtered = [y for y in c_selected_probs if 0 not in y.shape]
-    c_selected_probs_filtered = np.hstack(c_selected_probs_filtered)
+    if len(c_selected_probs_filtered) > 0:
+        c_selected_probs_filtered = np.hstack(c_selected_probs_filtered)
+    else:
+        c_selected_probs_filtered = np.array(c_selected_probs_filtered)
     all_selected_probs = K.cast(tf.convert_to_tensor(c_selected_probs_filtered), tf.float32)
 
     #all NMS processed preds (class predictions)
     c_selected_preds_filtered = [y for y in c_selected_preds if 0 not in y.shape]
-    c_selected_preds_filtered = np.hstack(c_selected_preds_filtered)
+    if len(c_selected_preds_filtered) > 0:
+        c_selected_preds_filtered = np.hstack(c_selected_preds_filtered)
+    else:
+        c_selected_preds_filtered = np.array(c_selected_preds_filtered)
     all_selected_preds = K.cast(tf.convert_to_tensor(c_selected_preds_filtered), tf.int32)
 
     return all_selected_boxes, all_selected_probs, all_selected_preds

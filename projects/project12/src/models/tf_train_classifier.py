@@ -27,14 +27,14 @@ train_dataset = load_dataset_rcnn(
     tune_for_perfomance=False,
     image_size=img_size_loader,
 )
-test_data = load_dataset_rcnn(
+"""test_data = load_dataset_rcnn(
     split="validation",
     normalize=False,
     batch_size=test_batch_size,
     tune_for_perfomance=False,
     use_data_augmentation=False,
     image_size=img_size_loader,
-)
+)"""
 
 base_model = tf.keras.applications.efficientnet_v2.EfficientNetV2S(
     include_top=False,
@@ -66,7 +66,7 @@ model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4),
 model.summary()
 
 history = model.fit(train_dataset,
-                    epochs=10,)
+                    epochs=5,)
                     #validation_data=test_data)
 
 if save_model:

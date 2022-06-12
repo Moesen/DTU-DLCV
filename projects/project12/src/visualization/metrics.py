@@ -137,18 +137,28 @@ for n,(bb_img, tensor_labels, img_path, BB) in tqdm(
         bb_confidence = tf.convert_to_tensor(bb_confidence,dtype=tf.float32)
         bb_class = tf.convert_to_tensor(bb_class,dtype=tf.float32)
 
+        #remove background objects 
+        idx = K.cast(np.where(bb_class.numpy()!=28)[0], tf.int32)
+        bb_class = tf.gather(bb_class, idx)
+        bb_confidence = tf.gather(bb_confidence, idx)
+        BB_all_predicted = tf.gather(BB_all_predicted, idx)
+
         # NMS post processing
-        bb_selected, bb_confidence_selected, bb_class_selected = NMS(BB_all_predicted, bb_class, bb_confidence, classes, iout = 0.5, st = 0.4, max_out = 10)
+        bb_selected, bb_confidence_selected, bb_class_selected = NMS(BB_all_predicted, bb_class, bb_confidence, classes[:-1], iout = 0.5, st = 0.4, max_out = 10)
 
-        bb_labels_selected = [labels[int(i)] for i in bb_class_selected.numpy().squeeze().tolist()]
+        class_pred = bb_class_selected.numpy().squeeze()
 
-        #add detected bbs
-        for db,dc,conf in zip(bb_selected, bb_labels_selected, bb_confidence_selected):
-            detected_boundingBox = BoundingBox(imageName=img_path, classId=dc, classConfidence=conf,
-                                    x=db[0], y=db[1], w=db[2], h=db[3], typeCoordinates=CoordinatesType.Absolute,
-                                    bbType=BBType.Detected, format=BBFormat.XYWH, imgSize=imgSize)
+        if len(class_pred)>0:
+            bb_labels_selected = [labels[int(i)] for i in class_pred]
 
-            myBoundingBoxes.addBoundingBox(detected_boundingBox)
+            #add detected bbs
+            for db,dc,conf in zip(bb_selected, bb_labels_selected, bb_confidence_selected):
+                detected_boundingBox = BoundingBox(imageName=img_path, classId=dc, classConfidence=conf,
+                                        x=db[0], y=db[1], w=db[2], h=db[3], typeCoordinates=CoordinatesType.Absolute,
+                                        bbType=BBType.Detected, format=BBFormat.XYWH, imgSize=imgSize)
+
+                myBoundingBoxes.addBoundingBox(detected_boundingBox)
+
 
         BB_all_predicted = []
         bb_class = []
