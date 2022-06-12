@@ -177,7 +177,7 @@ BB_all_predicted = []
 bb_class = []
 bb_confidence = []
 
-good_b = [11, 41, 71, 31]
+good_b = [11, 1, 11, 71]
 tits = ["Something 1", "Something 2", "Something 3", "Something 4"]
 
 

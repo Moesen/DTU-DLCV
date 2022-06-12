@@ -63,7 +63,10 @@ for (img, pred, prob, ax) in zip(test_img_plot.numpy(), predicted_plot, probs_pl
     ax.imshow(img)
     pred_prob = np.max(prob)
     pred_label = labels[int(pred)]
-    ax.title.set_text(f"Pred: {pred_label}, p={pred_prob:.2f}")
+    if pred_label == "nothotdog":
+        pred_prob = 1-pred_prob
+    ax.set_title(f"Pred: {pred_label}, p={pred_prob:.2f}",fontsize=24,x=0.5,y=1.05)
+    #ax.title.set_text(f"Pred: {pred_label}, p={pred_prob:.2f}")
 
 plt.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.9, wspace=0.2, hspace=0.2)
 
@@ -108,10 +111,12 @@ fig, axs = plt.subplots(1,2,figsize=(15,8))
 axs[0].imshow(img.numpy().squeeze())
 pred_prob = np.max(probs[img_idx, ...])
 pred_label = labels[int(predicted[img_idx, ...])]
-axs[0].title.set_text(f"Pred: {pred_label}, p={pred_prob:.2f}")
+#axs[0].title.set_text(f"Pred: {pred_label}, p={pred_prob:.2f}")
+axs[0].set_title(f"Pred: {pred_label}, p={pred_prob:.2f}",fontsize=20)
 
 axs[1].imshow(smap.squeeze(), cmap="jet")
-axs[1].title.set_text(f"Saliency of P(img=class {class_idx})")
+axs[1].set_title(f"Saliency of P(img=class {class_idx})",fontsize=20)
+#axs[1].title.set_text(f"Saliency of P(img=class {class_idx})")
 
 saliency_fig_path = PROJECT_ROOT / "reports/figures/raw_saliency.png"
 plt.savefig(saliency_fig_path)
@@ -124,7 +129,8 @@ axs[0].imshow(img.numpy().squeeze())
 pred_prob = np.max(probs[img_idx, ...])
 pred_label = labels[int(predicted[img_idx, ...])]
 
-axs[0].title.set_text(f"Pred: {pred_label}, p={pred_prob:.2f}")
+axs[0].set_title(f"Pred: {pred_label}, p={pred_prob:.2f}",fontsize=20)
+#axs[0].title.set_text(f"Pred: {pred_label}, p={pred_prob:.2f}")
 axs[1].imshow(img.numpy().squeeze())
 blurred = gaussian_filter(smap, sigma=3)
 # blurred[blurred<0.4] = np.NaN ### use 0.5 for non blurred
