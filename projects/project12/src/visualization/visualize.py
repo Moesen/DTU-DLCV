@@ -157,7 +157,7 @@ for m in range(2):
         pred_label = labels[int(pred)]
         object_text = f"{pred_label}, p={pred_prob:.2f}"
 
-        axs[m].text(bb[0],bb[1], object_text, color=rgba, 
+        axs[m].text(bb[0],bb[1], object_text, color="black", 
             bbox=dict(facecolor='white', edgecolor='black'),fontsize=10)
 
         axs[m].set_title(tits[m],fontsize=15,x=0.5, y=1.1)
