@@ -44,9 +44,9 @@ def NMS(BB, predicted, probs, classes, iout = 0.5, st = 0.2, max_out = 10):
             selected_probs = tf.gather(scores_c, selected_indices).numpy()
             selected_preds = tf.gather(pred_c, selected_indices).numpy()
         else:
-            selected_boxes = []
-            selected_probs = []
-            selected_preds = []
+            selected_boxes = np.array([])
+            selected_probs = np.array([])
+            selected_preds = np.array([])
 
 
         c_selected_boxes.append(selected_boxes)
