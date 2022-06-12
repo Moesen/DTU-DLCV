@@ -267,7 +267,7 @@ for gg, (ii, ax) in enumerate(zip(good_b,axs.ravel())):
         pred_label = labels[int(pred)]
         object_text = f"{pred_label}, p={pred_prob:.2f}"
 
-        ax.text(bb[0],bb[1], object_text, color='red', 
+        ax.text(bb[0],bb[1], object_text, color=rgba, 
             bbox=dict(facecolor='white', edgecolor='black'),fontsize=10)
 
 
