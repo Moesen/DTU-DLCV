@@ -119,7 +119,7 @@ BB_all_predicted = tf.gather(BB_all_predicted, idx)
 
 # NMS post processing
 print("Running NMS post-processing")
-all_selected_boxes, all_selected_probs, all_selected_preds = NMS(BB_all_predicted, bb_class, bb_confidence, classes[:-1], iout = 0.5, st = scores_t, max_out = 10)
+all_selected_boxes, all_selected_probs, all_selected_preds = NMS(BB_all_predicted, bb_class, bb_confidence, classes[:-1], iout = 0.5, st = score_t, max_out = 10)
 #all_selected_preds = [labels[int(i)] for i in all_selected_preds.numpy().squeeze().tolist()]
 
 
