@@ -142,7 +142,7 @@ for epoch in tqdm(range(num_epochs), unit='epoch'):
     for minibatch_no, (x, target) in tqdm(enumerate(train_loader), total=len(train_loader)):
         x_real = x.to(device)*2-1 #scale to (-1, 1) range
         z = torch.randn(x.shape[0], 100).to(device)
-        x_fake = g(z)
+        x_fake = g(z).to(device)
         #Update discriminator
         d.zero_grad()
         #remember to detach x_fake before using it to compute the discriminator loss
