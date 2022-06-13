@@ -98,29 +98,40 @@ has no activation on the final layer (we will call sigmoid if we want a probabil
 class Discriminator(nn.Module):
     def __init__(self,n_hidden_list):
         super(Discriminator, self).__init__()
+        
+        self.fully_connected_in = nn.Sequential(
+            nn.Linear(n_hidden_list[0], n_hidden_list[1]),
+            nn.LeakyReLU(),
+            )
+
+        self.fully_connected_middle2 = nn.Sequential(
+            nn.Linear(n_hidden_list[1], n_hidden_list[2]),
+            nn.LeakyReLU(),
+            )
+
+        self.fully_connected_middle3 = nn.Sequential(
+            nn.Linear(n_hidden_list[2], n_hidden_list[3]),
+            nn.LeakyReLU(),
+            )
 
         self.fully_connected_out = nn.Sequential(
             nn.Linear(n_hidden_list[-1], 1)
             )
-        
-        self.fcl = []
-
-        for n in range(len(n_hidden_list)-1):
-            fully_connected_middle = nn.Sequential(
-                nn.Linear(n_hidden_list[n], n_hidden_list[n+1]),
-                nn.LeakyReLU(),
-                )
-            self.fcl.append(fully_connected_middle)
 
         self.DO = nn.Dropout(p=0.5)
         
     def forward(self, x):
       #reshaping x so it becomes flat, except for the first dimension (which is the minibatch)
         x = x.view(x.size(0),-1)
-
-        for n in range(len(n_hidden_list)-1):
-            x = self.fcl[n](x)
-            x = self.DO(x)
+        x = self.fully_connected_in(x)
+        x = self.DO(x)
+        
+        x = self.fully_connected_middle1(x)
+        x = self.DO(x)
+        x = self.fully_connected_middle2(x)
+        x = self.DO(x)
+        x = self.fully_connected_middle3(x)
+        x = self.DO(x)
 
         x = self.fully_connected_out(x)
 
