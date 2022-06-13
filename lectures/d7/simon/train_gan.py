@@ -10,6 +10,12 @@ from IPython import display
 import matplotlib.pylab as plt
 import ipywidgets
 
+from projects.utils import get_repo_root
+
+PROJECT_ROOT = get_repo_root()
+lecture_path = PROJECT_ROOT / "lectures/d7/simon"
+
+
 if torch.cuda.is_available():
     print("The code will run on GPU.")
 else:
@@ -180,10 +186,15 @@ for epoch in tqdm(range(num_epochs), unit='epoch'):
                 subplots[-1].set_xlabel('Probability of being real')
                 subplots[-1].set_title('Discriminator loss: %.2f' % d_loss.item())
                 
-                title = 'Epoch {e} - minibatch {n}/{d}'.format(e=epoch+1, n=minibatch_no, d=len(train_loader))
+                title = 'Epoch{e}-minibatch-{n}_of_{d}'.format(e=epoch+1, n=minibatch_no, d=len(train_loader))
                 plt.gcf().suptitle(title, fontsize=20)
-                display.display(plt.gcf())
-                display.clear_output(wait=True)
+
+                img_path = lecture_path / title
+                plt.savefig(img_path)
+
+                #display.display(plt.gcf())
+                #display.clear_output(wait=True)
+
 
 
 """Do you get a model to generate nice images?
