@@ -104,12 +104,12 @@ class Discriminator(nn.Module):
             nn.LeakyReLU(),
             )
 
-        self.fully_connected_middle2 = nn.Sequential(
+        self.fully_connected_middle1 = nn.Sequential(
             nn.Linear(n_hidden_list[1], n_hidden_list[2]),
             nn.LeakyReLU(),
             )
 
-        self.fully_connected_middle3 = nn.Sequential(
+        self.fully_connected_middle2 = nn.Sequential(
             nn.Linear(n_hidden_list[2], n_hidden_list[3]),
             nn.LeakyReLU(),
             )
@@ -125,12 +125,10 @@ class Discriminator(nn.Module):
         x = x.view(x.size(0),-1)
         x = self.fully_connected_in(x)
         x = self.DO(x)
-        
+
         x = self.fully_connected_middle1(x)
         x = self.DO(x)
         x = self.fully_connected_middle2(x)
-        x = self.DO(x)
-        x = self.fully_connected_middle3(x)
         x = self.DO(x)
 
         x = self.fully_connected_out(x)
