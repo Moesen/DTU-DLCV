@@ -167,20 +167,14 @@ for epoch in tqdm(range(num_epochs), unit='epoch'):
         #loss = F.nll_loss(torch.log(output), target)
 
         #d_loss = -(torch.log(discriminator_final_layer(d(x_real))).mean(0) + torch.log(1-discriminator_final_layer(d(x_fake.detach()))).mean(0))
-        #d_loss = -( torch.nn.functional.logsigmoid( d(x_real) ).mean(0) + torch.log(1 -  discriminator_final_layer( d(x_fake.detach()) )).mean(0)  )
+        d_loss = -( torch.nn.functional.logsigmoid( d(x_real) ).mean(0) + torch.log(1 -  discriminator_final_layer( d(x_fake.detach()) )).mean(0)  )
         
-        #LSGAN loss 
-        batch_shape = x_real.shape[0]
-
-        d_loss = 1/2*( (d(x_real) - torch.ones(batch_shape,1).to(device))**2 ).mean(0) + 1/2*( (d(x_fake.detach()) + torch.ones(batch_shape,1).to(device))**2 ).mean(0)
-
         d_loss.backward()
         d_opt.step()
 
         #Update generator
         g.zero_grad()
-        #g_loss = torch.log( 1 -  discriminator_final_layer( d(x_fake) ) ).mean(0)
-        g_loss = 1/2*(d(x_fake) ).mean(0) #LSGAN loss
+        g_loss = torch.log( 1 -  discriminator_final_layer( d(x_fake) ) ).mean(0)
         g_loss.backward()
         g_opt.step()
         
