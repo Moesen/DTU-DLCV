@@ -154,7 +154,7 @@ for epoch in tqdm(range(num_epochs), unit='epoch'):
         #print( nn.LogSigmoid( d(x_real).mean(0) ) )
         #d_loss = -( torch.nn.functional.logsigmoid( d(x_real) ).mean(0) + ( 1 -  discriminator_final_layer( d(x_fake.detach()) ).mean(0) )  )
 
-        d_loss = d(x_real).mean(0).to(device)# + d(x_fake.detach()).mean(0).to(device)
+        d_loss = 1 #d(x_real).mean(0).to(device)# + d(x_fake.detach()).mean(0).to(device)
         #print(d(x_real).mean(0).shape)
 
         d_loss.backward()
@@ -162,7 +162,7 @@ for epoch in tqdm(range(num_epochs), unit='epoch'):
 
         #Update generator
         g.zero_grad()
-        g_loss = torch.log(1-d(x_fake)).mean(0)
+        g_loss = ( 1 -  discriminator_final_layer( d(x_fake) ).mean(0) )
         g_loss.backward()
         g_opt.step()
         
