@@ -26,15 +26,15 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 batch_size = 64
-#trainset = datasets.MNIST('./data', train=True, download=True, transform=transforms.ToTensor())
-#train_loader = DataLoader(trainset, batch_size=batch_size, shuffle=True)
-#testset = datasets.MNIST('./data', train=False, download=True, transform=transforms.ToTensor())
-#test_loader = DataLoader(testset, batch_size=batch_size, shuffle=False)
-
-trainset = datasets.FashionMNIST('./data', train=True, download=True, transform=transforms.ToTensor())
+trainset = datasets.MNIST('./data', train=True, download=True, transform=transforms.ToTensor())
 train_loader = DataLoader(trainset, batch_size=batch_size, shuffle=True)
-testset = datasets.FashionMNIST('./data', train=False, download=True, transform=transforms.ToTensor())
+testset = datasets.MNIST('./data', train=False, download=True, transform=transforms.ToTensor())
 test_loader = DataLoader(testset, batch_size=batch_size, shuffle=False)
+
+#trainset = datasets.FashionMNIST('./data', train=True, download=True, transform=transforms.ToTensor())
+#train_loader = DataLoader(trainset, batch_size=batch_size, shuffle=True)
+#testset = datasets.FashionMNIST('./data', train=False, download=True, transform=transforms.ToTensor())
+#test_loader = DataLoader(testset, batch_size=batch_size, shuffle=False)
 
 
 print("finished loading data")
@@ -153,7 +153,7 @@ g_opt = torch.optim.Adam(g.parameters(), 0.0002, (0.5, 0.999))
 
 plt.figure(figsize=(20,10))
 subplots = [plt.subplot(2, 6, k+1) for k in range(12)]
-num_epochs = 20
+num_epochs = 10
 discriminator_final_layer = torch.sigmoid
 
 
@@ -215,19 +215,20 @@ for epoch in tqdm(range(num_epochs), unit='epoch'):
                 #display.clear_output(wait=True)
 
 
+### interpolate between two points in latent space 
 
-"""Do you get a model to generate nice images?
+z1 = torch.randn(1, 100, 1, 1).to(device)
+z2 = torch.randn(1, 100, 1, 1).to(device)
 
-The plot shows probabilities of real and generated digits being classified as real. Is the discriminator able to distinguish real from fake? If not, try increasing the capacity of the discriminator. Feel free to change the architecture as you see fit.
+ll = torch.from_numpy(np.arange(0,1,0.1))
 
-Additional tasks
-Change the architecture to get better results
-Implement an LSGAN
-Implement a WGAN with SN
-Convert your network to a DCGAN
-Visualize what happens when you interpolate between to points in the latent space
-Generate images from FashionMNIST
-Harder tasks:
-Add data augmentation to fake and real images
-Use the data augmentation to the generated images
-Convert your architecture into an AC-GAN"""
+fig, axs = plt.subplots(3,4, figsize=(15,15))
+
+for n,l in enumerate(ll):
+    zz = (z2-z1)*l + z1
+    img = g(zz).numpy().squeeze()
+    axs[n].imshow(img)
+
+img_path = lecture_path / "interpolate"
+
+plt.savefig(img_path)
