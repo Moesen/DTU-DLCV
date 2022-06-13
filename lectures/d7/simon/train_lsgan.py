@@ -229,6 +229,6 @@ for n,l in enumerate(ll):
     img = g(zz).numpy().squeeze()
     axs[n].imshow(img)
 
-img_path = lecture_path / "interpolate"
+img_path = lecture_path / "interpolate.png"
 
 plt.savefig(img_path)
