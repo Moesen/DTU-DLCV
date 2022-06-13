@@ -16,7 +16,7 @@ __pycache__/
 
 **/reports/
 
-**/simon/
+**/simon/*.png
 
 # Distribution / packaging
 .Python
