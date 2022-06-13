@@ -94,16 +94,24 @@ uses LeakyReLU as the activation function
 uses Dropout
 has no activation on the final layer (we will call sigmoid if we want a probability)"""
 
-n_hidden_list = [image_dim, 1024, 512, 256]
 
 class Discriminator(nn.Module):
-    def __init__(self):
+    def __init__(self,n_hidden_list):
         super(Discriminator, self).__init__()
 
         self.fully_connected_out = nn.Sequential(
             nn.Linear(n_hidden_list[-1], 1)
             )
         
+        self.fcl = []
+
+        for n in range(len(n_hidden_list)-1):
+            fully_connected_middle = nn.Sequential(
+                nn.Linear(n_hidden_list[n], n_hidden_list[n+1]),
+                nn.LeakyReLU(),
+                )
+            self.fcl.append(fully_connected_middle)
+
         self.DO = nn.Dropout(p=0.5)
         
     def forward(self, x):
@@ -111,10 +119,7 @@ class Discriminator(nn.Module):
         x = x.view(x.size(0),-1)
 
         for n in range(len(n_hidden_list)-1):
-            x = nn.Sequential(
-            nn.Linear(n_hidden_list[n], n_hidden_list[n+1]),
-            nn.LeakyReLU(),
-            )(x)
+            x = self.fcl[n](x)
             x = self.DO(x)
 
         x = self.fully_connected_out(x)
@@ -124,7 +129,9 @@ class Discriminator(nn.Module):
 
 #Initialize networks
 print("initializing networks")
-d = Discriminator().to(device)
+n_hidden_list = [image_dim, 1024, 512, 256]
+
+d = Discriminator(n_hidden_list).to(device)
 g = Generator().to(device)
 d_opt = torch.optim.Adam(d.parameters(), 0.0004, (0.5, 0.999))
 g_opt = torch.optim.Adam(g.parameters(), 0.0001, (0.5, 0.999))
@@ -152,7 +159,7 @@ for epoch in tqdm(range(num_epochs), unit='epoch'):
 
         #d_loss = -(torch.log(discriminator_final_layer(d(x_real))).mean(0) + torch.log(1-discriminator_final_layer(d(x_fake.detach()))).mean(0))
         #print( nn.LogSigmoid( d(x_real).mean(0) ) )
-        d_loss = -( torch.nn.functional.logsigmoid( d(x_real) ).mean(0) + torch.log( 1 -  discriminator_final_layer( d(x_fake.detach()) ).mean(0) )  )
+        d_loss = -( torch.nn.functional.logsigmoid( d(x_real) ).mean(0) + torch.log(1 -  discriminator_final_layer( d(x_fake.detach()) )).mean(0)  )
 
         #d_loss = d(x_real) #d(x_real).mean(0).to(device)# + d(x_fake.detach()).mean(0).to(device)
         #print(d(x_real).mean(0).shape)
@@ -162,7 +169,7 @@ for epoch in tqdm(range(num_epochs), unit='epoch'):
 
         #Update generator
         g.zero_grad()
-        g_loss = ( 1 -  discriminator_final_layer( d(x_fake) ).mean(0) )
+        g_loss = torch.log( 1 -  discriminator_final_layer( d(x_fake) ) ).mean(0)
         g_loss.backward()
         g_opt.step()
         
