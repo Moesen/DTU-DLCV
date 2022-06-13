@@ -153,7 +153,7 @@ g_opt = torch.optim.Adam(g.parameters(), 0.0002, (0.5, 0.999))
 
 plt.figure(figsize=(20,10))
 subplots = [plt.subplot(2, 6, k+1) for k in range(12)]
-num_epochs = 10
+num_epochs = 5
 discriminator_final_layer = torch.sigmoid
 
 
@@ -224,10 +224,10 @@ ll = torch.from_numpy(np.arange(0,1,0.1))
 
 fig, axs = plt.subplots(3,4, figsize=(15,15))
 
-for n,l in enumerate(ll):
+for l,ax in zip(ll,axs.flatten()):
     zz = (z2-z1)*l + z1
     img = g(zz).cpu().detach().numpy().squeeze()
-    axs[n].imshow(img)
+    ax.imshow(img)
 
 img_path = lecture_path / "interpolate.png"
 
