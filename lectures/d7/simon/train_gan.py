@@ -147,7 +147,7 @@ g_opt = torch.optim.Adam(g.parameters(), 0.0001, (0.5, 0.999))
 
 plt.figure(figsize=(20,10))
 subplots = [plt.subplot(2, 6, k+1) for k in range(12)]
-num_epochs = 10
+num_epochs = 20
 discriminator_final_layer = torch.sigmoid
 
 #last layer, detach, loss 
@@ -184,7 +184,7 @@ for epoch in tqdm(range(num_epochs), unit='epoch'):
         
         assert(not np.isnan(d_loss.item()))
         #Plot results every 100 minibatches
-        if minibatch_no % 100 == 0:
+        if minibatch_no % 400 == 0:
             with torch.no_grad():
                 P = discriminator_final_layer(d(x_fake))
                 for k in range(11):
