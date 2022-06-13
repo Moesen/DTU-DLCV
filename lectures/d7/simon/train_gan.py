@@ -1,5 +1,5 @@
 import numpy as np
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -36,6 +36,7 @@ uses BatchNorm
 has Tanh as the last layer (we work with MNIST in the -1 to 1 range)"""
 
 image_dim = 28*28
+
 input_dim = 100
 n_hidden = 2848
 n_hidden_layers = 4
@@ -44,20 +45,20 @@ class Generator(nn.Module):
     def __init__(self):
         super(Generator, self).__init__()
 
-        self.BN = nn.BatchNorm1d(n_hidden)
-
         self.fully_connected_first = nn.Sequential(
             nn.Linear(input_dim, n_hidden),
+            nn.BatchNorm1d(n_hidden),
             nn.LeakyReLU(),
             )
         
         self.fully_connected_middle = nn.Sequential(
             nn.Linear(n_hidden, n_hidden),
+            nn.BatchNorm1d(n_hidden),
             nn.LeakyReLU(),
             )
 
         self.fully_connected_last = nn.Sequential(
-            nn.Linear(n_hidden,10),
+            nn.Linear(n_hidden,image_dim),
             nn.Tanh()
             #nn.Softmax(dim = 1)
             )
@@ -65,12 +66,11 @@ class Generator(nn.Module):
     def forward(self, x):
       #reshaping x so it becomes flat, except for the first dimension (which is the minibatch)
         x = x.view(x.size(0),-1)
+        
         x = self.fully_connected_first(x)
-        x = self.BN(x)
 
         for n in range(n_hidden_layers):
             x = self.fully_connected_middle(x)
-            x = self.BN(x)
 
         x = self.fully_connected_last(x)
         x = x.view(x.size(0), 1, 28, 28)
@@ -88,15 +88,14 @@ uses LeakyReLU as the activation function
 uses Dropout
 has no activation on the final layer (we will call sigmoid if we want a probability)"""
 
-n_hidden = [image_dim, 1024, 512, 256]
+n_hidden_list = [image_dim, 1024, 512, 256]
 
 class Discriminator(nn.Module):
     def __init__(self):
         super(Discriminator, self).__init__()
 
         self.fully_connected_out = nn.Sequential(
-            nn.Linear(n_hidden[-1], 1),
-            nn.LeakyReLU(),
+            nn.Linear(n_hidden_list[-1], 1)
             )
         
         self.DO = nn.Dropout(p=0.5)
@@ -105,9 +104,9 @@ class Discriminator(nn.Module):
       #reshaping x so it becomes flat, except for the first dimension (which is the minibatch)
         x = x.view(x.size(0),-1)
 
-        for n in range(len(n_hidden)-1):
+        for n in range(len(n_hidden_list)-1):
             x = nn.Sequential(
-            nn.Linear(n_hidden[n], n_hidden[n+1]),
+            nn.Linear(n_hidden_list[n], n_hidden_list[n+1]),
             nn.LeakyReLU(),
             )(x)
             x = self.DO(x)
@@ -129,9 +128,12 @@ subplots = [plt.subplot(2, 6, k+1) for k in range(12)]
 num_epochs = 10
 discriminator_final_layer = torch.sigmoid
 
+#last layer, detach, loss 
+
+
 print("initializing training")
-for epoch in range(num_epochs):
-    for minibatch_no, (x, target) in enumerate(train_loader):
+for epoch in tqdm(range(num_epochs), unit='epoch'):
+    for minibatch_no, (x, target) in tqdm(enumerate(train_loader), total=len(train_loader)):
         x_real = x.to(device)*2-1 #scale to (-1, 1) range
         z = torch.randn(x.shape[0], 100).to(device)
         x_fake = g(z)
@@ -140,15 +142,19 @@ for epoch in range(num_epochs):
         #remember to detach x_fake before using it to compute the discriminator loss
         #otherwise the discriminator loss will backpropagate through the generator as well, which is unnecessary.
         #loss = F.nll_loss(torch.log(output), target)
-        
-        d_loss = -(torch.log(d(x_real)).mean(1) + torch.log(1-d(x_fake)).mean(1))
+
+        #d_loss = -(torch.log(discriminator_final_layer(d(x_real))).mean(0) + torch.log(1-discriminator_final_layer(d(x_fake.detach()))).mean(0))
+#        print( nn.LogSigmoid( d(x_real).mean(0) ) )
+        d_loss = -( torch.nn.functional.logsigmoid( d(x_real) ).mean(0) + ( 1 -  discriminator_final_layer( d(x_fake.detach()) ).mean(0) ) )
+
+        #print(d(x_real).mean(0).shape)
 
         d_loss.backward()
         d_opt.step()
 
         #Update generator
         g.zero_grad()
-        g_loss = torch.log(1-d(x_fake)).mean(1)
+        g_loss = torch.log(1-d(x_fake)).mean(0)
         g_loss.backward()
         g_opt.step()
         
