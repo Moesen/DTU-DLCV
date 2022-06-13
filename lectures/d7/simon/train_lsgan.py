@@ -229,6 +229,6 @@ for l,ax in zip(ll,axs.flatten()):
     img = g(zz).cpu().detach().numpy().squeeze()
     ax.imshow(img)
 
-img_path = lecture_path / "interpolate.png"
+img_path = lecture_path / "interpolate2.png"
 
 plt.savefig(img_path)
