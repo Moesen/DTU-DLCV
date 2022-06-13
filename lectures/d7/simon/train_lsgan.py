@@ -226,7 +226,7 @@ fig, axs = plt.subplots(3,4, figsize=(15,15))
 
 for n,l in enumerate(ll):
     zz = (z2-z1)*l + z1
-    img = g(zz).numpy().squeeze()
+    img = g(zz).cpu().numpy().squeeze()
     axs[n].imshow(img)
 
 img_path = lecture_path / "interpolate.png"
