@@ -7,6 +7,7 @@
 # license agreement from NVIDIA CORPORATION is strictly prohibited.
 
 """Generate images using pretrained network pickle."""
+from projects.utils import get_project2_root
 
 import os
 import re
@@ -98,16 +99,19 @@ def generate_images(
 
     w = torch.randn([1, G.w_dim]).cuda()
     img1 = G.synthesis(w)
+    img1_3 = np.moveaxis( img1.cpu().numpy().squeeze() , 0, 2)
+    pil13 = PIL.Image.fromarray(img1_3, 'RGB')
 
 
     proj_w = w + 0.1*(ld)
     img2 = G.synthesis(proj_w)
-    img2.cpu().numpy()
+    img2_3 = np.moveaxis( img2.cpu().numpy().squeeze() , 0, 2)
+    pil23 = PIL.Image.fromarray(img2_3, 'RGB')
 
     #plotting
     fig, axs = plt.subplots(1,2, figsize=(15,8))
-    axs[0].imshow( img1.cpu().numpy() )
-    axs[1].imshow( img2.cpu().numpy() )
+    axs[0].imshow( pil13 )
+    axs[1].imshow( pil23 )
     save_path =  PROJECT_ROOT / "reports/figures.png"
     plt.savefig(save_path)
 
