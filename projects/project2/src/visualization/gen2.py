@@ -17,6 +17,8 @@ import dnnlib
 import numpy as np
 import PIL.Image
 import torch
+import matplotlib.pyplot as plt
+
 
 import legacy
 
@@ -83,17 +85,30 @@ def generate_images(
         G = legacy.load_network_pkl(f)['G_ema'].to(device) # type: ignore
 
 
-    z = torch.randn([1, G.z_dim]).cuda()    # latent codes
-    c = None                                # class labels (not used in this example)
-    img = G(z, c) 
+    #z = torch.randn([1, G.z_dim]).cuda()    # latent codes
+    #c = None                                # class labels (not used in this example)
+    #img = G(z, c) 
 
-    print(img.shape) # torch.Size([1, 3, 1024, 1024])
+    #print(img.shape) # torch.Size([1, 3, 1024, 1024])
 
     PROJECT_ROOT = get_project2_root()
-
     ld_path =  PROJECT_ROOT / "data/stylegan2directions/age.npy"
-
     ld = np.load(ld_path)
+
+    w = torch.randn([1, G.w_dim]).cuda()
+    img1 = G.synthesis(w)
+
+
+    proj_w = w + 0.1*(ld)
+    img2 = G.synthesis(proj_w)
+    img2.cpu().numpy()
+
+    #plotting
+    fig, axs = plt.subplots(1,2, figsize=(15,8))
+    axs[0].imshow( img1.cpu().numpy() )
+    axs[1].imshow( img2.cpu().numpy() )
+    save_path =  PROJECT_ROOT / "reports/figures.png"
+    plt.savefig(save_path)
 
     breakpoint()
 

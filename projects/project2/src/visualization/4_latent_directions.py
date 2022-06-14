@@ -7,10 +7,6 @@ import PIL.Image
 import torch
 import pickle 
 
-from projects.project2.stylegan2_ada_pytorch.torch_utils import *
-from projects.project2.stylegan2_ada_pytorch.dnnlib import *
-
-
 import matplotlib.pylab as plt
 
 from projects.utils import get_project2_root
