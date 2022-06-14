@@ -103,13 +103,15 @@ def generate_images(
 
     #w = torch.randn([1, G.num_ws, G.w_dim]).cuda()
     img1 = G.synthesis(w)
-    img1_3 = np.moveaxis( img1.cpu().numpy().squeeze() , 0, 2)
+    img1_3 = (img1.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
+    #img1_3 = np.moveaxis( img1.cpu().numpy().squeeze() , 0, 2)
     pil13 = PIL.Image.fromarray(img1_3, 'RGB')
 
 
     proj_w = w + 0.1*(ld)
     img2 = G.synthesis(proj_w)
-    img2_3 = np.moveaxis( img2.cpu().numpy().squeeze() , 0, 2)
+    img2_3 = (img2.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
+    #img2_3 = np.moveaxis( img2.cpu().numpy().squeeze() , 0, 2)
     pil23 = PIL.Image.fromarray(img2_3, 'RGB')
 
     #plotting
