@@ -13,16 +13,14 @@ import re
 from typing import List, Optional
 
 import click
-#import dnnlib
+import dnnlib
 import numpy as np
 import PIL.Image
 import torch
 
-#import legacy
+import legacy
 
-
-from projects.project2.stylegan2-ada-pytorch import dnnlib
-from projects.project2.stylegan2-ada-pytorch import legacy
+from projects.utils import get_project2_root
 
 
 #----------------------------------------------------------------------------
@@ -90,6 +88,12 @@ def generate_images(
     img = G(z, c) 
 
     print(img.shape) # torch.Size([1, 3, 1024, 1024])
+
+    PROJECT_ROOT = get_project2_root()
+
+    ld_path =  PROJECT_ROOT / "data/stylegan2directions/age.npy"
+
+    ld = np.load(ld_path)
 
     breakpoint()
 
