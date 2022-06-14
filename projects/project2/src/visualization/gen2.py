@@ -87,12 +87,6 @@ def generate_images(
         G = legacy.load_network_pkl(f)['G_ema'].to(device) # type: ignore
 
 
-    #z = torch.randn([1, G.z_dim]).cuda()    # latent codes
-    #c = None                                # class labels (not used in this example)
-    #img = G(z, c) 
-
-    #print(img.shape) # torch.Size([1, 3, 1024, 1024])
-
     PROJECT_ROOT = get_project2_root()
     ld_path =  PROJECT_ROOT / "data/stylegan2directions/age.npy"
     ldd = np.load(ld_path)
@@ -101,28 +95,16 @@ def generate_images(
     z = torch.randn([1, G.z_dim]).to(device)
     w = G.mapping(z,None) 
 
-    
-    #w = torch.randn([1, G.num_ws, G.w_dim]).cuda()
+    #initial image
     img = G.synthesis(w)
     img = (img.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
     pil13 = PIL.Image.fromarray(img[0].cpu().numpy().squeeze(), 'RGB')
 
-    #img1 = G.synthesis(w)
-    #img1_3 = (img1.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
-    #img1_3 = np.moveaxis( img1.cpu().numpy().squeeze() , 0, 2)
-    #pil13 = PIL.Image.fromarray(img1_3, 'RGB')
-
-
+    #older image
     proj_w = w + 10*(ld.unsqueeze(0))
-
     img = G.synthesis(proj_w)
     img = (img.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
     pil23 = PIL.Image.fromarray(img[0].cpu().numpy().squeeze(), 'RGB')
-
-    #img2 = G.synthesis(proj_w)
-    #img2_3 = (img2.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
-    #img2_3 = np.moveaxis( img2.cpu().numpy().squeeze() , 0, 2)
-    #pil23 = PIL.Image.fromarray(img2_3, 'RGB')
 
     #plotting
     fig, axs = plt.subplots(1,2, figsize=(15,8))
@@ -131,50 +113,12 @@ def generate_images(
     save_path =  PROJECT_ROOT / "reports/figures.png"
     plt.savefig(save_path)
 
-    breakpoint()
 
+    #z = torch.from_numpy(np.random.RandomState(seed).randn(1, G.z_dim)).to(device)
+    #img = G(z, label, truncation_psi=truncation_psi, noise_mode=noise_mode)
+    #img = G.synthesis(w.unsqueeze(0), noise_mode=noise_mode)
 
-    os.makedirs(outdir, exist_ok=True)
-
-    # Synthesize the result of a W projection.
-    if projected_w is not None:
-        if seeds is not None:
-            print ('warn: --seeds is ignored when using --projected-w')
-        print(f'Generating images from projected W "{projected_w}"')
-        ws = np.load(projected_w)['w']
-        ws = torch.tensor(ws, device=device) # pylint: disable=not-callable
-        assert ws.shape[1:] == (G.num_ws, G.w_dim)
-        for idx, w in enumerate(ws):
-            img = G.synthesis(w.unsqueeze(0), noise_mode=noise_mode)
-            img = (img.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
-            img = PIL.Image.fromarray(img[0].cpu().numpy(), 'RGB').save(f'{outdir}/proj{idx:02d}.png')
-        return
-
-    if seeds is None:
-        ctx.fail('--seeds option is required when not using --projected-w')
-
-    # Labels.
-    label = torch.zeros([1, G.c_dim], device=device)
-    if G.c_dim != 0:
-        if class_idx is None:
-            ctx.fail('Must specify class label with --class when using a conditional network')
-        label[:, class_idx] = 1
-    else:
-        if class_idx is not None:
-            print ('warn: --class=lbl ignored when running on an unconditional network')
-
-    # Generate images.
-    for seed_idx, seed in enumerate(seeds):
-        print('Generating image for seed %d (%d/%d) ...' % (seed, seed_idx, len(seeds)))
-        z = torch.from_numpy(np.random.RandomState(seed).randn(1, G.z_dim)).to(device)
-        img = G(z, label, truncation_psi=truncation_psi, noise_mode=noise_mode)
-        img = (img.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
-        PIL.Image.fromarray(img[0].cpu().numpy(), 'RGB').save(f'{outdir}/seed{seed:04d}.png')
-
-
-#----------------------------------------------------------------------------
 
 if __name__ == "__main__":
     generate_images() # pylint: disable=no-value-for-parameter
 
-#----------------------------------------------------------------------------
