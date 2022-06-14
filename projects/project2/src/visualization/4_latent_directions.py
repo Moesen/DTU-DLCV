@@ -1,7 +1,7 @@
 
 import numpy as np
 from tqdm import tqdm
-import dnnlib
+#import dnnlib
 import numpy as np
 import PIL.Image
 import torch
