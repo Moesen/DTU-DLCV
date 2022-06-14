@@ -99,10 +99,11 @@ def generate_images(
     ld = torch.from_numpy(ldd).to(device)
 
     z = torch.randn([1, G.z_dim]).to(device)
-    w = G.mapping(z, None) 
+    w = G.mapping(z,None) 
 
+    
     #w = torch.randn([1, G.num_ws, G.w_dim]).cuda()
-    img = G.synthesis(w.unsqueeze(0))
+    img = G.synthesis(w)
     img = (img.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
     pil13 = PIL.Image.fromarray(img[0].cpu().numpy().squeeze(), 'RGB')
 
@@ -112,9 +113,9 @@ def generate_images(
     #pil13 = PIL.Image.fromarray(img1_3, 'RGB')
 
 
-    proj_w = w + 0.1*(ld)
+    proj_w = w + 0.1*(ld.unsqueeze(0))
 
-    img = G.synthesis(proj_w.unsqueeze(0))
+    img = G.synthesis(proj_w)
     img = (img.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
     pil23 = PIL.Image.fromarray(img[0].cpu().numpy().squeeze(), 'RGB')
 
