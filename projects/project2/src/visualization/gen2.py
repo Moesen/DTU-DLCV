@@ -13,12 +13,17 @@ import re
 from typing import List, Optional
 
 import click
-import dnnlib
+#import dnnlib
 import numpy as np
 import PIL.Image
 import torch
 
-import legacy
+#import legacy
+
+
+from projects.project2.stylegan2-ada-pytorch import dnnlib
+from projects.project2.stylegan2-ada-pytorch import legacy
+
 
 #----------------------------------------------------------------------------
 
@@ -72,7 +77,8 @@ def generate_images(
     python generate.py --outdir=out --projected_w=projected_w.npz \\
         --network=https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada-pytorch/pretrained/metfaces.pkl
     """
-
+    
+    
     print('Loading networks from "%s"...' % network_pkl)
     device = torch.device('cuda')
     with dnnlib.util.open_url(network_pkl) as f:
@@ -83,9 +89,11 @@ def generate_images(
     c = None                                # class labels (not used in this example)
     img = G(z, c) 
 
-    print(img.shape)
+    print(img.shape) # torch.Size([1, 3, 1024, 1024])
 
     breakpoint()
+
+
     os.makedirs(outdir, exist_ok=True)
 
     # Synthesize the result of a W projection.
