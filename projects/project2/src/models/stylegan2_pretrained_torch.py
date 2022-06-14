@@ -8,6 +8,5 @@ def get_stylegan2_ffhq():
     model_path = PROJECT_ROOT / "models/ffhq.pkl"
     with open(model_path, 'rb') as f:
         G = pickle.load(f)['G_ema'].cuda()
-
     return G
 
