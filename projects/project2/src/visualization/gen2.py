@@ -20,7 +20,8 @@ import torch
 
 import legacy
 
-from projects.utils import get_project2_root
+# from projects.project2.stylegan2-ada-pytorch import dnnlib
+# from projects.project2.stylegan2-ada-pytorch import legacy
 
 
 #----------------------------------------------------------------------------
