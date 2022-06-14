@@ -98,7 +98,10 @@ def generate_images(
     ldd = np.load(ld_path)
     ld = torch.from_numpy(ldd).to(device)
 
-    w = torch.randn([1, G.num_ws, G.w_dim]).cuda()
+    z = torch.randn([1, G.z_dim]).to(device)
+    w = G.mapping(z, None) 
+
+    #w = torch.randn([1, G.num_ws, G.w_dim]).cuda()
     img1 = G.synthesis(w)
     img1_3 = np.moveaxis( img1.cpu().numpy().squeeze() , 0, 2)
     pil13 = PIL.Image.fromarray(img1_3, 'RGB')
