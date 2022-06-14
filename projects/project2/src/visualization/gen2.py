@@ -97,7 +97,7 @@ def generate_images(
     ld_path =  PROJECT_ROOT / "data/stylegan2directions/age.npy"
     ld = np.load(ld_path)
 
-    w = torch.randn([1, G.w_dim]).cuda()
+    w = torch.randn([1, G.num_ws, G.w_dim]).cuda()
     img1 = G.synthesis(w)
     img1_3 = np.moveaxis( img1.cpu().numpy().squeeze() , 0, 2)
     pil13 = PIL.Image.fromarray(img1_3, 'RGB')
