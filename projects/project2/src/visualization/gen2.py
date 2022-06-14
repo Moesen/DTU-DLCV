@@ -95,7 +95,8 @@ def generate_images(
 
     PROJECT_ROOT = get_project2_root()
     ld_path =  PROJECT_ROOT / "data/stylegan2directions/age.npy"
-    ld = np.load(ld_path)
+    ldd = np.load(ld_path)
+    ld = torch.from_numpy(ldd).to(device)
 
     w = torch.randn([1, G.num_ws, G.w_dim]).cuda()
     img1 = G.synthesis(w)
