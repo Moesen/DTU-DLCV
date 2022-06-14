@@ -104,7 +104,7 @@ def generate_images(
     #w = torch.randn([1, G.num_ws, G.w_dim]).cuda()
     img = G.synthesis(w.unsqueeze(0))
     img = (img.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
-    pil13 = PIL.Image.fromarray(img[0].cpu().numpy(), 'RGB')
+    pil13 = PIL.Image.fromarray(img[0].cpu().numpy().squeeze(), 'RGB')
 
     #img1 = G.synthesis(w)
     #img1_3 = (img1.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
@@ -116,7 +116,7 @@ def generate_images(
 
     img = G.synthesis(proj_w.unsqueeze(0))
     img = (img.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
-    pil23 = PIL.Image.fromarray(img[0].cpu().numpy(), 'RGB')
+    pil23 = PIL.Image.fromarray(img[0].cpu().numpy().squeeze(), 'RGB')
 
     #img2 = G.synthesis(proj_w)
     #img2_3 = (img2.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
