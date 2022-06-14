@@ -1,14 +1,29 @@
 
 import numpy as np
 from tqdm import tqdm
+import dnnlib
+import numpy as np
+import PIL.Image
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torchvision.transforms as transforms
+import pickle 
+
+from projects.project2.stylegan2-ada-pytorch.torch_utils import *
+from projects.project2.stylegan2-ada-pytorch.dnnlib import *
+
+
 import matplotlib.pylab as plt
 
 from projects.utils import get_project2_root
-from projects.project2.src.models.stylegan2_pretrained_torch import get_stylegan2_ffhq
+#from projects.project2.src.models.stylegan2_pretrained_torch import get_stylegan2_ffhq
+
+
+def get_stylegan2_ffhq():
+    PROJECT_ROOT = get_project2_root()
+    model_path = PROJECT_ROOT / "models/ffhq.pkl"
+    with open(model_path, 'rb') as f:
+        G = pickle.load(f)['G_ema'].cuda()
+
+    return G
 
 G = get_stylegan2_ffhq()
 
