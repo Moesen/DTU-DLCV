@@ -95,9 +95,9 @@ def generate_images(
 
 
     PROJECT_ROOT = get_project2_root()
-    #ld_path =  PROJECT_ROOT / "data/stylegan2directions/age.npy"
-    ld_path =  PROJECT_ROOT / "data/projected_w_markus.npz"
-    ldd = np.load(ld_path)['w']
+    ld_path =  PROJECT_ROOT / "data/stylegan2directions/age.npy"
+    #ld_path =  PROJECT_ROOT / "data/projected_w_markus.npz"
+    ldd = np.load(ld_path)
     ld = torch.from_numpy(ldd).to(device)
 
 
@@ -109,6 +109,11 @@ def generate_images(
     w = w[:,0,:]
     w = w.repeat(18,1)
     w = w.unsqueeze(0)
+
+    #generate markus
+    markus_path =  PROJECT_ROOT / "data/projected_w_markus.npz"
+    w = np.load(ld_path)['w']
+    w = torch.from_numpy(w).to(device)
 
     #initial image
     img = G.synthesis(w)
@@ -123,8 +128,6 @@ def generate_images(
     mag1 = list(range(1,4))
     mag1 = [(x / 3)*mag1_max for x in mag1]
 
-    breakpoint()
-    
     for n,m1 in enumerate(mag1):
         #older image
         proj_w = w + m1*(ld[0,:].repeat(18,1).unsqueeze(0))
