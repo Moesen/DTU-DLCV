@@ -57,7 +57,7 @@ def plot_latent_direction(X,y,mag=100,ref=[-2,-2],labels=["class1","class2"]):
 
     sns.set()
     
-    sns.lmplot(
+    ax=sns.lmplot(
         x='PC1', 
         y='PC2', 
         data=pca_df, 
@@ -76,9 +76,14 @@ def plot_latent_direction(X,y,mag=100,ref=[-2,-2],labels=["class1","class2"]):
     yy = np.array([ref[1],ref[1] + mag*w[1]])
 
     #plt.plot(xx,yy)
-    plt.arrow(xx[0], yy[0], xx[1], yy[1], length_includes_head=True,
-          head_width=2, head_length=3, width=1,edgecolor='black')
-    plt.text(xx[0]+xx[1], yy[0]+yy[1], "w", fontsize=12)
+    ax.arrow(xx[0], yy[0], xx[1], yy[1], length_includes_head=True,
+          head_width=1.5, head_length=3, width=0.7, edgecolor='black',color='red')
+    ax.text(xx[0]+xx[1], yy[0]+yy[1], "w", fontsize=20)
+    ax.set_xlabel("PC1",fontsize=20)
+    ax.set_ylabel("PC2",fontsize=20)
+
+    plt.setp(ax.get_legend().get_texts(), fontsize='20') # for legend text
+    plt.setp(ax.get_legend().get_title(), fontsize='20')
 
     #plt.title('PCA projected classes')
 
