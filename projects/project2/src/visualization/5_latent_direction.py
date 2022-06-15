@@ -145,6 +145,37 @@ def generate_images(
     #img = G(z, label, truncation_psi=truncation_psi, noise_mode=noise_mode)
     #img = G.synthesis(w.unsqueeze(0), noise_mode=noise_mode)
 
+    labels = ["hair","glasses"]
+    data_path =  PROJECT_ROOT / "data" 
+
+    w_paths1 = glob.glob((data_path / (labels[0]+"_w_out_*") / "projected_w.npz").as_posix())
+    w_paths2 = glob.glob((data_path / (labels[1]+"_w_out_*") / "projected_w.npz").as_posix())
+
+    ws = []
+    w_labels = []
+
+    for wp in w_paths1:
+        w = np.load(wp)['w']
+        w = w[0,0,:]
+        #ws = ws.repeat(18,1)
+        #ws = ws.unsqueeze(0)
+        ws.append(w)
+        w_labels.append( 0 )
+    
+    for wp in w_paths2:
+        w = np.load(wp)['w']
+        w = w[0,0,:]
+        #ws = ws.repeat(18,1)
+        #ws = ws.unsqueeze(0)
+        ws.append(w)
+        w_labels.append( 1 )
+    
+    X = np.array(ws)
+    y = np.array(w_labels)
+
+    w = get_latent_direction(X, y)
+    
+    ld1 = torch.from_numpy(w).to(device)
 
 
     #####################
@@ -206,7 +237,7 @@ def generate_images(
     for n,m2 in enumerate(mag2):
         #older image
         #proj_w = w + 10*(ld.unsqueeze(0))
-        proj_w = w + m2*(ld.repeat(18,1).unsqueeze(0))
+        proj_w = w + m2*(ld.repeat(18,1).unsqueeze(0) + ld1.repeat(18,1).unsqueeze(0))
         img = G.synthesis(proj_w)
         img = (img.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
         pil23 = PIL.Image.fromarray(img[0].cpu().numpy().squeeze(), 'RGB')
