@@ -83,7 +83,7 @@ def generate_images(
         --network=https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada-pytorch/pretrained/metfaces.pkl
     """
     mag1 = 10
-    mag2 = 100
+    mag2_max = 100
     
     print('Loading networks from "%s"...' % network_pkl)
     device = torch.device('cuda')
@@ -180,7 +180,8 @@ def generate_images(
     fig, axs = plt.subplots(1,4, figsize=(15,5))
     axs[0].imshow( pil13 )
 
-    mag2 = list(range(1,4)/3)*mag2
+    mag2 = list(range(1,4))
+    mag2 = [(x / 3)*mag2_max for x in mag2]
 
     for n,m2 in enumerate(mag2):
         #older image
