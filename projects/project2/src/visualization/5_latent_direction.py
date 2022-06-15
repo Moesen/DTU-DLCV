@@ -84,7 +84,9 @@ def generate_images(
     """
     mag1_max = 10
     mag2_max = 50
-    
+    plot_ref = [-2,-2]
+    plot_mag = 100
+
     print('Loading networks from "%s"...' % network_pkl)
     device = torch.device('cuda')
     with dnnlib.util.open_url(network_pkl) as f:
@@ -228,7 +230,7 @@ def generate_images(
         img = PIL.Image.fromarray(img[0].cpu().numpy(), 'RGB').save(f'{outdir}/proj{idx:02d}.png')
     return"""
 
-    plot_latent_direction(X,y,mag=100,ref=[-2,-2]):
+    plot_latent_direction(X,y,mag=plot_mag,ref=plot_ref)
 
 if __name__ == "__main__":
     generate_images() # pylint: disable=no-value-for-parameter
