@@ -28,7 +28,7 @@ def get_latent_direction(X, y):
     return clf.coef_[0]
 
 
-def plot_latent_direction(X,y,mag=100,ref=[-2,-2]),labels=[]:
+def plot_latent_direction(X,y,mag=100,ref=[-2,-2],labels=["class1","class2"]):
 
     scaler = StandardScaler()
 
