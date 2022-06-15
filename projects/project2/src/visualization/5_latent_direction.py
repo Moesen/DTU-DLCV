@@ -83,7 +83,7 @@ def generate_images(
         --network=https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada-pytorch/pretrained/metfaces.pkl
     """
     mag1_max = 10
-    mag2_max = 20
+    mag2_max = 50#20
     mag2glasses_max = 70
     plot_ref = [10,10]
     plot_mag = 50
@@ -95,7 +95,8 @@ def generate_images(
 
 
     PROJECT_ROOT = get_project2_root()
-    ld_path =  PROJECT_ROOT / "data/stylegan2directions/age.npy"
+    #ld_path =  PROJECT_ROOT / "data/stylegan2directions/age.npy"
+    ld_path =  PROJECT_ROOT / "data/projected_w_markus.npz"
     ldd = np.load(ld_path)
     ld = torch.from_numpy(ldd).to(device)
 
