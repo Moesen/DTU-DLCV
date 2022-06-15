@@ -83,7 +83,7 @@ def generate_images(
         --network=https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada-pytorch/pretrained/metfaces.pkl
     """
     mag1 = 10
-    mag2_max = 100
+    mag2_max = 50
     
     print('Loading networks from "%s"...' % network_pkl)
     device = torch.device('cuda')
@@ -191,8 +191,10 @@ def generate_images(
         img = (img.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
         pil23 = PIL.Image.fromarray(img[0].cpu().numpy().squeeze(), 'RGB')
 
-        axs[n].imshow( pil23 )
-
+        axs[n+1].imshow( pil23 )
+        
+    plt.grid(False)
+    plt.axis('off')
     save_path =  PROJECT_ROOT / "reports/figures3.png"
     plt.savefig(save_path)
 
