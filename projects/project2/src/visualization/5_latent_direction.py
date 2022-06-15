@@ -112,7 +112,7 @@ def generate_images(
 
     #generate markus
     markus_path =  PROJECT_ROOT / "data/projected_w_markus.npz"
-    w = np.load(ld_path)['w']
+    w = np.load(markus_path)['w']
     w = torch.from_numpy(w).to(device)
 
     #initial image
