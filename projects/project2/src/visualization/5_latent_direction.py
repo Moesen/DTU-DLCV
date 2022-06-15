@@ -148,7 +148,7 @@ def generate_images(
 
 
     #####################
-    labels = ["hair","glasses"]
+    labels = ["hair","bald"]
     data_path =  PROJECT_ROOT / "data" 
 
     w_paths1 = glob.glob((data_path / (labels[0]+"_w_out_*") / "projected_w.npz").as_posix())

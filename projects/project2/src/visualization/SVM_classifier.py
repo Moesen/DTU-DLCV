@@ -77,7 +77,7 @@ def plot_latent_direction(X,y,mag=100,ref=[-2,-2],labels=["class1","class2"]):
 
     #plt.plot(xx,yy)
     plt.arrow(xx[0], yy[0], xx[1], yy[1], length_includes_head=True,
-          head_width=0.08, head_length=1, width=0.2,edgecolor='black')
+          head_width=0.08, head_length=0.5, width=0.04,edgecolor='black')
     plt.text(xx[0]+xx[1], yy[0]+yy[1], "w", fontsize=12)
 
     plt.title('PCA projected classes')
