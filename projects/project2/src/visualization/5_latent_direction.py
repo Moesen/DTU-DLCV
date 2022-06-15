@@ -96,7 +96,9 @@ def generate_images(
     ldd = np.load(ld_path)
     ld = torch.from_numpy(ldd).to(device)
 
-    z = torch.randn([1, G.z_dim]).to(device)
+    seed = seeds
+    z = torch.from_numpy(np.random.RandomState(seed).randn(1, G.z_dim)).to(device)
+    #z = torch.randn([1, G.z_dim]).to(device)
     w = G.mapping(z,None) 
 
     w = w[:,0,:]
@@ -164,7 +166,7 @@ def generate_images(
 
 
     #generate a normal image
-    z = torch.randn([1, G.z_dim]).to(device)
+    #z = torch.randn([1, G.z_dim]).to(device)
     w = G.mapping(z,None) 
 
     w = w[:,0,:]
