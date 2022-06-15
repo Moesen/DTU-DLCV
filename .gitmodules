@@ -4,3 +4,6 @@
 [submodule "projects/project2/StyleCLIP"]
 	path = projects/project2/StyleCLIP
 	url = https://github.com/vipermu/StyleCLIP.git
+[submodule "projects/project2/FFHQ-Alignment"]
+	path = projects/project2/FFHQ-Alignment
+	url = https://github.com/happy-jihye/FFHQ-Alignment
