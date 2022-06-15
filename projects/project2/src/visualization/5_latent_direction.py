@@ -176,18 +176,22 @@ def generate_images(
     img = (img.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
     pil13 = PIL.Image.fromarray(img[0].cpu().numpy().squeeze(), 'RGB')
 
-
-    #older image
-    #proj_w = w + 10*(ld.unsqueeze(0))
-    proj_w = w + mag2*(ld.repeat(18,1).unsqueeze(0))
-    img = G.synthesis(proj_w)
-    img = (img.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
-    pil23 = PIL.Image.fromarray(img[0].cpu().numpy().squeeze(), 'RGB')
-
     #plotting
-    fig, axs = plt.subplots(1,2, figsize=(15,8))
+    fig, axs = plt.subplots(1,4, figsize=(15,5))
     axs[0].imshow( pil13 )
-    axs[1].imshow( pil23 )
+
+    mag2 = list(range(1,4)/3)*mag2
+
+    for n,m2 in enumerate(mag2):
+        #older image
+        #proj_w = w + 10*(ld.unsqueeze(0))
+        proj_w = w + m2*(ld.repeat(18,1).unsqueeze(0))
+        img = G.synthesis(proj_w)
+        img = (img.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
+        pil23 = PIL.Image.fromarray(img[0].cpu().numpy().squeeze(), 'RGB')
+
+        axs[n].imshow( pil23 )
+
     save_path =  PROJECT_ROOT / "reports/figures3.png"
     plt.savefig(save_path)
 
