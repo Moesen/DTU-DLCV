@@ -98,7 +98,6 @@ def generate_images(
     #ld_path =  PROJECT_ROOT / "data/stylegan2directions/age.npy"
     ld_path =  PROJECT_ROOT / "data/projected_w_markus.npz"
     ldd = np.load(ld_path)['w']
-    #ld = torch.from_numpy(ldd).to(device)
     ld = torch.from_numpy(ldd).to(device)
 
 
@@ -126,7 +125,8 @@ def generate_images(
 
     for n,m1 in enumerate(mag1):
         #older image
-        proj_w = w + m1*(ld[0,:].repeat(18,1).unsqueeze(0))
+        #proj_w = w + m1*(ld[0,:].repeat(18,1).unsqueeze(0))
+        proj_w = w + m1*(ld.repeat(18,1).unsqueeze(0))
         img = G.synthesis(proj_w)
         img = (img.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
         pil23 = PIL.Image.fromarray(img[0].cpu().numpy().squeeze(), 'RGB')
