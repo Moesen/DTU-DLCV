@@ -84,7 +84,7 @@ def generate_images(
     """
     mag1_max = 10
     mag2_max = 40
-    mag2glasses_max = 100
+    mag2glasses_max = 300
     plot_ref = [10,10]
     plot_mag = 50
 
