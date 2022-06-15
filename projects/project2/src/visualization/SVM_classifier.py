@@ -82,8 +82,10 @@ def plot_latent_direction(X,y,mag=100,ref=[-2,-2],labels=["class1","class2"]):
     plt.xlabel('PC1', fontsize=20)
     plt.ylabel('PC2', fontsize=20)
 
-    plt.setp(ax.get_legend().get_texts(), fontsize='20') # for legend text
-    plt.setp(ax.get_legend().get_title(), fontsize='20')
+    plt.legend(fontsize=20)
+    
+    #plt.setp(ax.get_legend().get_texts(), fontsize='20') # for legend text
+    #plt.setp(ax.get_legend().get_title(), fontsize='20')
 
     #plt.title('PCA projected classes')
 
