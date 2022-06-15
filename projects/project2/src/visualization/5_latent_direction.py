@@ -83,7 +83,8 @@ def generate_images(
         --network=https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada-pytorch/pretrained/metfaces.pkl
     """
     mag1_max = 10
-    mag2_max = 50
+    mag2_max = 40
+    mag2glasses_max = 100
     plot_ref = [10,10]
     plot_mag = 50
 
@@ -234,10 +235,13 @@ def generate_images(
     mag2 = list(range(1,4))
     mag2 = [(x / 3)*mag2_max for x in mag2]
 
-    for n,m2 in enumerate(mag2):
+    mag2g = list(range(1,4))
+    mag2g = [(x / 3)*mag2glasses_max for x in mag2g]
+
+    for n,(m2,m2g) in enumerate(zip(mag2,mag2g)):
         #older image
         #proj_w = w + 10*(ld.unsqueeze(0))
-        proj_w = w + m2*(ld.repeat(18,1).unsqueeze(0) + ld1.repeat(18,1).unsqueeze(0))
+        proj_w = w + (m2*ld.repeat(18,1).unsqueeze(0) + m2g*ld1.repeat(18,1).unsqueeze(0))
         img = G.synthesis(proj_w)
         img = (img.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
         pil23 = PIL.Image.fromarray(img[0].cpu().numpy().squeeze(), 'RGB')
