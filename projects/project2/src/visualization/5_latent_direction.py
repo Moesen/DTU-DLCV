@@ -192,9 +192,10 @@ def generate_images(
         pil23 = PIL.Image.fromarray(img[0].cpu().numpy().squeeze(), 'RGB')
 
         axs[n+1].imshow( pil23 )
-        
-    plt.grid(False)
-    plt.axis('off')
+
+        axs[n+1].grid(False)
+        axs[n+1].axis('off')
+
     save_path =  PROJECT_ROOT / "reports/figures3.png"
     plt.savefig(save_path)
 
