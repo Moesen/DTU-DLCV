@@ -84,8 +84,8 @@ def generate_images(
     """
     mag1_max = 10
     mag2_max = 50
-    plot_ref = [-2,-2]
-    plot_mag = 100
+    plot_ref = [10,-10]
+    plot_mag = 50
 
     print('Loading networks from "%s"...' % network_pkl)
     device = torch.device('cuda')
@@ -148,11 +148,11 @@ def generate_images(
 
 
     #####################
-    #classes = ["hair","bald"]
+    labels = ["hair","glasses"]
     data_path =  PROJECT_ROOT / "data" 
 
-    w_paths1 = glob.glob((data_path / "hair_w_out_*" / "projected_w.npz").as_posix())
-    w_paths2 = glob.glob((data_path / "glasses_w_out_*" / "projected_w.npz").as_posix())
+    w_paths1 = glob.glob((data_path / labels[0]+"_w_out_*" / "projected_w.npz").as_posix())
+    w_paths2 = glob.glob((data_path / labels[1]+"glasses_w_out_*" / "projected_w.npz").as_posix())
 
     ws = []
     w_labels = []
@@ -219,18 +219,8 @@ def generate_images(
     save_path =  PROJECT_ROOT / "reports/figures3.png"
     plt.savefig(save_path)
 
-    # Synthesize the result of a W projection.
-    #print(f'Generating images from projected W "{projected_w}"')
-    """ws = np.load(projected_w)['w']
-    ws = torch.tensor(ws, device=device) # pylint: disable=not-callable
-    assert ws.shape[1:] == (G.num_ws, G.w_dim)
-    for idx, w in enumerate(ws):
-        img = G.synthesis(w.unsqueeze(0), noise_mode=noise_mode)
-        img = (img.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
-        img = PIL.Image.fromarray(img[0].cpu().numpy(), 'RGB').save(f'{outdir}/proj{idx:02d}.png')
-    return"""
 
-    plot_latent_direction(X,y,mag=plot_mag,ref=plot_ref)
+    plot_latent_direction(X,y,mag=plot_mag,ref=plot_ref,labels=labels)
 
 if __name__ == "__main__":
     generate_images() # pylint: disable=no-value-for-parameter

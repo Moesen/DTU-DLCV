@@ -28,7 +28,7 @@ def get_latent_direction(X, y):
     return clf.coef_[0]
 
 
-def plot_latent_direction(X,y,mag=100,ref=[-2,-2]):
+def plot_latent_direction(X,y,mag=100,ref=[-2,-2]),labels=[]:
 
     scaler = StandardScaler()
 
@@ -48,8 +48,8 @@ def plot_latent_direction(X,y,mag=100,ref=[-2,-2]):
     
     # map target names to PCA features   
     target_names = {
-    0:'bald',
-    1:'hair', 
+    0:labels[0],
+    1:labels[1], 
     }
     
     pca_df['class'] = y
@@ -80,7 +80,7 @@ def plot_latent_direction(X,y,mag=100,ref=[-2,-2]):
           head_width=0.08, head_length=0.5, width=0.02,edgecolor='black')
     plt.text(xx[0]+xx[1], yy[0]+yy[1], "w", fontsize=12)
 
-    plt.title('2D PCA Graph')
+    plt.title('PCA projected classes')
 
     PROJECT_ROOT = get_project2_root()
     save_path =  PROJECT_ROOT / "reports/figures/latent_direction_PCA.png"
