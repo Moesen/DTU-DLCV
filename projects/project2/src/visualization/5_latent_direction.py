@@ -97,9 +97,9 @@ def generate_images(
     PROJECT_ROOT = get_project2_root()
     #ld_path =  PROJECT_ROOT / "data/stylegan2directions/age.npy"
     ld_path =  PROJECT_ROOT / "data/projected_w_markus.npz"
-    ldd = np.load(ld_path)
+    ldd = np.load(ld_path)['w']
     #ld = torch.from_numpy(ldd).to(device)
-    ld = torch.from_numpy(np.array(ldd)).to(device)
+    ld = torch.from_numpy(ldd).to(device)
 
 
     seed = seeds
