@@ -106,7 +106,7 @@ def generate_images(
 
     #older image
     #proj_w = w + 10*(ld.unsqueeze(0))
-    proj_w = w + 10*(ld[:,0,:].repeat(18,1).unsqueeze(0))
+    proj_w = w + 10*(ld[0,:].repeat(18,1).unsqueeze(0))
     img = G.synthesis(proj_w)
     img = (img.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
     pil23 = PIL.Image.fromarray(img[0].cpu().numpy().squeeze(), 'RGB')
