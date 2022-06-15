@@ -83,8 +83,8 @@ def generate_images(
         --network=https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada-pytorch/pretrained/metfaces.pkl
     """
     mag1_max = 10
-    mag2_max = 50
-    mag2glasses_max = 200
+    mag2_max = 20
+    mag2glasses_max = 70
     plot_ref = [10,10]
     plot_mag = 50
 
