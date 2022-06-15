@@ -57,7 +57,7 @@ def plot_latent_direction(X,y,mag=100,ref=[-2,-2],labels=["class1","class2"]):
 
     sns.set()
     
-    ax=sns.lmplot(
+    sns.lmplot(
         x='PC1', 
         y='PC2', 
         data=pca_df, 
