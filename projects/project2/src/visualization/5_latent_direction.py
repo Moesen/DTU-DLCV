@@ -8,6 +8,8 @@
 
 """Generate images using pretrained network pickle."""
 from projects.utils import get_project2_root
+from projects.project2.src.visualization.SVM_classifier import get_latent_direction
+
 
 import os
 import re
@@ -20,6 +22,7 @@ import PIL.Image
 import torch
 import matplotlib.pyplot as plt
 
+import glob
 
 import legacy
 
@@ -122,6 +125,81 @@ def generate_images(
     #z = torch.from_numpy(np.random.RandomState(seed).randn(1, G.z_dim)).to(device)
     #img = G(z, label, truncation_psi=truncation_psi, noise_mode=noise_mode)
     #img = G.synthesis(w.unsqueeze(0), noise_mode=noise_mode)
+
+
+
+    #####################
+    #classes = ["hair","bald"]
+    data_path =  PROJECT_ROOT / "data" 
+
+    w_paths1 = glob.glob((data_path / "hair_w_out_*" / "projected_w.npz").as_posix())
+    w_paths2 = glob.glob((data_path / "bald_w_out_*" / "projected_w.npz").as_posix())
+
+    ws = []
+    w_labels = []
+
+    for wp in w_paths1:
+        w = np.load(wp)['w']
+        w = w[0,0,:]
+        #ws = ws.repeat(18,1)
+        #ws = ws.unsqueeze(0)
+        ws.append(w)
+        w_labels.append( 0 )
+    
+    for wp in w_paths2:
+        w = np.load(wp)['w']
+        w = w[0,0,:]
+        #ws = ws.repeat(18,1)
+        #ws = ws.unsqueeze(0)
+        ws.append(w)
+        w_labels.append( 1 )
+    
+    X = np.array(ws)
+    y = np.array(w_labels)
+
+    w = get_latent_direction(X, y)
+    
+    ld = torch.from_numpy(w).to(device)
+
+
+    #generate a normal image
+    z = torch.randn([1, G.z_dim]).to(device)
+    w = G.mapping(z,None) 
+
+    w = w[:,0,:]
+    w = w.repeat(18,1)
+    w = w.unsqueeze(0)
+
+    #initial image
+    img = G.synthesis(w)
+    img = (img.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
+    pil13 = PIL.Image.fromarray(img[0].cpu().numpy().squeeze(), 'RGB')
+
+
+    #older image
+    #proj_w = w + 10*(ld.unsqueeze(0))
+    proj_w = w + 10*(ld.repeat(18,1).unsqueeze(0))
+    img = G.synthesis(proj_w)
+    img = (img.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
+    pil23 = PIL.Image.fromarray(img[0].cpu().numpy().squeeze(), 'RGB')
+
+    #plotting
+    fig, axs = plt.subplots(1,2, figsize=(15,8))
+    axs[0].imshow( pil13 )
+    axs[1].imshow( pil23 )
+    save_path =  PROJECT_ROOT / "reports/figures3.png"
+    plt.savefig(save_path)
+
+    # Synthesize the result of a W projection.
+    #print(f'Generating images from projected W "{projected_w}"')
+    """ws = np.load(projected_w)['w']
+    ws = torch.tensor(ws, device=device) # pylint: disable=not-callable
+    assert ws.shape[1:] == (G.num_ws, G.w_dim)
+    for idx, w in enumerate(ws):
+        img = G.synthesis(w.unsqueeze(0), noise_mode=noise_mode)
+        img = (img.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
+        img = PIL.Image.fromarray(img[0].cpu().numpy(), 'RGB').save(f'{outdir}/proj{idx:02d}.png')
+    return"""
 
 
 if __name__ == "__main__":
