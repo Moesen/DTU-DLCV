@@ -84,8 +84,8 @@ def generate_images(
     """
     mag1_max = 10
     mag2_max = 50
-    plot_ref = [10,-10]
-    plot_mag = 50
+    plot_ref = [10,-15]
+    plot_mag = 30
 
     print('Loading networks from "%s"...' % network_pkl)
     device = torch.device('cuda')

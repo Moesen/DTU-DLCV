@@ -72,15 +72,15 @@ def plot_latent_direction(X,y,mag=100,ref=[-2,-2],labels=["class1","class2"]):
     w = scaler.transform(w)
     w = pca.transform(w).squeeze()
 
-    xx = np.array([ref[0],mag*w[0]])
-    yy = np.array([ref[1],mag*w[1]])
+    xx = np.array([ref[0],ref[0] + mag*w[0]])
+    yy = np.array([ref[1],ref[1] + mag*w[1]])
 
     #plt.plot(xx,yy)
     plt.arrow(xx[0], yy[0], xx[1], yy[1], length_includes_head=True,
-          head_width=0.08, head_length=0.5, width=0.04,edgecolor='black')
+          head_width=0.08, head_length=5, width=2,edgecolor='black')
     plt.text(xx[0]+xx[1], yy[0]+yy[1], "w", fontsize=12)
 
-    plt.title('PCA projected classes')
+    #plt.title('PCA projected classes')
 
     PROJECT_ROOT = get_project2_root()
     save_path =  PROJECT_ROOT / "reports/figures/latent_direction_PCA.png"
