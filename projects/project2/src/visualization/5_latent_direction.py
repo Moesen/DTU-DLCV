@@ -179,6 +179,8 @@ def generate_images(
     #plotting
     fig, axs = plt.subplots(1,4, figsize=(15,5))
     axs[0].imshow( pil13 )
+    axs[0].grid(False)
+    axs[0].axis('off')
 
     mag2 = list(range(1,4))
     mag2 = [(x / 3)*mag2_max for x in mag2]
