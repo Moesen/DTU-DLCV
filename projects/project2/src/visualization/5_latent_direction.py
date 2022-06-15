@@ -82,7 +82,8 @@ def generate_images(
     python generate.py --outdir=out --projected_w=projected_w.npz \\
         --network=https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada-pytorch/pretrained/metfaces.pkl
     """
-    
+    mag1 = 10
+    mag2 = 100
     
     print('Loading networks from "%s"...' % network_pkl)
     device = torch.device('cuda')
@@ -109,7 +110,7 @@ def generate_images(
 
     #older image
     #proj_w = w + 10*(ld.unsqueeze(0))
-    proj_w = w + 10*(ld[0,:].repeat(18,1).unsqueeze(0))
+    proj_w = w + mag1*(ld[0,:].repeat(18,1).unsqueeze(0))
     img = G.synthesis(proj_w)
     img = (img.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
     pil23 = PIL.Image.fromarray(img[0].cpu().numpy().squeeze(), 'RGB')
@@ -178,7 +179,7 @@ def generate_images(
 
     #older image
     #proj_w = w + 10*(ld.unsqueeze(0))
-    proj_w = w + 10*(ld.repeat(18,1).unsqueeze(0))
+    proj_w = w + mag2*(ld.repeat(18,1).unsqueeze(0))
     img = G.synthesis(proj_w)
     img = (img.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
     pil23 = PIL.Image.fromarray(img[0].cpu().numpy().squeeze(), 'RGB')
