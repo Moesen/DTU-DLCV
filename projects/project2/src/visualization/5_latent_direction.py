@@ -8,7 +8,7 @@
 
 """Generate images using pretrained network pickle."""
 from projects.utils import get_project2_root
-from projects.project2.src.visualization.SVM_classifier import get_latent_direction
+from projects.project2.src.visualization.SVM_classifier import get_latent_direction, plot_latent_direction
 
 
 import os
@@ -82,7 +82,7 @@ def generate_images(
     python generate.py --outdir=out --projected_w=projected_w.npz \\
         --network=https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada-pytorch/pretrained/metfaces.pkl
     """
-    mag1 = 10
+    mag1_max = 10
     mag2_max = 50
     
     print('Loading networks from "%s"...' % network_pkl)
@@ -110,19 +110,33 @@ def generate_images(
     img = (img.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
     pil13 = PIL.Image.fromarray(img[0].cpu().numpy().squeeze(), 'RGB')
 
-    #older image
-    #proj_w = w + 10*(ld.unsqueeze(0))
-    proj_w = w + mag1*(ld[0,:].repeat(18,1).unsqueeze(0))
-    img = G.synthesis(proj_w)
-    img = (img.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
-    pil23 = PIL.Image.fromarray(img[0].cpu().numpy().squeeze(), 'RGB')
-
     #plotting
-    fig, axs = plt.subplots(1,2, figsize=(15,8))
+    fig, axs = plt.subplots(1,4, figsize=(15,5))
     axs[0].imshow( pil13 )
-    axs[1].imshow( pil23 )
+
+    #older image
+    mag1 = list(range(1,4))
+    mag1 = [(x / 3)*mag1_max for x in mag1]
+
+    for n,m1 in enumerate(mag1):
+        #older image
+        proj_w = w + m1*(ld[0,:].repeat(18,1).unsqueeze(0))
+        img = G.synthesis(proj_w)
+        img = (img.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
+        pil23 = PIL.Image.fromarray(img[0].cpu().numpy().squeeze(), 'RGB')
+
+        axs[n+1].imshow( pil23 )
+
+        axs[n+1].grid(False)
+        axs[n+1].axis('off')
+
     save_path =  PROJECT_ROOT / "reports/figures2.png"
     plt.savefig(save_path)
+
+    #proj_w = w + mag1*(ld[0,:].repeat(18,1).unsqueeze(0))
+    #img = G.synthesis(proj_w)
+    #img = (img.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
+    #pil23 = PIL.Image.fromarray(img[0].cpu().numpy().squeeze(), 'RGB')
 
 
     #z = torch.from_numpy(np.random.RandomState(seed).randn(1, G.z_dim)).to(device)
@@ -136,7 +150,7 @@ def generate_images(
     data_path =  PROJECT_ROOT / "data" 
 
     w_paths1 = glob.glob((data_path / "hair_w_out_*" / "projected_w.npz").as_posix())
-    w_paths2 = glob.glob((data_path / "bald_w_out_*" / "projected_w.npz").as_posix())
+    w_paths2 = glob.glob((data_path / "glasses_w_out_*" / "projected_w.npz").as_posix())
 
     ws = []
     w_labels = []
@@ -214,6 +228,7 @@ def generate_images(
         img = PIL.Image.fromarray(img[0].cpu().numpy(), 'RGB').save(f'{outdir}/proj{idx:02d}.png')
     return"""
 
+    plot_latent_direction(X,y,mag=100,ref=[-2,-2]):
 
 if __name__ == "__main__":
     generate_images() # pylint: disable=no-value-for-parameter

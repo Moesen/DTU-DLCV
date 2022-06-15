@@ -8,10 +8,11 @@ from sklearn.decomposition import PCA
 
 from projects.utils import get_project2_root
 
-
 import numpy as np
 import pandas as pd
 import seaborn as sns
+
+
 
 def get_latent_direction(X, y):
     """
@@ -27,9 +28,14 @@ def get_latent_direction(X, y):
     return clf.coef_[0]
 
 
-def plot_latent_direction(X,y):
+def plot_latent_direction(X,y,mag=100,ref=[-2,-2]):
 
-    x_scaled = StandardScaler().fit_transform(X)
+    scaler = StandardScaler()
+
+    scaler = scaler.fit(X)
+    x_scaled = scaler.transform(X)
+
+    #x_scaled = scaler.fit_transform(X)
 
     pca = PCA(n_components=2)
 
@@ -62,15 +68,17 @@ def plot_latent_direction(X,y):
     
     w = get_latent_direction(X, y)
     w = w[np.newaxis,:]
-    w = StandardScaler().fit_transform(w)
+    #w = StandardScaler().fit_transform(w)
+    w = scaler.transform(w)
     w = pca.transform(w).squeeze()
 
-    mag = -100
+    xx = np.array([ref[0],mag*w[0]])
+    yy = np.array([ref[1],mag*w[1]])
 
-    xx = np.array([w[0],mag*w[0]])
-    yy = np.array([w[1],mag*w[1]])
-
-    plt.plot(xx,yy)
+    #plt.plot(xx,yy)
+    plt.arrow(xx[0], yy[0], xx[1], yy[1], length_includes_head=True,
+          head_width=0.08, head_length=0.5, width=0.02,edgecolor='black')
+    plt.text(xx[0]+xx[1], yy[0]+yy[1], "w", fontsize=12)
 
     plt.title('2D PCA Graph')
 
@@ -125,26 +133,29 @@ def plot_latent_direction(X,y):
 
 
 
-X, y = make_blobs(n_samples=100, centers=2, random_state=6)
+"""X, y = make_blobs(n_samples=100, centers=2, random_state=6)
 
-"""X = np.array([[1,1],
+X = np.array([[1,1],
              [0.5,0.5],
              [0,1],
              [2,2],
              [3,3],
              [3,2]])
 
-y = np.array([0,0,0,1,1,1])"""
+y = np.array([0,0,0,1,1,1])
 
 
 X = np.array([[1,1,1],
              [0.5,0.5,1],
              [0,1,2],
+             [-1,1,4],
+             [2,-1,3],
              [2,2,3],
              [3,3,4],
-             [3,2,9]])
+             [3,2,9],
+             [4,1,5],
+             [5,3,2]])
 
-y = np.array([0,0,0,1,1,1])
+y = np.array([0,0,0,0,0,1,1,1,1,1])
 
-
-plot_latent_direction(X,y)
+plot_latent_direction(X,y,mag=-3,ref=[-2,-1])"""
