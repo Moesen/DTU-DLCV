@@ -207,6 +207,7 @@ def bce_loss(y_real, y_pred):
     return torch.mean(y_pred - y_real*y_pred + torch.log(1 + torch.exp(-y_pred)))
 
 def dice_loss(y_real, y_pred):
+    breakpoint()
     return 1- 1/(256**2)*torch.sum((2*y_real*y_pred)/(y_real + y_pred))
 
 loss_func = dice_loss
