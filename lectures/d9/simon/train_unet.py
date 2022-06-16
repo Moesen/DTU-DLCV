@@ -22,7 +22,8 @@ from IPython.display import clear_output
 
 from projects.utils import get_repo_root
 
-
+PROJECT_ROOT = get_repo_root()
+lecture_path = PROJECT_ROOT / "lectures/d9/simon"
 
 #hyper parameters 
 size = 128
@@ -116,6 +117,7 @@ class Unet(nn.Module):
 
         # decoder
         d0 = F.relu(self.dec_conv0(self.upsample0(b)))
+        breakpoint()
         d0 = torch.cat([d0,e2],1)
         d1 = F.relu(self.dec_conv1(self.upsample1(d0)))
         d1 = torch.cat([d1,e1],1)
@@ -183,11 +185,11 @@ def predict(model, data):
 
 
 model = Unet().to(device)
-summary(model, (3, 256, 256))
+#summary(model, (3, 256, 256))
 num_epochs = 50
 
-from torchviz import make_dot
-make_dot(model(torch.randn(20, 3, 256, 256).cuda()), params=dict(model.named_parameters()))
+#from torchviz import make_dot
+#make_dot(model(torch.randn(20, 3, 256, 256).cuda()), params=dict(model.named_parameters()))
 
 torch.cuda.empty_cache()
 
