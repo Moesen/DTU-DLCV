@@ -166,6 +166,7 @@ class Unet2(nn.Module):
 
         # decoder
         d0 = F.relu(self.dec_conv0(b))
+        breakpoint()
         d0 = torch.cat([d0,e2],1)
         d1 = F.relu(self.dec_conv1(d0))
         d1 = torch.cat([d1,e1],1)
