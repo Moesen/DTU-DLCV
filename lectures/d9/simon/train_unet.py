@@ -99,11 +99,11 @@ class Unet(nn.Module):
         self.upsample0 = nn.Upsample(16)  # 8 -> 16
         self.dec_conv0 = nn.Conv2d(64, 64, 3, padding=1)
         self.upsample1 = nn.Upsample(32)  # 16 -> 32
-        self.dec_conv1 = nn.Conv2d(64, 64, 3, padding=1)
+        self.dec_conv1 = nn.Conv2d(64*2, 64, 3, padding=1)
         self.upsample2 = nn.Upsample(64)  # 32 -> 64
-        self.dec_conv2 = nn.Conv2d(64, 64, 3, padding=1)
+        self.dec_conv2 = nn.Conv2d(64*2, 64, 3, padding=1)
         self.upsample3 = nn.Upsample(128)  # 64 -> 128
-        self.dec_conv3 = nn.Conv2d(64, 1, 3, padding=1)
+        self.dec_conv3 = nn.Conv2d(64*2, 1, 3, padding=1)
 
     def forward(self, x):
         # encoder
