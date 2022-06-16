@@ -167,7 +167,6 @@ class Unet2(nn.Module):
 
         # bottleneck
         b = F.relu(self.bottleneck_conv(e3))
-        breakpoint()
         # decoder
         d0 = F.relu(self.dec_conv0(self.upsample0(b)))
         d0 = torch.cat([d0,e2],1)
