@@ -186,7 +186,7 @@ def train(model, opt, loss_fn, epochs, train_loader, test_loader):
             plt.title('Output')
             plt.axis('off')
         plt.suptitle('%d / %d - loss: %f' % (epoch+1, epochs, avg_loss))
-        fig_path = lecture_path / f"data_images_epoch{epoch}_batch{n}.png"
+        fig_path = lecture_path / f"data_images_epoch{epoch}.png"
         plt.savefig(fig_path)
         #plt.show()
 
@@ -199,7 +199,7 @@ def predict(model, data):
 
 model = EncDec().to(device)
 summary(model, (3, 256, 256))
-num_epochs = 50
+num_epochs = 100
 
 
 def bce_loss(y_real, y_pred):
