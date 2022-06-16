@@ -201,7 +201,7 @@ def predict(model, data):
 model = EncDec().to(device)
 summary(model, (3, 256, 256))
 
-num_epochs = 10
+num_epochs = 50
 train(model, optim.Adam(model.parameters()), bce_loss, num_epochs, train_loader, test_loader)
 
 
