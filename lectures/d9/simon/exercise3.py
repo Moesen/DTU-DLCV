@@ -213,7 +213,11 @@ def dice_loss(y_real, y_pred):
 def focal_loss(y_real, y_pred,gamma=2):
     return - torch.sum( (1-F.sigmoid(y_pred))**gamma*y_real*torch.log(F.sigmoid(y_pred)) + (1-y_real)*torch.log(1-F.sigmoid(y_pred)) )
 
-loss_func = focal_loss
+def bce_total_variation(y_real, y_pred):
+    total_var = torch.sum(torch.abs(F.sigmoid(y_pred[:,:,:,1:]) - F.sigmoid(y_pred[:,:,:,:-1]))) + torch.sum(torch.abs(F.sigmoid(y_pred[:,:,1:,:]) - F.sigmoid(y_pred[:,:,:-1,:])))
+    return bce_loss(y_real, y_pred) + 1e-5*total_var
+
+loss_func = bce_total_variation
 optimizer = optim.Adam(model.parameters(),lr=1e-4)
 
 train(model, optimizer, loss_func, num_epochs, train_loader, test_loader)
