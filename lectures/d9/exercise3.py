@@ -83,7 +83,7 @@ for i in range(6):
 
 
 PROJECT_ROOT = get_repo_root()
-lecture_path = PROJECT_ROOT / "lectures/d9/
+lecture_path = PROJECT_ROOT / "lectures/d9"
 fig_path = lecture_path / "data_images.png"
 plt.savefig(fig_path)
 
