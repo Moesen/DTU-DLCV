@@ -199,8 +199,8 @@ def predict(model, data):
 
 model = EncDec().to(device)
 summary(model, (3, 256, 256))
-
 num_epochs = 50
+
 
 def bce_loss(y_real, y_pred):
     y_pred = torch.clamp(y_pred, min=-1e3, max=1e3)
@@ -210,8 +210,9 @@ def dice_loss(y_real, y_pred):
     return 1- 1/(256**2)*torch.sum((2*y_real*y_pred)/(y_real + y_pred))
 
 loss_func = dice_loss
+optimizer = optim.Adam(model.parameters(),lr=1e-4)
 
-train(model, optim.Adam(model.parameters()), loss_func, num_epochs, train_loader, test_loader)
+train(model, optimizer, loss_func, num_epochs, train_loader, test_loader)
 
 
 """
