@@ -14,6 +14,7 @@ from torchvision import models
 from torchsummary import summary
 import torch.optim as optim
 from time import time
+import tqdm
 
 import matplotlib.pyplot as plt
 from IPython.display import clear_output
@@ -83,7 +84,7 @@ for i in range(6):
 
 
 PROJECT_ROOT = get_repo_root()
-lecture_path = PROJECT_ROOT / "lectures/d9"
+lecture_path = PROJECT_ROOT / "lectures/d9/simon"
 fig_path = lecture_path / "data_images.png"
 plt.savefig(fig_path)
 
@@ -148,13 +149,13 @@ def bce_loss(y_real, y_pred):
 def train(model, opt, loss_fn, epochs, train_loader, test_loader):
     X_test, Y_test = next(iter(test_loader))
 
-    for epoch in range(epochs):
+    for epoch in tqdm(range(num_epochs), unit='epoch'):
         tic = time()
         print('* Epoch %d/%d' % (epoch+1, epochs))
 
         avg_loss = 0
         model.train()  # train mode
-        for X_batch, Y_batch in train_loader:
+        for n,(X_batch, Y_batch) in tqdm(enumerate(train_loader), total=len(train_loader)):
             X_batch = X_batch.to(device)
             Y_batch = Y_batch.to(device)
 
@@ -187,7 +188,9 @@ def train(model, opt, loss_fn, epochs, train_loader, test_loader):
             plt.title('Output')
             plt.axis('off')
         plt.suptitle('%d / %d - loss: %f' % (epoch+1, epochs, avg_loss))
-        plt.show()
+        fig_path = lecture_path / f"data_images_epoch{epoch}_batch{n}.png"
+        plt.savefig(fig_path)
+        #plt.show()
 
 def predict(model, data):
     model.eval()  # testing mode
