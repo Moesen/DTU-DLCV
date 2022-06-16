@@ -149,7 +149,7 @@ def bce_loss(y_real, y_pred):
 def train(model, opt, loss_fn, epochs, train_loader, test_loader):
     X_test, Y_test = next(iter(test_loader))
 
-    for epoch in tqdm(range(num_epochs), unit='epoch'):
+    for epoch in tqdm(range(epochs), unit='epoch'):
         tic = time()
         print('* Epoch %d/%d' % (epoch+1, epochs))
 
