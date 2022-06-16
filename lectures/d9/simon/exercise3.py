@@ -139,9 +139,6 @@ class EncDec(nn.Module):
         d3 = self.dec_conv3(self.upsample3(d2))  # no activation
         return d3
 
-def bce_loss(y_real, y_pred):
-    return torch.mean(y_pred - y_real*y_pred + torch.log(1 + torch.exp(-y_pred)))
-
 
 
 ### TRAINING #### 
@@ -152,7 +149,7 @@ def train(model, opt, loss_fn, epochs, train_loader, test_loader):
 
     for epoch in tqdm(range(epochs), unit='epoch'):
         tic = time()
-        print('* Epoch %d/%d' % (epoch+1, epochs))
+        #print('* Epoch %d/%d' % (epoch+1, epochs))
 
         avg_loss = 0
         model.train()  # train mode
@@ -199,10 +196,17 @@ def predict(model, data):
     return np.array(Y_pred)
 
 
+
 model = EncDec().to(device)
 summary(model, (3, 256, 256))
 
 num_epochs = 50
+
+def bce_loss(y_real, y_pred):
+    y_pred = torch.clamp(y_pred, min=-1e5, max=1e5)
+    return torch.mean(y_pred - y_real*y_pred + torch.log(1 + torch.exp(-y_pred)))
+
+
 train(model, optim.Adam(model.parameters()), bce_loss, num_epochs, train_loader, test_loader)
 
 
