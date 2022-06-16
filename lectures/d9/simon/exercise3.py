@@ -207,8 +207,12 @@ def bce_loss(y_real, y_pred):
     return torch.mean(y_pred - y_real*y_pred + torch.log(1 + torch.exp(-y_pred)))
 
 def dice_loss(y_real, y_pred):
+    breakpoint()
     y_pred = F.sigmoid(y_pred)
     return 1- 1/(256**2)*torch.sum( torch.sum(torch.sum((2*y_real*y_pred),dim=2),dim=2) / torch.sum(torch.sum((y_real + y_pred),dim=2),dim=2) )
+
+def focal_loss(y_real, y_pred,gamma=2):
+    return - torch.sum( (1-F.sigmoid(y_pred))**gamma*y_real*torch.log(F.sigmoid(y_pred)) + (1-y_real)*torch.log(1-F.sigmoid(y_pred)) )
 
 loss_func = dice_loss
 optimizer = optim.Adam(model.parameters(),lr=1e-4)
@@ -216,20 +220,12 @@ optimizer = optim.Adam(model.parameters(),lr=1e-4)
 train(model, optimizer, loss_func, num_epochs, train_loader, test_loader)
 
 
-[6, 1, 128, 128]
+
 
 """
 
 ### OTHER LOSSES 
-def dice_loss(y_real, y_pred):
-    return ...
 
-model = EncDec().to(device)
-train(model, optim.Adam(model.parameters(), 0.0001), dice_loss, 20, train_loader, test_loader)
-
-
-def focal_loss(y_real, y_pred):
-    return ...
 
 model = EncDec().to(device)
 train(model, optim.Adam(model.parameters(), 0.0001), focal_loss, 20, train_loader, test_loader)
