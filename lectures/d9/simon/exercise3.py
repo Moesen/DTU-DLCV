@@ -208,7 +208,6 @@ def bce_loss(y_real, y_pred):
 
 def dice_loss(y_real, y_pred):
     y_pred = F.sigmoid(y_pred)
-    breakpoint()
     return 1- 1/(256**2)*torch.sum( torch.sum(torch.sum((2*y_real*y_pred),dim=2),dim=2) / torch.sum(torch.sum((y_real + y_pred),dim=2),dim=2) )
 
 loss_func = dice_loss
