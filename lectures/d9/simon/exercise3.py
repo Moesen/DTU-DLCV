@@ -208,8 +208,7 @@ def bce_loss(y_real, y_pred):
 
 def dice_loss(y_real, y_pred):
     y_pred = F.sigmoid(y_pred)
-    y_pred[y_pred>0.5] = 1
-    y_pred[y_pred<0.5] = 0
+    breakpoint()
     return 1- 1/(256**2)*torch.sum((2*y_real*y_pred)/(y_real + y_pred))
 
 loss_func = dice_loss
@@ -217,6 +216,8 @@ optimizer = optim.Adam(model.parameters(),lr=5e-5)
 
 train(model, optimizer, loss_func, num_epochs, train_loader, test_loader)
 
+
+[6, 1, 128, 128]
 
 """
 
