@@ -203,11 +203,15 @@ summary(model, (3, 256, 256))
 num_epochs = 50
 
 def bce_loss(y_real, y_pred):
-    y_pred = torch.clamp(y_pred, min=-1e5, max=1e5)
+    y_pred = torch.clamp(y_pred, min=-1e3, max=1e3)
     return torch.mean(y_pred - y_real*y_pred + torch.log(1 + torch.exp(-y_pred)))
 
+def dice_loss(y_real, y_pred):
+    return 1- 1/(256**2)*torch.sum((2*y_real*y_pred)/(y_real + y_pred))
 
-train(model, optim.Adam(model.parameters()), bce_loss, num_epochs, train_loader, test_loader)
+loss_func = dice_loss
+
+train(model, optim.Adam(model.parameters()), loss_func, num_epochs, train_loader, test_loader)
 
 
 """
