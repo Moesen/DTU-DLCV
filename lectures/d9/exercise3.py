@@ -18,6 +18,9 @@ from time import time
 import matplotlib.pyplot as plt
 from IPython.display import clear_output
 
+from projects.utils import get_repo_root
+
+
 
 #hyper parameters 
 size = 128
@@ -77,7 +80,12 @@ for i in range(6):
 
     plt.subplot(2, 6, i+7)
     plt.imshow(labels[i].squeeze())
-plt.show()
+
+
+PROJECT_ROOT = get_repo_root()
+lecture_path = PROJECT_ROOT / "lectures/d9/
+fig_path = lecture_path / "data_images.png"
+plt.savefig(fig_path)
 
 #use GPU if available
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -192,6 +200,9 @@ summary(model, (3, 256, 256))
 
 train(model, optim.Adam(model.parameters()), bce_loss, 20, train_loader, test_loader)
 
+
+
+### OTHER LOSSES 
 def dice_loss(y_real, y_pred):
     return ...
 
