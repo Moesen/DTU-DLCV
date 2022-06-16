@@ -290,7 +290,7 @@ def predict(model, data):
 
 
 
-model = Unet2().to(device)
+model = DilatedNet().to(device) #Unet2().to(device)
 #summary(model, (3, 256, 256))
 num_epochs = 50
 
