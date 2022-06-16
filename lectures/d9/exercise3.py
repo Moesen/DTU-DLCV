@@ -93,7 +93,7 @@ print(device)
 
 
 
-"""#Encoder-decoder 
+#Encoder-decoder 
 class EncDec(nn.Module):
     def __init__(self):
         super().__init__()
@@ -198,9 +198,11 @@ def predict(model, data):
 model = EncDec().to(device)
 summary(model, (3, 256, 256))
 
-train(model, optim.Adam(model.parameters()), bce_loss, 20, train_loader, test_loader)
+num_epochs = 10
+train(model, optim.Adam(model.parameters()), bce_loss, num_epochs, train_loader, test_loader)
 
 
+"""
 
 ### OTHER LOSSES 
 def dice_loss(y_real, y_pred):
