@@ -94,7 +94,7 @@ class Pix2Pix_Unet():
             enc_blocks.append( block )
 
         #bottleneck
-        d2, _ = conv2d(d1,self.gf*16, dropout=self.dropout_percent, downsample=False)
+        d2, _ = conv2d(d1,self.gf*2**(self.depth), dropout=self.dropout_percent, downsample=False)
 
         #DECODER
         for i in range(self.depth):
