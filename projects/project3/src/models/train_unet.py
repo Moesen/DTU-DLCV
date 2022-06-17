@@ -105,121 +105,92 @@ def dice_loss():
 
 
 class Pix2Pix_Unet():
-    def __init__(self,train_dataset=[],test_data=[],img_size=(256,256,3),batch_size=16, gf=32, depth=4):
-        
-        self.img_size = img_size
-        self.batch_size = batch_size
-        self.gf = gf  # Number of filters in the first layer of G
+    def __init__(self,loss_f, 
+                train_dataset=[],test_data=[],
+                img_size=(256,256,3),
+                gf=32, 
+                num_conv=2,
+                depth=4,
+                lr=1e-4,
+                dropout_percent=0.1, 
+                batchnorm=True
+    ):
 
-        self.img_shape = img_size
-
+        #Data
         self.train_dataset = train_dataset
         self.test_data = test_data
 
+        #Network
+        self.img_shape = img_size
+        self.gf = gf  # Number of filters in the first layer of G
+        self.num_conv = num_conv
         self.depth = depth
+        self.batchnorm = batchnorm
 
-        """# Configure data loader
-        self.train_dataset = load_dataset(train=True,
-                                        normalize=True,
-                                        shuffle=True,
-                                        batch_size=self.batch_size,
-                                        use_data_augmentation=False,
-                                        image_size=img_size,
-        )
+        #training
+        self.optimizer = Adam(lr=lr)
+        self.loss_func = loss_f #tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+        self.dropout_percent = dropout_percent
 
-        self.test_data = load_dataset(train=False,
-                                    normalize=True,
-                                    batch_size=self.batch_size,
-                                    use_data_augmentation=False,
-        )"""
-
-
-        self.optimizer = Adam(1e-4)
-        self.loss_func = dice_loss() #tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
-
+        #initiate network
         self.unet = self.build_unet()
-
         self.out_dict = defaultdict(list)
-
         self.unet.compile(loss=self.loss_func,
-                            optimizer=self.optimizer,
-                            metrics=['accuracy'])
+                          optimizer=self.optimizer,
+                          metrics=['accuracy'])
 
 
     def build_unet(self):
         """U-Net Generator"""
 
-        def conv2d(layer,filters,f_size=3,dropout=0.1, downsample=True):
+        def conv2d(layer, filters, f_size=3, dropout=self.dropout_percent, downsample=True):
             #shortcut = layer
-            for _ in range(1,3):
-                layer = Conv2D(filters, kernel_size=f_size, padding='same',strides=1)(layer)
+            for _ in range(self.num_conv):
+                layer = Conv2D(filters, kernel_size=f_size, padding='same', strides=1)(layer)
                 layer = BatchNormalization()(layer)
                 layer = Activation('relu')(layer)
                 layer = Dropout(dropout)(layer)
             if downsample:
                 downsample = Conv2D(filters*2, kernel_size=f_size, padding='same', strides=2)(layer)
-                downsample = BatchNormalization()(downsample)
+                if self.batchnorm:
+                    downsample = BatchNormalization()(downsample)
                 downsample = Activation('relu')(downsample)
             return layer, downsample
 
         #def convt_block(layer, concat, filters)
         def deconv2d(layer, concat, filters, f_size=3):
             layer = Conv2DTranspose(filters, kernel_size=f_size, padding='same', strides=2)(layer)
-            layer = BatchNormalization()(layer)
+            if self.batchnorm:
+                layer = BatchNormalization()(layer)
             layer = Activation('relu')(layer)
             layer = concatenate([layer, concat], axis=-1)
             return layer
 
 
+        ## BUILT THE UNET STRUCTURE 
+
+        #Input
         d0 = Input(shape=self.img_shape)
+        d1 = Conv2D(16, kernel_size=7, padding='same', strides=1)(d0)
 
-        #d1 = Conv2D(16, kernel_size=7, padding='same',strides=1)(d0)
-        #for _ in range(self.depth):
-        #    block1, d1 = conv2d(d1,self.gf,dropout=.1)
+        enc_blocks = []
+        #ENCODER
+        for i in range(self.depth):
+            block, d1 = conv2d(d1, self.gf*2**(i+1), dropout=.1)
+            enc_blocks.append( block )
 
+        #bottleneck
+        d2, _ = conv2d(d1,self.gf*16, dropout=self.dropout_percent, downsample=False)
 
-        block1, dblock1 = conv2d(d0,self.gf,dropout=.1)
-        block2, dblock2 = conv2d(dblock1,self.gf*2,dropout=.1)
-        block3, dblock3 = conv2d(dblock2,self.gf*4,dropout=.1)
-        #block4, dblock4 = conv2d(dblock3,self.gf*8,dropout=.1)
-        block5, _ = conv2d(dblock3,self.gf*16,dropout=0.3,downsample=False)
-        
-        # DECODING
-        #block7 = deconv2d(block5,block4,self.gf*8) 
-        #block8, _ = conv2d(block7,self.gf*8,dropout=.1,downsample=False)
+        #DECODER
+        for i in range(self.depth):
+            d2 = deconv2d(d2, enc_blocks[-(i+1)], self.gf*2**(self.depth-i)) 
+            d2, _ = conv2d(d2, self.gf*2**(self.depth-i), dropout=self.dropout_percent, downsample=False)
 
-        block9 = deconv2d(block5,block3,self.gf*8) 
-        block10, _ = conv2d(block9,self.gf*8,dropout=.1,downsample=False)
+        output = Conv2D(1,kernel_size=3, padding='same', strides=1)(d2) #, activation='relu'
 
-        block11 = deconv2d(block10,block2,self.gf*4)
-        block12, _ = conv2d(block11,self.gf*4,dropout=.1,downsample=False)
-
-        block13 = deconv2d(block12,block1,self.gf*2)
-        block14, _ = conv2d(block13,self.gf,dropout=.1,downsample=False)
-
-        """block1, dblock1 = conv2d(d0,self.gf,dropout=.1)
-        block2, dblock2 = conv2d(dblock1,self.gf*2,dropout=.1)
-        block3, dblock3 = conv2d(dblock2,self.gf*4,dropout=.1)
-        block4, dblock4 = conv2d(dblock3,self.gf*8,dropout=.1)
-        block5, _ = conv2d(dblock4,self.gf*16,dropout=0.3,downsample=False)
-        
-        # DECODING
-        block7 = deconv2d(block5,block4,self.gf*8) 
-        block8, _ = conv2d(block7,self.gf*8,dropout=.1,downsample=False)
-
-        block9 = deconv2d(block8,block3,self.gf*4) 
-        block10, _ = conv2d(block9,self.gf*4,dropout=.1,downsample=False)
-
-        block11 = deconv2d(block10,block2,self.gf*2)
-        block12, _ = conv2d(block11,self.gf*2,dropout=.1,downsample=False)
-
-        block13 = deconv2d(block12,block1,self.gf)
-        block14, _ = conv2d(block13,self.gf,dropout=.1,downsample=False)"""
-
-        output = Conv2D(1,kernel_size=3, padding='same',strides=1)(block14) #, activation='relu'
         return Model(d0, output)
         
-
 
 
     def train(self, epochs, STEPS_PER_EPOCH=None, sample_interval_epoch=10):
@@ -261,7 +232,6 @@ class Pix2Pix_Unet():
                 #dataset_size += len(y_batch_train)
 
                 # training loss
-                print(loss_value.numpy())
                 train_loss.append(loss_value.numpy())
 
                 # custom computation of recall with keras backend
@@ -270,9 +240,8 @@ class Pix2Pix_Unet():
             # If at save interval => save generated image samples
             if epoch % sample_interval_epoch == 0:
                 print("Saving test image of epoch:",epoch)
-                #self.sample_images(epoch, batch_i)
 
-                (x_batch_val, y_batch_val) = next(iter(self.train_dataset))#next(iter(self.test_data))
+                (x_batch_val, y_batch_val) = next(iter(self.train_dataset))
                 val_logits = self.unet(x_batch_val, training=False)
                 val_probs = tf.keras.activations.sigmoid(val_logits)
 
@@ -293,7 +262,6 @@ class Pix2Pix_Unet():
                     plt.imshow(val_probs[k,:,:,:], cmap='gray')
                     plt.title('Pred')
                     plt.axis('off')
-                #plt.suptitle('%d / %d - loss: %f' % (epoch+1, epochs, avg_loss))
 
                 PROJECT_ROOT = get_project3_root()
                 fig_path = PROJECT_ROOT / f"reports/figures/seg_predictions_epoch{epoch}.png"
@@ -313,17 +281,6 @@ class Pix2Pix_Unet():
             # Reset training metrics at the end of each epoch
             #train_acc_metric.reset_states()
 
-            # Run a validation loop at the end of each epoch.
-            #for x_batch_val, y_batch_val in test_data:
-            #    val_logits = model(x_batch_val, training=False)
-
-                # Update val metrics
-                #val_acc_metric.update_state(y_batch_val, val_logits)
-            #val_acc = val_acc_metric.result()
-            #out_dict["val_acc"].append(val_acc.numpy())
-            #val_acc_metric.reset_states()
-            #print("Validation acc: %.4f" % (float(val_acc),))
-            #print("Time taken: %.2fs" % (time.time() - start_time))
 
 
 
@@ -337,6 +294,7 @@ if __name__ == '__main__':
     data_root = proot / "data/isic/train_allstyles"
     image_path = data_root / "Images"
     mask_path = data_root / "Segmentations"
+
     dataset_loader = IsicDataSet(
         image_folder=image_path,
         mask_folder=mask_path,
@@ -386,6 +344,7 @@ if __name__ == '__main__':
 
 
 
+
     #ARCHIVE
     """dataset_path = PROJECT_ROOT / "data/isic"
     training_path = "train_allstyles2/Images"
@@ -399,4 +358,27 @@ if __name__ == '__main__':
     train_dataset, val_dataset = basic_loader(dataset_path, training_path, validation_path, IMG_SIZE, BATCH_SIZE, BUFFER_SIZE, AUTOTUNE)
     
     #GIVE STEPS_PER_EPOCH TO THE TRAINING FUNCTION
-    """
+
+
+
+
+    block1, dblock1 = conv2d(d0,self.gf,dropout=.1)
+    block2, dblock2 = conv2d(dblock1,self.gf*2,dropout=.1)
+    block3, dblock3 = conv2d(dblock2,self.gf*4,dropout=.1)
+    block4, dblock4 = conv2d(dblock3,self.gf*8,dropout=.1)
+    block5, _ = conv2d(dblock4,self.gf*16,dropout=0.3,downsample=False)
+    
+    # DECODING
+    block7 = deconv2d(block5,block4,self.gf*8) 
+    block8, _ = conv2d(block7,self.gf*8,dropout=.1,downsample=False)
+
+    block9 = deconv2d(block8,block3,self.gf*4) 
+    block10, _ = conv2d(block9,self.gf*4,dropout=.1,downsample=False)
+
+    block11 = deconv2d(block10,block2,self.gf*2)
+    block12, _ = conv2d(block11,self.gf*2,dropout=.1,downsample=False)
+
+    block13 = deconv2d(block12,block1,self.gf)
+    block14, _ = conv2d(block13,self.gf,dropout=.1,downsample=False)
+
+    output = Conv2D(1,kernel_size=3, padding='same',strides=1)(block14) """ 
