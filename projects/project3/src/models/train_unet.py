@@ -270,12 +270,17 @@ class Pix2Pix_Unet():
                 val_probs = tf.math.round(val_probs)
 
                 for k in range(6):
-                    plt.subplot(2, 6, k+1)
+                    plt.subplot(3, 6, k+1)
                     plt.imshow(x_batch_val[k,:,:,:], cmap='gray')
                     plt.title('Real')
                     plt.axis('off')
 
-                    plt.subplot(2, 6, k+7)
+                    plt.subplot(3, 6, k+7)
+                    plt.imshow(y_batch_val[k,:,:,:], cmap='gray')
+                    plt.title('GT segmentation')
+                    plt.axis('off')
+
+                    plt.subplot(3, 6, k+13)
                     plt.imshow(val_probs[k,:,:,:], cmap='gray')
                     plt.title('Output')
                     plt.axis('off')
