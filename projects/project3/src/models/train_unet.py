@@ -25,6 +25,7 @@ from projects.utils import get_project3_root
 #from projects.project3.src.data.dataloader import load_dataset
 
 # built tensorflow with GPU
+from tensorflow.python.client import device_lib
 
 print("TENSORFLOW BUILT WITH CUDA: ", tf.test.is_built_with_cuda())
 print("Num GPUs Available: ", len(tf.config.list_physical_devices("GPU")))
