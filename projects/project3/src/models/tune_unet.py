@@ -55,7 +55,7 @@ def objective(trial: optuna.trial.Trial) -> float:
     # config
     c = dict(
         # Network
-        first_layer_channels=trial.suggest_int("First layer channels", 20, 50),
+        first_layer_channels=trial.suggest_int("First layer channels", 20, 32),
         depth=trial.suggest_int("Depth", 2, 5),
 
         # Kernels
@@ -69,7 +69,7 @@ def objective(trial: optuna.trial.Trial) -> float:
         # Learning
         dropout_percentage=trial.suggest_float("dropout_percentage", 0.1, 0.8),
         learning_rate=trial.suggest_loguniform("learning rate", 1e-6, 1e-3),
-        batch_size=trial.suggest_int("batch size", 8, 32, 8),
+        batch_size=trial.suggest_int("batch size", 4, 24, 4),
         batchnorm=trial.suggest_categorical("batch norm", [True, False]),
         loss_func=trial.suggest_categorical(
             "Loss function", [tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True), 
