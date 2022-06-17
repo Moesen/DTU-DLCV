@@ -35,7 +35,8 @@ def parse_image(img_path: str) -> dict:
         # But it will mess up with our N_CLASS = 150
         # Since 255 means the 255th class
         # Which doesn't exist
-        mask = tf.where(mask == 255, np.dtype('uint8').type(0), mask)
+        mask = tf.image.convert_image_dtype(mask, tf.uint8)
+        #mask = tf.where(mask == 255, np.dtype('uint8').type(0), mask)
         # Note that we have to convert the new value (0)
         # With the same dtype than the tensor itself
 
@@ -63,6 +64,8 @@ def basic_loader(dataset_path, training_data, validation_data, IMG_SIZE, BATCH_S
             Normalized image and its annotation.
         """
         input_image = tf.cast(input_image, tf.float32) / 255.0
+        input_mask = tf.cast(input_mask, tf.float32) / 255.0
+        
         return input_image, input_mask
 
     @tf.function

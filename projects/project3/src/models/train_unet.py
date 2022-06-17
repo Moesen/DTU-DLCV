@@ -272,17 +272,17 @@ class Pix2Pix_Unet():
                 for k in range(6):
                     plt.subplot(3, 6, k+1)
                     plt.imshow(x_batch_val[k,:,:,:], cmap='gray')
-                    plt.title('Real')
+                    plt.title('Input')
                     plt.axis('off')
 
                     plt.subplot(3, 6, k+7)
                     plt.imshow(y_batch_val[k,:,:,:], cmap='gray')
-                    plt.title('GT segmentation')
+                    plt.title('GT')
                     plt.axis('off')
 
                     plt.subplot(3, 6, k+13)
                     plt.imshow(val_probs[k,:,:,:], cmap='gray')
-                    plt.title('Output')
+                    plt.title('Pred')
                     plt.axis('off')
                 #plt.suptitle('%d / %d - loss: %f' % (epoch+1, epochs, avg_loss))
 
