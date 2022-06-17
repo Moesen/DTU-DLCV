@@ -184,12 +184,17 @@ class IsicDataSet(object):
             (self._test_image_paths, self._test_mask_paths)
         ).map(self._parse_data, num_parallel_calls=AUTOTUNE)
 
+        # fmt: off
         if shuffle:
-            train_dataset = (
-                train_dataset.prefetch(AUTOTUNE).shuffle(self._seed).batch(batch_size)
-            )
+            train_dataset = (train_dataset
+                            .prefetch(AUTOTUNE)
+                            .shuffle(self._seed)
+                            .batch(batch_size))
         else:
-            train_dataset = train_dataset.batch(batch_size).prefetch(AUTOTUNE)
+            train_dataset = (train_dataset
+                            .batch(batch_size)
+                            .prefetch(AUTOTUNE))
+        # fmt: on
 
         test_dataset = train_dataset.batch(batch_size).prefetch(AUTOTUNE)
 
