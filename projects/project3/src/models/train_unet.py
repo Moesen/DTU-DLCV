@@ -103,20 +103,11 @@ if __name__ == '__main__':
         image_file_extension="jpg",
         mask_file_extension="png",
         do_normalize=True,
+        validation_percentage=.2
     )
 
-    val_dataset_loader = IsicDataSet(
-        image_folder=image_path,
-        mask_folder=mask_path,
-        image_size=IMG_SIZE,
-        image_channels=3,
-        mask_channels=1,
-        image_file_extension="jpg",
-        mask_file_extension="png",
-        do_normalize=True,
-    )
 
-    train_dataset = dataset_loader.get_dataset(batch_size=BATCH_SIZE, shuffle=True)
+    train_dataset, val_dataset = dataset_loader.get_dataset(batch_size=BATCH_SIZE, shuffle=True)
     #val_dataset = val_dataset_loader.get_dataset(batch_size=len(FULL_VAL),shuffle=False)
 
     ##### TRAIN MODEL ##### 
@@ -140,7 +131,7 @@ if __name__ == '__main__':
     unet.unet.summary()
     print("MEMORY USAGE: ",get_model_memory_usage(BATCH_SIZE, unet.unet))
 
-    model_history = unet.unet.fit(train_dataset, epochs=num_epochs,)
+    model_history = unet.unet.fit(train_dataset, epochs=num_epochs,validation_data=val_dataset)
     
     #unet.train(epochs=num_epochs,sample_interval_epoch=sample_img_interval )
 
