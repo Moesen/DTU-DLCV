@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-import tensorflow as tf
-from pathlib import Path
-from projects.utils import get_project3_root
-import re
 import random
+import re
+from pathlib import Path
+
 import matplotlib.pyplot as plt
+import tensorflow as tf
+from projects.utils import get_project3_root
 from sklearn.model_selection import train_test_split
 
 # CONSTANTS
@@ -69,6 +70,7 @@ class IsicDataSet(object):
         train_img_paths, val_img_paths = train_test_split(
             img_paths, test_size=validation_percentage, random_state=self._seed
         )
+
         self._train_image_paths, self._train_mask_paths = self._match_img_mask(
             train_img_paths
         )
@@ -92,7 +94,7 @@ class IsicDataSet(object):
 
                 # Search for expression, if not a match: continue
                 match = SEG_EXPR.search(mask_fn)
-                if match == None:
+                if match is None:
                     continue
 
                 # Extract id and segmentation type.
@@ -176,6 +178,7 @@ class IsicDataSet(object):
         Returns:
             data: A tf dataset object
         """
+
         train_dataset = tf.data.Dataset.from_tensor_slices(
             (self._train_image_paths, self._train_mask_paths)
         ).map(self._map_function, num_parallel_calls=AUTOTUNE)
@@ -187,21 +190,21 @@ class IsicDataSet(object):
         # fmt: off
         if shuffle:
             train_dataset = (train_dataset
-                            .prefetch(AUTOTUNE)
-                            .shuffle(self._seed)
-                            .batch(batch_size))
+                             .prefetch(AUTOTUNE)
+                             .shuffle(self._seed)
+                             .batch(batch_size))
         else:
             train_dataset = (train_dataset
-                            .batch(batch_size)
-                            .prefetch(AUTOTUNE))
+                             .batch(batch_size)
+                             .prefetch(AUTOTUNE))
         # fmt: on
-
         test_dataset = train_dataset.batch(batch_size).prefetch(AUTOTUNE)
 
         return train_dataset, test_dataset
 
 
 if __name__ == "__main__":
+    # Example of using dataloader and extracting datasets train and test
     proot = get_project3_root()
     data_root = proot / "data/train_allstyles"
     image_path = data_root / "Images"
