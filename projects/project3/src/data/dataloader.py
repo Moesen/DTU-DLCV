@@ -6,10 +6,16 @@ from projects.utils import get_project3_root
 import re
 import random
 import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
 
 # CONSTANTS
 AUTOTUNE = tf.data.AUTOTUNE
 SUPPORTED_FILETYPES = ["jpg", "png"]
+
+# Have to match image_folder imgs, with mask_imgs
+# Use regex pattern to find id for each mask
+ID_EXPR = re.compile(r"(^\w*?_\d*)")
+SEG_EXPR = re.compile(r"(^\w*?_\d*).*?_(\d+)")
 
 
 class IsicDataSet(object):
@@ -25,6 +31,7 @@ class IsicDataSet(object):
         mask_file_extension: str,
         do_normalize: bool,
         image_size: tuple[int, int],
+        validation_percentage: float | None = 0.2,
         segmentation_type: str | None = None,
         seed: int | None = None,
     ) -> None:
@@ -41,28 +48,50 @@ class IsicDataSet(object):
         self._seed = seed or random.randint(0, 1000)
         self._do_normalize = do_normalize
         self._segmentation_type = segmentation_type
+        self._image_folder = image_folder
+        self._mask_folder = mask_folder
 
-        # Have to match image_folder imgs, with mask_imgs
-        # Use regex pattern to find id for each mask
-        id_expr = re.compile(r"(^\w*?_\d*)")
-        seg_expr = re.compile(r"(^\w*?_\d*).*?_(\d+)")
+        # Img decoders
+        self._image_decoder = (
+            tf.image.decode_jpeg
+            if image_file_extension == "jpg"
+            else tf.image.decode_png
+        )
 
-        self._image_paths: list[str] = []
-        self._mask_paths: list[str] = []
+        self._mask_decoder = (
+            tf.image.decode_jpeg
+            if mask_file_extension == "jpg"
+            else tf.image.decode_png
+        )
 
-        for im_path, im_fn in [
-            (x, x.name) for x in image_folder.iterdir() if "ISIC" in x.name
-        ]:
-            img_id = id_expr.findall(str(im_fn))
+        # Paths
+        img_paths = [x for x in image_folder.iterdir() if "isic" in x.name.lower()]
+        train_img_paths, val_img_paths = train_test_split(
+            img_paths, test_size=validation_percentage, random_state=self._seed
+        )
+        self._train_image_paths, self._train_mask_paths = self._match_img_mask(
+            train_img_paths
+        )
+        self._test_image_paths, self._test_mask_paths = self._match_img_mask(
+            val_img_paths
+        )
 
-            assert len(img_id) == 1
+    def _match_img_mask(self, image_paths: list[Path]) -> tuple[list[str], list[str]]:
+        img_paths_paired = []
+        mask_paths_paired = []
 
-            img_id = img_id[0]
-            for mask_path in mask_folder.iterdir():
-                mask_name = mask_path.name
+        for image_path, im_fn in [(x, x.name) for x in image_paths]:
+            search = ID_EXPR.search(im_fn)
+            img_id = search and search.group(1)
+            assert img_id is not None
+
+            for mask_path in self._mask_folder.iterdir():
+                # Get filename of path, that is
+                # /.../.../.../(name.png) <--- this part
+                mask_fn = mask_path.name
 
                 # Search for expression, if not a match: continue
-                match = seg_expr.search(mask_name)
+                match = SEG_EXPR.search(mask_fn)
                 if match == None:
                     continue
 
@@ -76,21 +105,10 @@ class IsicDataSet(object):
                 if self._segmentation_type and self._segmentation_type != seg_type:
                     continue
 
-                self._image_paths.append(im_path.as_posix())
-                self._mask_paths.append(mask_path.as_posix())
+                img_paths_paired.append(image_path.as_posix())
+                mask_paths_paired.append(mask_path.as_posix())
 
-
-        self._image_decoder = (
-            tf.image.decode_jpeg
-            if image_file_extension == "jpg"
-            else tf.image.decode_png
-        )
-
-        self._mask_decoder = (
-            tf.image.decode_jpeg
-            if mask_file_extension == "jpg"
-            else tf.image.decode_png
-        )
+        return img_paths_paired, mask_paths_paired
 
     def _augmentation_func(
         self, image: tf.Tensor, mask: tf.Tensor
@@ -101,8 +119,7 @@ class IsicDataSet(object):
         # His augmentation function is inside the map function, but this is neater
 
         return image, mask
-        
-        
+
     def _normalize(
         self, image: tf.Tensor, mask: tf.Tensor
     ) -> tuple[tf.Tensor, tf.Tensor]:
@@ -144,9 +161,13 @@ class IsicDataSet(object):
         # https://github.com/HasnainRaz/SemSegPipeline/blob/master/dataloader.py
 
         image, mask = self._parse_data(image_path, mask_path)
-        return tf.py_function(self._augmentation_func, [image, mask], [tf.float32, tf.float32])
+        return tf.py_function(
+            self._augmentation_func, [image, mask], [tf.float32, tf.float32]
+        )
 
-    def get_dataset(self, batch_size: int, shuffle: bool = False) -> tf.data.Dataset:
+    def get_dataset(
+        self, batch_size: int, shuffle: bool = False
+    ) -> tuple[tf.data.Dataset, tf.data.Dataset]:
         """
         - Reads the data
         - Normalizes it if normalize=true
@@ -155,17 +176,24 @@ class IsicDataSet(object):
         Returns:
             data: A tf dataset object
         """
-        dataset = tf.data.Dataset.from_tensor_slices(
-            (self._image_paths, self._mask_paths)
-        )
-        dataset = dataset.map(self._map_function, num_parallel_calls=AUTOTUNE)
+        train_dataset = tf.data.Dataset.from_tensor_slices(
+            (self._train_image_paths, self._train_mask_paths)
+        ).map(self._map_function, num_parallel_calls=AUTOTUNE)
+
+        test_dataset = tf.data.Dataset.from_tensor_slices(
+            (self._test_image_paths, self._test_mask_paths)
+        ).map(self._parse_data, num_parallel_calls=AUTOTUNE)
 
         if shuffle:
-            dataset = dataset.prefetch(AUTOTUNE).shuffle(self._seed).batch(batch_size)
+            train_dataset = (
+                train_dataset.prefetch(AUTOTUNE).shuffle(self._seed).batch(batch_size)
+            )
         else:
-            dataset = dataset.batch(batch_size).prefetch(AUTOTUNE)
+            train_dataset = train_dataset.batch(batch_size).prefetch(AUTOTUNE)
 
-        return dataset
+        test_dataset = train_dataset.batch(batch_size).prefetch(AUTOTUNE)
+
+        return train_dataset, test_dataset
 
 
 if __name__ == "__main__":
@@ -185,10 +213,8 @@ if __name__ == "__main__":
         segmentation_type="0",
     )
 
-    print(len(dataset_loader._image_paths), len(dataset_loader._mask_paths))
-    dataset = dataset_loader.get_dataset(batch_size=1, shuffle=True)
-
-    image, mask = next(iter(dataset)) 
+    train_dataset, test_dataset = dataset_loader.get_dataset(batch_size=1, shuffle=True)
+    image, mask = next(iter(train_dataset))
     _, [a, b] = plt.subplots(1, 2)
     a.imshow(image[0])
     b.imshow(mask[0])
