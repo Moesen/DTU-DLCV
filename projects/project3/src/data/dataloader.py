@@ -81,6 +81,11 @@ class IsicDataSet(object):
             else tf.image.decode_png
         )
 
+    def _augmentation_func(self, images: tf.Tensor, masks: tf.Tensor):
+        # TODO
+        raise NotImplemented
+
+
     def _normalize(
         self, image: tf.Tensor, mask: tf.Tensor
     ) -> tuple[tf.Tensor, tf.Tensor]:
@@ -106,7 +111,7 @@ class IsicDataSet(object):
         image = tf.image.resize(image, self._image_size)
         mask = tf.image.resize(mask, self._image_size)
         return image, mask
-
+    
     def _map_function(self, image_path: str, mask_path: str):
         """Maps the data"""
         # TODO: Possibly implement data augmentation
