@@ -85,7 +85,7 @@ def get_model_memory_usage(batch_size, model):
 
 if __name__ == '__main__':
     
-    BATCH_SIZE = 32
+    BATCH_SIZE = 24
     IMG_SIZE = (256,256) #(256,256,3)
     GF = 32
 

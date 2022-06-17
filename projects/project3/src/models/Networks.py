@@ -98,8 +98,8 @@ class Pix2Pix_Unet():
 
         #DECODER
         for i in range(self.depth):
-            d2 = deconv2d(d2, enc_blocks[-(i+1)], self.gf*2**(self.depth-i)) 
-            d2, _ = conv2d(d2, self.gf*2**(self.depth-i), dropout=self.dropout_percent, downsample=False)
+            d2 = deconv2d(d2, enc_blocks[-(i+1)], self.gf*2**(self.depth-i-1)) 
+            d2, _ = conv2d(d2, self.gf*2**(self.depth-i-1), dropout=self.dropout_percent, downsample=False)
 
         output = Conv2D(1,kernel_size=3, padding='same', strides=1)(d2) #, activation='relu'
 
