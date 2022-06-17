@@ -318,7 +318,6 @@ if __name__ == '__main__':
     unet = Pix2Pix_Unet(train_dataset=train_dataset,
                         test_data=[],
                         img_size=(*IMG_SIZE, 3),
-                        batch_size=BATCH_SIZE,
                         gf=GF)
     unet.unet.summary()
 
