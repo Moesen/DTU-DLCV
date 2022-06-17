@@ -131,7 +131,7 @@ def objective(trial: optuna.trial.Trial) -> float:
     )
 
     # metrics
-    metric = keras.metrics.SparseCategoricalAccuracy()
+    #metric = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
 
     unet = Pix2Pix_Unet(loss_f= c["loss_func"], 
                         train_dataset=[], #given in fit below
@@ -142,22 +142,22 @@ def objective(trial: optuna.trial.Trial) -> float:
                         depth=c["depth"],
                         lr=c["learning_rate"],
                         dropout_percent=c["dropout_percentage"],
-                        batchnorm=c["batchnorm"],
-                        )
+                        batchnorm=c["batchnorm"]
+    )
 
     unet.unet.summary()
 
     num_epochs = 100
-    unet.train(epochs=num_epochs)
+    #unet.train(epochs=num_epochs)
 
     # Callbacks
-    #early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=10, verbose=1, mode='min')
+    early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=10, verbose=1, mode='min',restore_best_weights=True)
     #wandb_callback = WandbCallback(monitor="val_sparse_categorical_accuracy", log_evaluation=False, save_model=False, validation_steps = len(val_ds))
 
     # Compiling model with optimizer and loss function
     #model.compile(optimizer, loss=loss_fn, metrics=[metric])
     
-    history = unet.unet.fit(train_dataset, validation_data=val_dataset, epochs=100, callbacks=[early_stopping, wandb_callback])
+    history = unet.unet.fit(train_dataset, validation_data=val_dataset, epochs=num_epochs, callbacks=[early_stopping]) #wandb_callback])
 
 
     run.log({"best validation accuracy": max(history.history["val_sparse_categorical_accuracy"])}) # type: ignore

@@ -76,7 +76,7 @@ if __name__ == '__main__':
     ##### TRAIN MODEL ##### 
     save_model = False
 
-    num_epochs = 100
+    num_epochs = 2
     sample_img_interval = 20
 
     metric = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0]) #keras.metrics.SparseCategoricalAccuracy()
@@ -91,8 +91,12 @@ if __name__ == '__main__':
     unet.unet.summary()
 
     model_history = unet.unet.fit(train_dataset, epochs=num_epochs)
-
+    
     #unet.train(epochs=num_epochs,sample_interval_epoch=sample_img_interval )
+
+    final_preds = unet.unet.predict(train_dataset)
+
+    breakpoint()
 
     model_name = 'unet_'+datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 
