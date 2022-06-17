@@ -315,10 +315,12 @@ if __name__ == '__main__':
     num_epochs = 100
     sample_img_interval = 20
 
-    unet = Pix2Pix_Unet(train_dataset=train_dataset,
+    unet = Pix2Pix_Unet(loss_f=focal_loss(),
+                        train_dataset=train_dataset,
                         test_data=[],
                         img_size=(*IMG_SIZE, 3),
                         gf=GF)
+
     unet.unet.summary()
 
     unet.train(epochs=num_epochs,sample_interval_epoch=sample_img_interval )
