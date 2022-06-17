@@ -22,9 +22,9 @@ class IsicDataSet(object):
         mask_channels: int,
         image_file_extension: str,
         mask_file_extension: str,
-        normalize: bool,
-        image_size: tuple[int, int] | None,
-        segment_type: int | None,
+        do_normalize: bool,
+        image_size: tuple[int, int],
+        segment_type: int | None = None,
         seed: int | None = None,
     ):
         # Assignment
@@ -32,7 +32,7 @@ class IsicDataSet(object):
         self._image_channels = image_channels
         self._mask_channels = mask_channels
         self._seed = seed or random.randint(0, 1000)
-        self._do_normalize = normalize
+        self._do_normalize = do_normalize
 
         # Have to match image_folder imgs, with mask_imgs
         # Use regex pattern to find id for each mask
@@ -45,8 +45,7 @@ class IsicDataSet(object):
             img_filename = img_path.name
             img_id = id_expr.findall(str(img_filename))
 
-            if len(img_id) != 1:
-                raise ValueError(img_filename)
+            assert len(img_id) == 1
 
             img_id = img_id[0]
             mask_pairs = [
@@ -153,7 +152,8 @@ if __name__ == "__main__":
         mask_channels=1,
         image_file_extension="jpg",
         mask_file_extension="png",
-        normalize=True,
+        do_normalize=True,
+        segment_type=0
     )
 
     dataset = dataset_loader.get_dataset(batch_size=1, shuffle=True)
