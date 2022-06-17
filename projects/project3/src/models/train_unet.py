@@ -79,14 +79,14 @@ if __name__ == '__main__':
     num_epochs = 2
     sample_img_interval = 20
 
-    metric = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0]) #keras.metrics.SparseCategoricalAccuracy()
+    #metric = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0]) #keras.metrics.SparseCategoricalAccuracy()
 
     unet = Pix2Pix_Unet(loss_f=focal_loss(),  #tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
                         train_dataset=train_dataset,
                         test_data=[],
                         img_size=(*IMG_SIZE, 3),
                         gf=GF,
-                        metrics=metric)
+                        )
 
     unet.unet.summary()
 
