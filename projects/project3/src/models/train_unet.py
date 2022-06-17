@@ -23,7 +23,9 @@ from tqdm import tqdm
 from collections import defaultdict
 
 from projects.utils import get_project3_root
-from projects.project3.src.data.simple_dataloader import basic_loader
+#from projects.project3.src.data.simple_dataloader import basic_loader
+from projects.project3.src.data.dataloader import IsicDataSet
+
 
 # built tensorflow with GPU
 from tensorflow.python.client import device_lib
@@ -103,7 +105,7 @@ def dice_loss():
 
 
 class Pix2Pix_Unet():
-    def __init__(self,train_dataset=[],test_data=[],img_size=(256,256,3),batch_size=16, gf=32):
+    def __init__(self,train_dataset=[],test_data=[],img_size=(256,256,3),batch_size=16, gf=32, depth=4):
         
         self.img_size = img_size
         self.batch_size = batch_size
@@ -113,6 +115,8 @@ class Pix2Pix_Unet():
 
         self.train_dataset = train_dataset
         self.test_data = test_data
+
+        self.depth = depth
 
         """# Configure data loader
         self.train_dataset = load_dataset(train=True,
@@ -169,6 +173,11 @@ class Pix2Pix_Unet():
 
         d0 = Input(shape=self.img_shape)
 
+        #d1 = Conv2D(16, kernel_size=7, padding='same',strides=1)(d0)
+        #for _ in range(self.depth):
+        #    block1, d1 = conv2d(d1,self.gf,dropout=.1)
+
+
         block1, dblock1 = conv2d(d0,self.gf,dropout=.1)
         block2, dblock2 = conv2d(dblock1,self.gf*2,dropout=.1)
         block3, dblock3 = conv2d(dblock2,self.gf*4,dropout=.1)
@@ -213,7 +222,7 @@ class Pix2Pix_Unet():
 
 
 
-    def train(self, epochs, STEPS_PER_EPOCH=10, sample_interval_epoch=10):
+    def train(self, epochs, STEPS_PER_EPOCH=None, sample_interval_epoch=10):
 
         # for epoch in range(epochs):
         for epoch in tqdm(range(epochs), unit="epoch"):
@@ -228,7 +237,7 @@ class Pix2Pix_Unet():
 
             # Iterate over the batches of the dataset.
             for step, (x_batch_train, y_batch_train) in tqdm(
-                enumerate(self.train_dataset), total=STEPS_PER_EPOCH,#len(self.train_dataset)
+                enumerate(self.train_dataset), total=len(self.train_dataset), #total=STEPS_PER_EPOCH,#)
             ):
                 if step==STEPS_PER_EPOCH:
                     break
@@ -236,8 +245,8 @@ class Pix2Pix_Unet():
                 with tf.GradientTape() as tape:
                     logits = self.unet(x_batch_train, training=True)
                     loss_value = self.loss_func(y_batch_train, logits)
-                grads = tape.gradient(loss_value, self.unet.trainable_weights)
-                self.optimizer.apply_gradients(zip(grads, self.unet.trainable_weights))
+                    grads = tape.gradient(loss_value, self.unet.trainable_weights)
+                    self.optimizer.apply_gradients(zip(grads, self.unet.trainable_weights))
 
                 # Update training metric.
                 # accuracy with tensorflow metric object
@@ -319,34 +328,43 @@ class Pix2Pix_Unet():
 
 
 if __name__ == '__main__':
-    from projects.utils import get_project3_root
     
-    PROJECT_ROOT = get_project3_root()
-
-    dataset_path = PROJECT_ROOT / "data/isic"
-    training_path = "train_allstyles2/Images"
-    validation_path = "train_allstyles2/Images"
-
+    proot = get_project3_root()
     BATCH_SIZE = 8
-    IMG_SIZE = 256
-    BUFFER_SIZE = 1000
-    AUTOTUNE = tf.data.experimental.AUTOTUNE
+    IMG_SIZE = (256,256) #(256,256,3)
+    GF = 16
 
-    train_dataset, val_dataset = basic_loader(dataset_path, training_path, validation_path, IMG_SIZE, BATCH_SIZE, BUFFER_SIZE, AUTOTUNE)
-    
+    data_root = proot / "data/isic/train_allstyles"
+    image_path = data_root / "Images"
+    mask_path = data_root / "Segmentations"
+    dataset_loader = IsicDataSet(
+        image_folder=image_path,
+        mask_folder=mask_path,
+        image_size=IMG_SIZE,
+        image_channels=3,
+        mask_channels=1,
+        image_file_extension="jpg",
+        mask_file_extension="png",
+        normalize=True,
+    )
+
+    train_dataset = dataset_loader.get_dataset(batch_size=BATCH_SIZE, shuffle=True)
+
 
     ##### TRAIN MODEL ##### 
     save_model = False
 
-    STEPS_PER_EPOCH = 100 // BATCH_SIZE #there are 100 images in total
-    gf = 16
-    img_size = (IMG_SIZE,IMG_SIZE,3)#(256,256,3)
-
     num_epochs = 100
     sample_img_interval = 20
 
-    unet = Pix2Pix_Unet(train_dataset=train_dataset,test_data=[],img_size=img_size,batch_size=BATCH_SIZE, gf=gf)
+    unet = Pix2Pix_Unet(train_dataset=train_dataset,
+                        test_data=[],
+                        img_size=(*IMG_SIZE, 3),
+                        batch_size=BATCH_SIZE,
+                        gf=GF)
     unet.unet.summary()
+
+    unet.train(epochs=num_epochs,sample_interval_epoch=sample_img_interval )
 
     ######
     #EPOCHS = 10
@@ -358,15 +376,27 @@ if __name__ == '__main__':
                           #validation_steps=VALIDATION_STEPS,
                           #validation_data=dataset['val'])
     ######
-    unet.train(epochs=num_epochs,STEPS_PER_EPOCH=STEPS_PER_EPOCH,sample_interval_epoch=sample_img_interval )
     
     model_name = 'unet_'+datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 
     if save_model:
-        PROJECT_ROOT = get_project3_root()
-        model_path = PROJECT_ROOT / "models" / model_name
+        model_path = proot / "models" / model_name
         unet.save(model_path)
+    
 
-    #unet.generator.save(unet.model_name+'/'+unet.model_name)
-    #with open(unet.model_name+'/'+unet.model_name+'.json', "w") as json_file:
-    #    json_file.write(unet.generator.to_json())
+
+
+    #ARCHIVE
+    """dataset_path = PROJECT_ROOT / "data/isic"
+    training_path = "train_allstyles2/Images"
+    validation_path = "train_allstyles2/Images"
+
+    IMG_SIZE = 256
+    BUFFER_SIZE = 1000
+    AUTOTUNE = tf.data.experimental.AUTOTUNE
+    STEPS_PER_EPOCH = 100 // BATCH_SIZE #there are 100 images in total
+
+    train_dataset, val_dataset = basic_loader(dataset_path, training_path, validation_path, IMG_SIZE, BATCH_SIZE, BUFFER_SIZE, AUTOTUNE)
+    
+    #GIVE STEPS_PER_EPOCH TO THE TRAINING FUNCTION
+    """
