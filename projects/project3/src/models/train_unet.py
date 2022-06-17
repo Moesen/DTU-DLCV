@@ -210,6 +210,9 @@ class Pix2Pix_Unet():
             for step, (x_batch_train, y_batch_train) in tqdm(
                 enumerate(self.train_dataset), total=STEPS_PER_EPOCH,#len(self.train_dataset)
             ):
+                if step==STEPS_PER_EPOCH:
+                    break
+
                 with tf.GradientTape() as tape:
                     logits = self.unet(x_batch_train, training=True)
                     loss_value = self.loss_func(y_batch_train, logits)
@@ -229,6 +232,7 @@ class Pix2Pix_Unet():
                 #dataset_size += len(y_batch_train)
 
                 # training loss
+                print(loss_value.numpy())
                 train_loss.append(loss_value.numpy())
 
                 # custom computation of recall with keras backend
@@ -236,6 +240,7 @@ class Pix2Pix_Unet():
 
                 # If at save interval => save generated image samples
                 if epoch % sample_interval_epoch == 0:
+                    print("Saving test image of epoch:",epoch)
                     #self.sample_images(epoch, batch_i)
 
                     (x_batch_val, y_batch_val) = next(iter(self.train_dataset))#next(iter(self.test_data))
