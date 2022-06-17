@@ -179,6 +179,7 @@ class Unet2(nn.Module):
         return d3
 
 
+#formula: out = (x - 1)s - 2p + d(k - 1) + op + 1
 
 class DilatedNet(nn.Module):
     def __init__(self):
