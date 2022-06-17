@@ -22,8 +22,9 @@ class IsicDataSet(object):
         mask_channels: int,
         image_file_extension: str,
         mask_file_extension: str,
-        image_size: tuple[int, int] | None,
         normalize: bool,
+        image_size: tuple[int, int] | None,
+        segment_type: int | None,
         seed: int | None = None,
     ):
         # Assignment
@@ -80,10 +81,16 @@ class IsicDataSet(object):
             else tf.image.decode_png
         )
 
+    def _augmentation_func(self, images: tf.Tensor, masks: tf.Tensor):
+        # TODO
+        raise NotImplemented
+
+
     def _normalize(
         self, image: tf.Tensor, mask: tf.Tensor
     ) -> tuple[tf.Tensor, tf.Tensor]:
         image = tf.cast(image, tf.float32) / 255.0
+        mask = tf.cast(mask, tf.float32) / 255.0
         return image, mask
 
     def _parse_data(self, image_path: str, mask_path: str):
@@ -104,7 +111,7 @@ class IsicDataSet(object):
         image = tf.image.resize(image, self._image_size)
         mask = tf.image.resize(mask, self._image_size)
         return image, mask
-
+    
     def _map_function(self, image_path: str, mask_path: str):
         """Maps the data"""
         # TODO: Possibly implement data augmentation
