@@ -72,11 +72,10 @@ def objective(trial: optuna.trial.Trial) -> float:
         batch_size=trial.suggest_int("batch size", 4, 16, 4),
         batchnorm=trial.suggest_categorical("batch norm", [True, False]),
         loss_func=trial.suggest_categorical(
-            "Loss function", [tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True), 
-                                focal_loss(), 
-                                dice_loss(),
-                                weighted_cross_entropy()]
-        )
+            "Loss function", ["focal_loss", "dice_loss", "weighted_cross_entropy"]
+        ),
+        # "cross_entroy": tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True), 
+         
         # Img attributes
         #image_size=trial.suggest_int("image size", 64, 256, 16),
         # Augmentations
@@ -86,7 +85,13 @@ def objective(trial: optuna.trial.Trial) -> float:
         #),
         #augmentation_rotation=trial.suggest_float("augmentation_rotation", 0.0, 0.2),
         #augmentation_contrast=trial.suggest_float("augmentation_contrast", 0.0, 0.6),
-    )
+        )
+        switch = {
+                "focal_loss": focal_loss, 
+                "dice_loss": dice_loss,
+                "weighted_cross_entropy": weighted_cross_entropy
+        }
+        loss_func = switch[c['loss_func']]()
 
     logger.info(f"config:\n{json.dumps(c, indent=4)}", )
 
@@ -105,7 +110,7 @@ def objective(trial: optuna.trial.Trial) -> float:
     )"""
 
     proot = get_project3_root()
-    data_root = proot / "data/isic/train_allstyles"
+    data_root = Path("/dtu/datasets1/02514/isic/train_allstyles")
     image_path = data_root / "Images"
     mask_path = data_root / "Segmentations"
 
@@ -134,7 +139,7 @@ def objective(trial: optuna.trial.Trial) -> float:
     # metrics
     #metric = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
 
-    unet = Pix2Pix_Unet(loss_f= c["loss_func"], 
+    unet = Pix2Pix_Unet(loss_f= loss_func, 
                         train_dataset=[], #given in fit below
                         test_data=[], #given in fit below
                         img_size=(*IMG_SIZE, 3),
