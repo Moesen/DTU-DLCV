@@ -69,7 +69,7 @@ def objective(trial: optuna.trial.Trial) -> float:
         # Learning
         dropout_percentage=trial.suggest_float("dropout_percentage", 0.1, 0.8),
         learning_rate=trial.suggest_loguniform("learning rate", 1e-6, 1e-3),
-        batch_size=trial.suggest_int("batch size", 4, 20, 4),
+        batch_size=trial.suggest_int("batch size", 4, 16, 4),
         batchnorm=trial.suggest_categorical("batch norm", [True, False]),
         loss_func=trial.suggest_categorical(
             "Loss function", [tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True), 
@@ -110,30 +110,18 @@ def objective(trial: optuna.trial.Trial) -> float:
     mask_path = data_root / "Segmentations"
 
     dataset_loader = IsicDataSet(
-        image_folder=image_path,
-        mask_folder=mask_path,
-        image_size=IMG_SIZE,
-        image_channels=3,
-        mask_channels=1,
-        image_file_extension="jpg",
-        mask_file_extension="png",
-        do_normalize=True,
+                                image_folder=image_path,
+                                mask_folder=mask_path,
+                                image_size=IMG_SIZE,
+                                image_channels=3,
+                                mask_channels=1,
+                                image_file_extension="jpg",
+                                mask_file_extension="png",
+                                do_normalize=True,
+                                validation_percentage=.2
     )
 
-    val_dataset_loader = IsicDataSet(
-        image_folder=image_path,
-        mask_folder=mask_path,
-        image_size=IMG_SIZE,
-        image_channels=3,
-        mask_channels=1,
-        image_file_extension="jpg",
-        mask_file_extension="png",
-        do_normalize=True,
-    )
-    
-    train_dataset = dataset_loader.get_dataset(batch_size=c["batch_size"], shuffle=True)
-    val_dataset = val_dataset_loader.get_dataset(batch_size=len(FULL_VAL),shuffle=False)
-
+    train_dataset, val_dataset = dataset_loader.get_dataset(batch_size=c["batch_size"], shuffle=True)
 
     run = wandb.init(
         project="project3",
@@ -198,7 +186,11 @@ def objective(trial: optuna.trial.Trial) -> float:
     history = unet.unet.fit(train_dataset, validation_data=val_dataset, epochs=num_epochs, callbacks=[early_stopping,image_callback]) #wandb_callback])
 
     # Compute IoU for the best model 
-    pred_logits = unet.unet.predict(val_dataset)
+    #pred_logits = unet.unet.predict(val_dataset)
+    (x_batch_val, y_batch_val) = next(iter(val_dataset))
+    val_logits = unet.unet(x_batch_val, training=False)
+    val_probs = tf.keras.activations.sigmoid(val_logits)
+    pred_logits = tf.math.round(val_probs)
     pred_mask = tf.keras.activations.sigmoid(pred_logits)
     _,true_mask = next(iter(val_dataset))
 
