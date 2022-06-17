@@ -1,14 +1,13 @@
 import scipy
 
 #from keras_contrib.layers.normalization.instancenormalization import InstanceNormalization
-from keras.layers import Input, Dense, Reshape, Flatten, Dropout, Concatenate
-from keras.layers import BatchNormalization, Activation, ZeroPadding2D
+#from keras.layers import Input, Dense, Reshape, Flatten, Dropout, Concatenate
+#from keras.layers import BatchNormalization, Activation, ZeroPadding2D
 
 from keras.layers import Conv2D,Conv2DTranspose, Dropout, Input, Activation, BatchNormalization, concatenate, add
-from keras import backend as K, regularizers
+#from keras import backend as K, regularizers
 from glob import glob
 import tensorflow as tf
-
 
 #from keras.layers.advanced_activations import LeakyReLU
 #from keras.layers.convolutional import UpSampling2D, Conv2D
@@ -17,9 +16,7 @@ from keras.optimizers import Adam
 import datetime
 import matplotlib.pyplot as plt
 
-
 import numpy as np
-import os
 
 from tqdm import tqdm
 from collections import defaultdict
@@ -127,8 +124,8 @@ class Pix2Pix_Unet():
         """U-Net Generator"""
 
         def conv2d(layer,filters,f_size=3,dropout=0.1, downsample=True):
-            shortcut = layer
-            for i in range(1,3):
+            #shortcut = layer
+            for _ in range(1,2):
                 layer = Conv2D(filters, kernel_size=f_size, padding='same',strides=(1,1))(layer)
                 layer = BatchNormalization()(layer)
                 layer = Activation('relu')(layer)
@@ -441,6 +438,7 @@ if __name__ == '__main__':
     sample_img_interval = 2
 
     unet = Pix2Pix_Unet(train_dataset=dataset['train'],img_size=img_size,batch_size=batch_size, gf=gf,test_data=[])
+    unet.unet.summary()
     
     ######
     #EPOCHS = 10
