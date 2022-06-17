@@ -457,11 +457,12 @@ if __name__ == '__main__':
     save_model = False
 
     batch_size = BATCH_SIZE
+    STEPS_PER_EPOCH = 100 // batch_size #there are 100 images in total
     gf = 32
     img_size = (IMG_SIZE,IMG_SIZE,3)#(256,256,3)
 
-    num_epochs = 10
-    sample_img_interval = 2
+    num_epochs = 100
+    sample_img_interval = 20
 
     unet = Pix2Pix_Unet(train_dataset=dataset['train'],img_size=img_size,batch_size=batch_size, gf=gf,test_data=[])
     unet.unet.summary()
@@ -476,7 +477,6 @@ if __name__ == '__main__':
                           #validation_steps=VALIDATION_STEPS,
                           #validation_data=dataset['val'])
     ######
-    STEPS_PER_EPOCH = 100 // batch_size #there are 100 images in total
     unet.train(epochs=num_epochs,STEPS_PER_EPOCH=STEPS_PER_EPOCH,sample_interval_epoch=sample_img_interval )
     
     model_name = 'unet_'+datetime.datetime.now().strftime("%Y%m%d%H%M%S")
