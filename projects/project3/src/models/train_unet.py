@@ -238,32 +238,32 @@ class Pix2Pix_Unet():
                 # custom computation of recall with keras backend
                 #train_recall.append(recall(y_targets, predicted).numpy())
 
-                # If at save interval => save generated image samples
-                if epoch % sample_interval_epoch == 0:
-                    print("Saving test image of epoch:",epoch)
-                    #self.sample_images(epoch, batch_i)
+            # If at save interval => save generated image samples
+            if epoch % sample_interval_epoch == 0:
+                print("Saving test image of epoch:",epoch)
+                #self.sample_images(epoch, batch_i)
 
-                    (x_batch_val, y_batch_val) = next(iter(self.train_dataset))#next(iter(self.test_data))
-                    val_logits = self.unet(x_batch_val, training=False)
-                    val_probs = tf.keras.activations.sigmoid(val_logits)
+                (x_batch_val, y_batch_val) = next(iter(self.train_dataset))#next(iter(self.test_data))
+                val_logits = self.unet(x_batch_val, training=False)
+                val_probs = tf.keras.activations.sigmoid(val_logits)
 
-                    val_probs = tf.math.round(val_probs)
+                val_probs = tf.math.round(val_probs)
 
-                    for k in range(6):
-                        plt.subplot(2, 6, k+1)
-                        plt.imshow(x_batch_val[k,:,:,:], cmap='gray')
-                        plt.title('Real')
-                        plt.axis('off')
+                for k in range(6):
+                    plt.subplot(2, 6, k+1)
+                    plt.imshow(x_batch_val[k,:,:,:], cmap='gray')
+                    plt.title('Real')
+                    plt.axis('off')
 
-                        plt.subplot(2, 6, k+7)
-                        plt.imshow(val_probs[k,:,:,:], cmap='gray')
-                        plt.title('Output')
-                        plt.axis('off')
-                    #plt.suptitle('%d / %d - loss: %f' % (epoch+1, epochs, avg_loss))
+                    plt.subplot(2, 6, k+7)
+                    plt.imshow(val_probs[k,:,:,:], cmap='gray')
+                    plt.title('Output')
+                    plt.axis('off')
+                #plt.suptitle('%d / %d - loss: %f' % (epoch+1, epochs, avg_loss))
 
-                    PROJECT_ROOT = get_project3_root()
-                    fig_path = PROJECT_ROOT / f"reports/figures/seg_predictions_epoch{epoch}.png"
-                    plt.savefig(fig_path)
+                PROJECT_ROOT = get_project3_root()
+                fig_path = PROJECT_ROOT / f"reports/figures/seg_predictions_epoch{epoch}.png"
+                plt.savefig(fig_path)
 
 
             #out_dict["train_acc"].append(train_n_correct_epoch / dataset_size)
