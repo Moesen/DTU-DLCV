@@ -23,7 +23,7 @@ from tqdm import tqdm
 from collections import defaultdict
 
 from projects.utils import get_project3_root
-#from projects.project3.src.data.dataloader import load_dataset
+from projects.project3.src.data.simple_dataloader import basic_loader
 
 # built tensorflow with GPU
 from tensorflow.python.client import device_lib
@@ -41,12 +41,13 @@ else:
     os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 
-physical_devices = tf.config.list_physical_devices('GPU') 
-tf.config.experimental.set_memory_growth(physical_devices[0], True)
+if len(tf.config.list_physical_devices("GPU")) > 0:
+    physical_devices = tf.config.list_physical_devices('GPU') 
+    tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
-config = tf.compat.v1.ConfigProto()
-config.gpu_options.allow_growth = True
-
+    config = tf.compat.v1.ConfigProto()
+    config.gpu_options.allow_growth = True
+    
 ### LOSSES 
 
 def weighted_cross_entropy(beta=0.3):
@@ -146,7 +147,7 @@ class Pix2Pix_Unet():
 
         def conv2d(layer,filters,f_size=3,dropout=0.1, downsample=True):
             #shortcut = layer
-            for _ in range(1,2):
+            for _ in range(1,3):
                 layer = Conv2D(filters, kernel_size=f_size, padding='same',strides=1)(layer)
                 layer = BatchNormalization()(layer)
                 layer = Activation('relu')(layer)
@@ -167,25 +168,44 @@ class Pix2Pix_Unet():
 
 
         d0 = Input(shape=self.img_shape)
+
         block1, dblock1 = conv2d(d0,self.gf,dropout=.1)
         block2, dblock2 = conv2d(dblock1,self.gf*2,dropout=.1)
-        block3, dblock3 = conv2d(dblock2,self.gf*4,dropout=.2)
-        block4, dblock4 = conv2d(dblock3,self.gf*8,dropout=.2)
-        block5, _ = conv2d(dblock4,self.gf*16,dropout=0.3,downsample=False)
+        block3, dblock3 = conv2d(dblock2,self.gf*4,dropout=.1)
+        #block4, dblock4 = conv2d(dblock3,self.gf*8,dropout=.1)
+        block5, _ = conv2d(dblock3,self.gf*16,dropout=0.3,downsample=False)
         
+        # DECODING
+        #block7 = deconv2d(block5,block4,self.gf*8) 
+        #block8, _ = conv2d(block7,self.gf*8,dropout=.1,downsample=False)
+
+        block9 = deconv2d(block5,block3,self.gf*8) 
+        block10, _ = conv2d(block9,self.gf*8,dropout=.1,downsample=False)
+
+        block11 = deconv2d(block10,block2,self.gf*4)
+        block12, _ = conv2d(block11,self.gf*4,dropout=.1,downsample=False)
+
+        block13 = deconv2d(block12,block1,self.gf*2)
+        block14, _ = conv2d(block13,self.gf,dropout=.1,downsample=False)
+
+        """block1, dblock1 = conv2d(d0,self.gf,dropout=.1)
+        block2, dblock2 = conv2d(dblock1,self.gf*2,dropout=.1)
+        block3, dblock3 = conv2d(dblock2,self.gf*4,dropout=.1)
+        block4, dblock4 = conv2d(dblock3,self.gf*8,dropout=.1)
+        block5, _ = conv2d(dblock4,self.gf*16,dropout=0.3,downsample=False)
         
         # DECODING
         block7 = deconv2d(block5,block4,self.gf*8) 
-        block8, _ = conv2d(block7,self.gf*8,dropout=.3,downsample=False)
+        block8, _ = conv2d(block7,self.gf*8,dropout=.1,downsample=False)
 
         block9 = deconv2d(block8,block3,self.gf*4) 
-        block10, _ = conv2d(block9,self.gf*4,dropout=.2,downsample=False)
+        block10, _ = conv2d(block9,self.gf*4,dropout=.1,downsample=False)
 
         block11 = deconv2d(block10,block2,self.gf*2)
         block12, _ = conv2d(block11,self.gf*2,dropout=.1,downsample=False)
 
         block13 = deconv2d(block12,block1,self.gf)
-        block14, _ = conv2d(block13,self.gf,dropout=.1,downsample=False)
+        block14, _ = conv2d(block13,self.gf,dropout=.1,downsample=False)"""
 
         output = Conv2D(1,kernel_size=3, padding='same',strides=1)(block14) #, activation='relu'
         return Model(d0, output)
@@ -299,172 +319,28 @@ if __name__ == '__main__':
     PROJECT_ROOT = get_project3_root()
 
     dataset_path = PROJECT_ROOT / "data/isic"
-    training_data = "train_allstyles2/Images"
-    val_data = "train_allstyles2/Images"
+    training_path = "train_allstyles2/Images"
+    validation_path = "train_allstyles2/Images"
 
     BATCH_SIZE = 8
-    gf = 32
     IMG_SIZE = 256
     BUFFER_SIZE = 1000
-    SEED = 69
     AUTOTUNE = tf.data.experimental.AUTOTUNE
 
-    num_epochs = 10
-
-    def parse_image(img_path: str) -> dict:
-        """Load an image and its annotation (mask) and returning
-        a dictionary.
-
-        Parameters
-        ----------
-        img_path : str
-            Image (not the mask) location.
-
-        Returns
-        -------
-        dict
-            Dictionary mapping an image and its annotation.
-        """
-        image = tf.io.read_file(img_path)
-        image = tf.image.decode_jpeg(image, channels=3)
-        image = tf.image.convert_image_dtype(image, tf.uint8)
-
-        # For one Image path:
-        # .../trainset/images/training/ADE_train_00000001.jpg
-        # Its corresponding annotation path is:
-        # .../trainset/annotations/training/ADE_train_00000001.png
-        mask_path = tf.strings.regex_replace(img_path, "Images", "Segmentations")
-        #mask_path = tf.strings.regex_replace(img_path, ".", "_seg_0.")
-        #mask_path = tf.strings.regex_replace(mask_path, "jpg", "png")
-        mask_path = tf.strings.regex_replace(mask_path, ".jpg", "_seg_0.png")
-        mask = tf.io.read_file(mask_path)
-        # The masks contain a class index for each pixels
-        mask = tf.image.decode_png(mask, channels=1)
-        # In scene parsing, "not labeled" = 255
-        # But it will mess up with our N_CLASS = 150
-        # Since 255 means the 255th class
-        # Which doesn't exist
-        mask = tf.where(mask == 255, np.dtype('uint8').type(0), mask)
-        # Note that we have to convert the new value (0)
-        # With the same dtype than the tensor itself
-
-        return {'image': image, 'segmentation_mask': mask}
-
-
-    train_dataset = tf.data.Dataset.list_files((dataset_path / training_data / "*.jpg").as_posix(), seed=SEED)
-    train_dataset = train_dataset.map(parse_image)
-
-    val_dataset = tf.data.Dataset.list_files((dataset_path / val_data / "*.jpg").as_posix(), seed=SEED)
-    val_dataset = val_dataset.map(parse_image)
-
-    @tf.function
-    def normalize(input_image: tf.Tensor, input_mask: tf.Tensor) -> tuple:
-        """Rescale the pixel values of the images between 0.0 and 1.0
-        compared to [0,255] originally.
-
-        Parameters
-        ----------
-        input_image : tf.Tensor
-            Tensorflow tensor containing an image of size [SIZE,SIZE,3].
-        input_mask : tf.Tensor
-            Tensorflow tensor containing an annotation of size [SIZE,SIZE,1].
-
-        Returns
-        -------
-        tuple
-            Normalized image and its annotation.
-        """
-        input_image = tf.cast(input_image, tf.float32) / 255.0
-        return input_image, input_mask
-
-    @tf.function
-    def load_image_train(datapoint: dict) -> tuple:
-        """Apply some transformations to an input dictionary
-        containing a train image and its annotation.
-
-        Notes
-        -----
-        An annotation is a regular  channel image.
-        If a transformation such as rotation is applied to the image,
-        the same transformation has to be applied on the annotation also.
-
-        Parameters
-        ----------
-        datapoint : dict
-            A dict containing an image and its annotation.
-
-        Returns
-        -------
-        tuple
-            A modified image and its annotation.
-        """
-        input_image = tf.image.resize(datapoint['image'], (IMG_SIZE, IMG_SIZE))
-        input_mask = tf.image.resize(datapoint['segmentation_mask'], (IMG_SIZE, IMG_SIZE))
-
-        if tf.random.uniform(()) > 0.5:
-            input_image = tf.image.flip_left_right(input_image)
-            input_mask = tf.image.flip_left_right(input_mask)
-
-        input_image, input_mask = normalize(input_image, input_mask)
-
-        return input_image, input_mask
-
-    @tf.function
-    def load_image_test(datapoint: dict) -> tuple:
-        """Normalize and resize a test image and its annotation.
-
-        Notes
-        -----
-        Since this is for the test set, we don't need to apply
-        any data augmentation technique.
-
-        Parameters
-        ----------
-        datapoint : dict
-            A dict containing an image and its annotation.
-
-        Returns
-        -------
-        tuple
-            A modified image and its annotation.
-        """
-        input_image = tf.image.resize(datapoint['image'], (IMG_SIZE, IMG_SIZE))
-        input_mask = tf.image.resize(datapoint['segmentation_mask'], (IMG_SIZE, IMG_SIZE))
-
-        input_image, input_mask = normalize(input_image, input_mask)
-
-        return input_image, input_mask
-
-
-
-    dataset = {"train": train_dataset, "val": val_dataset}
-
-    # -- Train Dataset --#
-    dataset['train'] = dataset['train'].map(load_image_train)#, num_parallel_calls=tf.data.experimental.AUTOTUNE)
-    dataset['train'] = dataset['train'].shuffle(buffer_size=BUFFER_SIZE, seed=SEED)
-    dataset['train'] = dataset['train'].repeat()
-    dataset['train'] = dataset['train'].batch(BATCH_SIZE)
-    dataset['train'] = dataset['train'].prefetch(buffer_size=AUTOTUNE)
-
-    #-- Validation Dataset --#
-    dataset['val'] = dataset['val'].map(load_image_test)
-    dataset['val'] = dataset['val'].repeat()
-    dataset['val'] = dataset['val'].batch(BATCH_SIZE)
-    dataset['val'] = dataset['val'].prefetch(buffer_size=AUTOTUNE)
-
+    train_dataset, val_dataset = basic_loader(dataset_path, training_path, validation_path, IMG_SIZE, BATCH_SIZE, BUFFER_SIZE, AUTOTUNE)
+    
 
     ##### TRAIN MODEL ##### 
     save_model = False
 
-    batch_size = BATCH_SIZE
-    STEPS_PER_EPOCH = 100 // batch_size #there are 100 images in total
-    gf = 32
+    STEPS_PER_EPOCH = 100 // BATCH_SIZE #there are 100 images in total
+    gf = 16
     img_size = (IMG_SIZE,IMG_SIZE,3)#(256,256,3)
 
     num_epochs = 100
     sample_img_interval = 20
 
-    unet = Pix2Pix_Unet(train_dataset=dataset['train'],img_size=img_size,batch_size=batch_size, gf=gf,test_data=[])
+    unet = Pix2Pix_Unet(train_dataset=train_dataset,test_data=[],img_size=img_size,batch_size=BATCH_SIZE, gf=gf)
     unet.unet.summary()
 
     ######
