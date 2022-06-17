@@ -33,12 +33,12 @@ from tqdm import tqdm
 from collections import defaultdict
 
 from projects.utils import get_project3_root
-#from projects.project3.src.data.simple_dataloader import basic_loader
+
+# from projects.project3.src.data.simple_dataloader import basic_loader
 from projects.project3.src.data.dataloader import IsicDataSet
 from projects.project3.src.models.Networks import Pix2Pix_Unet
 from projects.project3.src.metrics.losses import *
 from projects.project3.src.metrics.eval_metrics import *
-
 
 
 log_path = Path("./log")
@@ -46,7 +46,7 @@ logger = init_logger(__name__, True, log_path)
 
 study_name = "unet_test_100"
 
-IMG_SIZE = (256,256) #(256,256,3)
+IMG_SIZE = (256, 256)  # (256,256,3)
 
 
 def objective(trial: optuna.trial.Trial) -> float:
@@ -57,15 +57,14 @@ def objective(trial: optuna.trial.Trial) -> float:
         # Network
         first_layer_channels=trial.suggest_int("First layer channels", 10, 32),
         depth=trial.suggest_int("Depth", 2, 5),
-
         # Kernels
         num_kernels=trial.suggest_int("Convolutinal layers", 1, 3),
-        #kernel_regularizer_strength=trial.suggest_loguniform(
+        # kernel_regularizer_strength=trial.suggest_loguniform(
         #    "kernel regularizer strength", 1e-10, 1e-2
-        #),
-        #kernel_initializer=trial.suggest_categorical(
+        # ),
+        # kernel_initializer=trial.suggest_categorical(
         #    "kernel initializer", ["he_normal", "glorot_uniform"]
-        #),
+        # ),
         # Learning
         dropout_percentage=trial.suggest_float("dropout_percentage", 0.1, 0.8),
         learning_rate=trial.suggest_loguniform("learning rate", 1e-6, 1e-3),
@@ -74,26 +73,27 @@ def objective(trial: optuna.trial.Trial) -> float:
         loss_func=trial.suggest_categorical(
             "Loss function", ["focal_loss", "dice_loss", "weighted_cross_entropy"]
         ),
-        # "cross_entroy": tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True), 
-         
+        # "cross_entroy": tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
         # Img attributes
-        #image_size=trial.suggest_int("image size", 64, 256, 16),
+        # image_size=trial.suggest_int("image size", 64, 256, 16),
         # Augmentations
-        #augmentation_flip=trial.suggest_categorical(
+        # augmentation_flip=trial.suggest_categorical(
         #    "augmentation_flip",
         #    ["horizontal_and_vertical", "horizontal", "vertical", "none"],
-        #),
-        #augmentation_rotation=trial.suggest_float("augmentation_rotation", 0.0, 0.2),
-        #augmentation_contrast=trial.suggest_float("augmentation_contrast", 0.0, 0.6),
-        )
-        switch = {
-                "focal_loss": focal_loss, 
-                "dice_loss": dice_loss,
-                "weighted_cross_entropy": weighted_cross_entropy
-        }
-        loss_func = switch[c['loss_func']]()
+        # ),
+        # augmentation_rotation=trial.suggest_float("augmentation_rotation", 0.0, 0.2),
+        # augmentation_contrast=trial.suggest_float("augmentation_contrast", 0.0, 0.6),
+    )
+    switch = {
+        "focal_loss": focal_loss,
+        "dice_loss": dice_loss,
+        "weighted_cross_entropy": weighted_cross_entropy,
+    }
+    loss_func = switch[c["loss_func"]]()
 
-    logger.info(f"config:\n{json.dumps(c, indent=4)}", )
+    logger.info(
+        f"config:\n{json.dumps(c, indent=4)}",
+    )
 
     """img_size = (c["image_size"], c["image_size"])
     img_shape = (*img_size, 3)
@@ -115,18 +115,20 @@ def objective(trial: optuna.trial.Trial) -> float:
     mask_path = data_root / "Segmentations"
 
     dataset_loader = IsicDataSet(
-                                image_folder=image_path,
-                                mask_folder=mask_path,
-                                image_size=IMG_SIZE,
-                                image_channels=3,
-                                mask_channels=1,
-                                image_file_extension="jpg",
-                                mask_file_extension="png",
-                                do_normalize=True,
-                                validation_percentage=.2
+        image_folder=image_path,
+        mask_folder=mask_path,
+        image_size=IMG_SIZE,
+        image_channels=3,
+        mask_channels=1,
+        image_file_extension="jpg",
+        mask_file_extension="png",
+        do_normalize=True,
+        validation_percentage=0.2,
     )
 
-    train_dataset, val_dataset = dataset_loader.get_dataset(batch_size=c["batch_size"], shuffle=True)
+    train_dataset, val_dataset = dataset_loader.get_dataset(
+        batch_size=c["batch_size"], shuffle=True
+    )
 
     run = wandb.init(
         project="project3",
@@ -137,18 +139,19 @@ def objective(trial: optuna.trial.Trial) -> float:
     )
 
     # metrics
-    #metric = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
+    # metric = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
 
-    unet = Pix2Pix_Unet(loss_f= loss_func, 
-                        train_dataset=[], #given in fit below
-                        test_data=[], #given in fit below
-                        img_size=(*IMG_SIZE, 3),
-                        gf=c["first_layer_channels"],
-                        num_conv=c["num_kernels"],
-                        depth=c["depth"],
-                        lr=c["learning_rate"],
-                        dropout_percent=c["dropout_percentage"],
-                        batchnorm=c["batchnorm"]
+    unet = Pix2Pix_Unet(
+        loss_f=loss_func,
+        train_dataset=[],  # given in fit below
+        test_data=[],  # given in fit below
+        img_size=(*IMG_SIZE, 3),
+        gf=c["first_layer_channels"],
+        num_conv=c["num_kernels"],
+        depth=c["depth"],
+        lr=c["learning_rate"],
+        dropout_percent=c["dropout_percentage"],
+        batchnorm=c["batchnorm"],
     )
 
     unet.unet.summary()
@@ -160,53 +163,64 @@ def objective(trial: optuna.trial.Trial) -> float:
         val_probs = tf.math.round(val_probs)
 
         for k in range(6):
-                    plt.subplot(3, 6, k+1)
-                    plt.imshow(x_batch_val[k,:,:,:], cmap='gray')
-                    plt.title('Input')
-                    plt.axis('off')
+            plt.subplot(3, 6, k + 1)
+            plt.imshow(x_batch_val[k, :, :, :], cmap="gray")
+            plt.title("Input")
+            plt.axis("off")
 
-                    plt.subplot(3, 6, k+7)
-                    plt.imshow(y_batch_val[k,:,:,:], cmap='gray')
-                    plt.title('GT')
-                    plt.axis('off')
+            plt.subplot(3, 6, k + 7)
+            plt.imshow(y_batch_val[k, :, :, :], cmap="gray")
+            plt.title("GT")
+            plt.axis("off")
 
-                    plt.subplot(3, 6, k+13)
-                    plt.imshow(val_probs[k,:,:,:], cmap='gray')
-                    plt.title('Pred')
-                    plt.axis('off')
-        wandb.log({"Validation:" : plt}, step=epoch)
+            plt.subplot(3, 6, k + 13)
+            plt.imshow(val_probs[k, :, :, :], cmap="gray")
+            plt.title("Pred")
+            plt.axis("off")
+        wandb.log({"Validation:": plt}, step=epoch)
 
     image_callback = keras.callbacks.LambdaCallback(on_epoch_end=log_image)
 
     num_epochs = 100
-    #unet.train(epochs=num_epochs)
+    # unet.train(epochs=num_epochs)
 
     # Callbacks
-    early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=10, verbose=1, mode='min',restore_best_weights=True)
-    #wandb_callback = WandbCallback(monitor="val_sparse_categorical_accuracy", log_evaluation=False, save_model=False, validation_steps = len(val_ds))
+    early_stopping = tf.keras.callbacks.EarlyStopping(
+        monitor="val_loss",
+        patience=10,
+        verbose=1,
+        mode="min",
+        restore_best_weights=True,
+    )
+    # wandb_callback = WandbCallback(monitor="val_sparse_categorical_accuracy", log_evaluation=False, save_model=False, validation_steps = len(val_ds))
 
     # Compiling model with optimizer and loss function
-    #model.compile(optimizer, loss=loss_fn, metrics=[metric])
-    
-    history = unet.unet.fit(train_dataset, validation_data=val_dataset, epochs=num_epochs, callbacks=[early_stopping,image_callback]) #wandb_callback])
+    # model.compile(optimizer, loss=loss_fn, metrics=[metric])
 
-    # Compute IoU for the best model 
-    #pred_logits = unet.unet.predict(val_dataset)
+    history = unet.unet.fit(
+        train_dataset,
+        validation_data=val_dataset,
+        epochs=num_epochs,
+        callbacks=[early_stopping, image_callback],
+    )  # wandb_callback])
+
+    # Compute IoU for the best model
+    # pred_logits = unet.unet.predict(val_dataset)
     (x_batch_val, y_batch_val) = next(iter(val_dataset))
     val_logits = unet.unet(x_batch_val, training=False)
     val_probs = tf.keras.activations.sigmoid(val_logits)
     pred_logits = tf.math.round(val_probs)
     pred_mask = tf.keras.activations.sigmoid(pred_logits)
-    _,true_mask = next(iter(val_dataset))
+    _, true_mask = next(iter(val_dataset))
 
     compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
-    best_iou = compute_IoU(pred_mask,true_mask)
-    print("Best model IoU: ",best_iou)
+    best_iou = compute_IoU(pred_mask, true_mask)
+    print("Best model IoU: ", best_iou)
 
-    run.log({"best model IoU": best_iou}) # type: ignore
-    run.finish() # type: ignore
+    run.log({"best model IoU": best_iou})  # type: ignore
+    run.finish()  # type: ignore
 
-    return best_iou #max(history.history["val_loss"])
+    return best_iou  # max(history.history["val_loss"])
 
 
 if __name__ == "__main__":
