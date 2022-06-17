@@ -24,6 +24,24 @@ from collections import defaultdict
 from projects.utils import get_project3_root
 #from projects.project3.src.data.dataloader import load_dataset
 
+# built tensorflow with GPU
+
+print("TENSORFLOW BUILT WITH CUDA: ", tf.test.is_built_with_cuda())
+print("Num GPUs Available: ", len(tf.config.list_physical_devices("GPU")))
+
+
+print("TENSORFLOW VISIBLE DEVIES: ", device_lib.list_local_devices())
+
+method = "GPU"
+
+if method == "GPU":
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+else:
+    os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
+
+physical_devices = tf.config.list_physical_devices('GPU') 
+tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 
 ### LOSSES 
@@ -126,19 +144,19 @@ class Pix2Pix_Unet():
         def conv2d(layer,filters,f_size=3,dropout=0.1, downsample=True):
             #shortcut = layer
             for _ in range(1,2):
-                layer = Conv2D(filters, kernel_size=f_size, padding='same',strides=(1,1))(layer)
+                layer = Conv2D(filters, kernel_size=f_size, padding='same',strides=1)(layer)
                 layer = BatchNormalization()(layer)
                 layer = Activation('relu')(layer)
                 layer = Dropout(dropout)(layer)
             if downsample:
-                downsample = Conv2D(filters*2, kernel_size=f_size, padding='same', strides=(2,2))(layer)
+                downsample = Conv2D(filters*2, kernel_size=f_size, padding='same', strides=2)(layer)
                 downsample = BatchNormalization()(downsample)
                 downsample = Activation('relu')(downsample)
             return layer, downsample
 
         #def convt_block(layer, concat, filters)
-        def deconv2d(layer, concat, filters, f_size=3, stridevals=(2,2)):
-            layer = Conv2DTranspose(filters, kernel_size=f_size, padding='same', strides=stridevals)(layer)
+        def deconv2d(layer, concat, filters, f_size=3):
+            layer = Conv2DTranspose(filters, kernel_size=f_size, padding='same', strides=2)(layer)
             layer = BatchNormalization()(layer)
             layer = Activation('relu')(layer)
             layer = concatenate([layer, concat], axis=-1)
@@ -166,7 +184,7 @@ class Pix2Pix_Unet():
         block13 = deconv2d(block12,block1,self.gf)
         block14, _ = conv2d(block13,self.gf,dropout=.1,downsample=False)
 
-        output = Conv2D(1,kernel_size=3, padding='same',strides=(1,1))(block14) #, activation='relu'
+        output = Conv2D(1,kernel_size=3, padding='same',strides=1)(block14) #, activation='relu'
         return Model(d0, output)
         
 
@@ -439,7 +457,7 @@ if __name__ == '__main__':
 
     unet = Pix2Pix_Unet(train_dataset=dataset['train'],img_size=img_size,batch_size=batch_size, gf=gf,test_data=[])
     unet.unet.summary()
-    
+
     ######
     #EPOCHS = 10
     #STEPS_PER_EPOCH = 100 // BATCH_SIZE
