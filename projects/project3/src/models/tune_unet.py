@@ -120,7 +120,20 @@ def objective(trial: optuna.trial.Trial) -> float:
         do_normalize=True,
     )
 
+    val_dataset_loader = IsicDataSet(
+        image_folder=image_path,
+        mask_folder=mask_path,
+        image_size=IMG_SIZE,
+        image_channels=3,
+        mask_channels=1,
+        image_file_extension="jpg",
+        mask_file_extension="png",
+        do_normalize=True,
+    )
+    
     train_dataset = dataset_loader.get_dataset(batch_size=c["batch_size"], shuffle=True)
+    val_dataset = val_dataset_loader.get_dataset(batch_size=len(FULL_VAL),shuffle=False)
+
 
     run = wandb.init(
         project="project3",
@@ -147,6 +160,31 @@ def objective(trial: optuna.trial.Trial) -> float:
 
     unet.unet.summary()
 
+    def log_image(epoch, logs):
+        (x_batch_val, y_batch_val) = next(iter(val_dataset))
+        val_logits = unet.unet(x_batch_val, training=False)
+        val_probs = tf.keras.activations.sigmoid(val_logits)
+        val_probs = tf.math.round(val_probs)
+
+        for k in range(6):
+                    plt.subplot(3, 6, k+1)
+                    plt.imshow(x_batch_val[k,:,:,:], cmap='gray')
+                    plt.title('Input')
+                    plt.axis('off')
+
+                    plt.subplot(3, 6, k+7)
+                    plt.imshow(y_batch_val[k,:,:,:], cmap='gray')
+                    plt.title('GT')
+                    plt.axis('off')
+
+                    plt.subplot(3, 6, k+13)
+                    plt.imshow(val_probs[k,:,:,:], cmap='gray')
+                    plt.title('Pred')
+                    plt.axis('off')
+        wandb.log({"Validation:" : plt}, step=epoch)
+
+    image_callback = keras.callbacks.LambdaCallback(on_epoch_end=log_image)
+
     num_epochs = 100
     #unet.train(epochs=num_epochs)
 
@@ -157,13 +195,21 @@ def objective(trial: optuna.trial.Trial) -> float:
     # Compiling model with optimizer and loss function
     #model.compile(optimizer, loss=loss_fn, metrics=[metric])
     
-    history = unet.unet.fit(train_dataset, validation_data=val_dataset, epochs=num_epochs, callbacks=[early_stopping]) #wandb_callback])
+    history = unet.unet.fit(train_dataset, validation_data=val_dataset, epochs=num_epochs, callbacks=[early_stopping,image_callback]) #wandb_callback])
 
+    # Compute IoU for the best model 
+    pred_logits = unet.unet.predict(val_dataset)
+    pred_mask = tf.keras.activations.sigmoid(pred_logits)
+    _,true_mask = next(iter(val_dataset))
 
-    run.log({"best validation accuracy": max(history.history["val_sparse_categorical_accuracy"])}) # type: ignore
+    compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
+    best_iou = compute_IoU(pred_mask,true_mask)
+    print("Best model IoU: ",best_iou)
+
+    run.log({"best model IoU": best_iou}) # type: ignore
     run.finish() # type: ignore
 
-    return max(history.history["val_sparse_categorical_accuracy"])
+    return best_iou #max(history.history["val_loss"])
 
 
 if __name__ == "__main__":
@@ -185,4 +231,4 @@ if __name__ == "__main__":
     study = optuna.create_study(direction="maximize", sampler=sampler, pruner=pruner)
 
     logger.info("Beginning optuna optimization")
-    study.optimize(objective, n_trials=50)
+    study.optimize(objective, n_trials=100)
