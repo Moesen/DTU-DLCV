@@ -52,7 +52,7 @@ if __name__ == '__main__':
     
     BATCH_SIZE = 32
     IMG_SIZE = (256,256) #(256,256,3)
-    GF = 50
+    GF = 32
 
     proot = get_project3_root()
     data_root = proot / "data/isic/train_allstyles"
