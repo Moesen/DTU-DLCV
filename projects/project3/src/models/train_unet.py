@@ -303,7 +303,7 @@ if __name__ == '__main__':
         mask_channels=1,
         image_file_extension="jpg",
         mask_file_extension="png",
-        normalize=True,
+        do_normalize=True,
     )
 
     train_dataset = dataset_loader.get_dataset(batch_size=BATCH_SIZE, shuffle=True)
