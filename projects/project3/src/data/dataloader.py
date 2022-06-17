@@ -22,8 +22,9 @@ class IsicDataSet(object):
         mask_channels: int,
         image_file_extension: str,
         mask_file_extension: str,
-        image_size: tuple[int, int] | None,
         normalize: bool,
+        image_size: tuple[int, int] | None,
+        segment_type: int | None,
         seed: int | None = None,
     ):
         # Assignment
@@ -84,6 +85,7 @@ class IsicDataSet(object):
         self, image: tf.Tensor, mask: tf.Tensor
     ) -> tuple[tf.Tensor, tf.Tensor]:
         image = tf.cast(image, tf.float32) / 255.0
+        mask = tf.cast(mask, tf.float32) / 255.0
         return image, mask
 
     def _parse_data(self, image_path: str, mask_path: str):
