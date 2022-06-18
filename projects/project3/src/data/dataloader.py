@@ -34,6 +34,7 @@ class IsicDataSet(object):
         do_normalize: bool,
         image_size: tuple[int, int],
         validation_percentage: float | None = 0.2,
+        output_image_path: bool | None = False,
         segmentation_type: str | None = None,
         seed: int | None = None,
         flipping: str | None = "none",
@@ -58,6 +59,7 @@ class IsicDataSet(object):
         self._segmentation_type = segmentation_type
         self._image_folder = image_folder
         self._mask_folder = mask_folder
+        self._output_image_path = output_image_path
         self._flipping = flipping #flipping should be either of ["none", "horizontal", "vertical", "horizontal_and_vertical"]
         self._rotation = rotation #rotation should be in interval [0, 0.5]
         self._brightness = brightness #brightness should be in interval [0, 1]
@@ -126,8 +128,8 @@ class IsicDataSet(object):
         return img_paths_paired, mask_paths_paired
 
     def _augmentation_func(
-        self, image: tf.Tensor, mask: tf.Tensor,
-    ) -> tuple[tf.Tensor, tf.Tensor]:
+        self, image: tf.Tensor, mask: tf.Tensor, image_path: tf.Tensor = None
+    ) -> tuple[tf.Tensor, tf.Tensor, tf.Tensor]:
         # TODO: Implement augmentations
         # Link to someone who already did some augments
         # https://github.com/HasnainRaz/SemSegPipeline/blob/master/dataloader.py
@@ -161,7 +163,10 @@ class IsicDataSet(object):
             image = tf.image.random_saturation(image, 0, self._saturation) #saturation should be in interval [0, ?]
         image = tf.image.random_hue(image, self._hue) #hue should be in interval [0, 0.5]
 
-        return image, mask
+        if image_path != None:
+            return image, mask, image_path
+        else:
+            return image, mask
 
     def _normalize(
         self, image: tf.Tensor, mask: tf.Tensor
@@ -179,11 +184,15 @@ class IsicDataSet(object):
 
         image = self._image_decoder(image_content, channels=self._image_channels)
         mask = self._mask_decoder(mask_content, channels=self._mask_channels)
+        image_path = tf.convert_to_tensor(image_path)
 
         if self._do_normalize:
             image, mask = self._normalize(image, mask)
 
-        return image, mask
+        if self._output_image_path:
+            return image, mask, image_path
+        else:
+            return image, mask
 
     def _resize_data(
         self, image: tf.Tensor, mask: tf.Tensor
@@ -202,11 +211,16 @@ class IsicDataSet(object):
         # This file is heavily inspired by link below, which also
         # implements data augmentation so maybe follow that
         # https://github.com/HasnainRaz/SemSegPipeline/blob/master/dataloader.py
-
-        image, mask = self._parse_data(image_path, mask_path)
-        return tf.py_function(
-            self._augmentation_func, [image, mask], [tf.float32, tf.float32]
-        )
+        if self._output_image_path:
+            image, mask, image_path = self._parse_data(image_path, mask_path)
+            return tf.py_function(
+                self._augmentation_func, [image, mask, image_path], [tf.float32, tf.float32, tf.string]
+            )
+        else:
+            image, mask = self._parse_data(image_path, mask_path)
+            return tf.py_function(
+                self._augmentation_func, [image, mask], [tf.float32, tf.float32, tf.string]
+            )      
 
     def get_dataset(
         self, batch_size: int, shuffle: bool = False
@@ -260,15 +274,25 @@ if __name__ == "__main__":
         mask_file_extension="png",
         do_normalize=True,
         segmentation_type="0",
+        output_image_path=False,
         flipping="horizontal_and_vertical",
         rotation=0.5,
         hue=0.5,
     )
 
     train_dataset, test_dataset = dataset_loader.get_dataset(batch_size=1, shuffle=True)
-    image, mask = next(iter(test_dataset))
-    _, [a, b] = plt.subplots(1, 2)
-    a.imshow(image[0])
-    b.imshow(mask[0])
-    b.set_title(f"max val: {tf.reduce_max(mask)}, min val: {tf.reduce_min(mask)}")
-    plt.show()
+    if dataset_loader._output_image_path:
+        image, mask, image_path = next(iter(test_dataset))
+        image_path = image_path.numpy()[0].decode("utf-8")
+        _, [a, b] = plt.subplots(1, 2)
+        a.imshow(image[0])
+        b.imshow(mask[0])
+        b.set_title(f"max val: {tf.reduce_max(mask)}, min val: {tf.reduce_min(mask)}")
+        plt.show()
+    else:
+        image, mask = next(iter(test_dataset))
+        _, [a, b] = plt.subplots(1, 2)
+        a.imshow(image[0])
+        b.imshow(mask[0])
+        b.set_title(f"max val: {tf.reduce_max(mask)}, min val: {tf.reduce_min(mask)}")
+        plt.show()
