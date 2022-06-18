@@ -83,12 +83,15 @@ for (img, mask, ax) in zip(test_img_plot.numpy(), mask_img_plot.numpy(), axs.rav
     colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255)]
 
     out = cv2.cvtColor(mask.astype(np.uint8), cv2.COLOR_GRAY2BGR)
+
     k = -1
     for i, cnt in enumerate(contours):
         if (hier[0, i, 3] == -1):
             k += 1
         cv2.drawContours(out, [cnt], -1, colors[k], 2)
 
+    breakpoint()
+    
     cv2.imshow('out', out)
 
     #ax.imshow(img)
