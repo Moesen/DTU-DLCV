@@ -20,7 +20,7 @@ from projects.project3.src.data.dataloader import IsicDataSet
 from projects.project3.src.models.Networks import Pix2Pix_Unet
 from projects.project3.src.metrics.losses import *
 from projects.project3.src.metrics.eval_metrics import *
-
+from projects.project3.src.visualization.make_boundary import get_boundary
 
 
 PROJECT_ROOT = get_project3_root()
@@ -57,56 +57,28 @@ dataset_loader = IsicDataSet(
 
 train_dataset, val_dataset = dataset_loader.get_dataset(batch_size=BATCH_SIZE, shuffle=False)
 
-
 test_img, mask = list(iter(val_dataset))[1]
 
+#use these images 
 idx = tf.constant([0,4,8,12])
-
-#test_img_plot = tf.image.resize( tf.gather(test_img, idx), [256,256])
-#mask_img_plot = tf.image.resize( tf.gather(mask, idx), [256,256])
 test_img_plot = tf.gather(test_img, idx)
 mask_img_plot = tf.gather(mask, idx)
 
 print("Plotting...")
 fig, axs = plt.subplots(1,4, figsize=(15,8))
 
-for (img, mask, ax) in zip(test_img_plot.numpy(), mask_img_plot.numpy(), axs.ravel()):
+
+for (img, mask, ax) in zip(test_img_plot, mask_img_plot, axs.ravel()):
     
-    """mask = Image.fromarray(mask.squeeze(),mode="L")
-    #img_gray = mask.convert("L")
-    edges = mask.filter(ImageFilter.FIND_EDGES)
-    e = np.asarray(edges)
-    edge_coord = np.where(e==255)
-    plt.plot(edge_coord[0], edge_coord[1], color="red", linewidth=3)"""
+    img = img.numpy()
+    mask = mask.numpy()
 
-    contours, hier = cv2.findContours(mask.astype(np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    colors = [(0, 255, 0)]
-
-    out = cv2.cvtColor(mask.astype(np.uint8), cv2.COLOR_GRAY2BGR)
-
-    k = -1
-    for i, cnt in enumerate(contours):
-        if (hier[0, i, 3] == -1):
-            k += 1
-        cv2.drawContours(out, [cnt], -1, colors[0], 2)
-
-
-    #cv2.imshow('out', out)
-    out2 = Image.fromarray(out).convert("L")
-    e = np.asarray(out2)
-
-    #img[ np.logical_and(out>0, out<255) ] = out[ np.logical_and(out>0, out<255) ]
-    img[e>1,:] = out[e>1,:]
+    out, b_idx = get_boundary(mask)
+    img[b_idx>1,:] = out[b_idx>1,:]
     
     ax.imshow(img)
     #ax.get_xaxis().set_ticks([])
     #ax.get_yaxis().set_ticks([])
-
-    #out2 = Image.fromarray(out).convert("L")
-    #e = np.asarray(out2)
-    #e[e>0] = 255
-    #edge_coord = np.squeeze(np.where(e == 255))
-    #plt.scatter(edge_coord[0,:], edge_coord[1,:], color="red")
 
     iou = 1
     ax.set_title(f"Prediction: {iou:.2f}",fontsize=24,x=0.5,y=1.05)
@@ -121,6 +93,7 @@ plt.savefig(fig_path)
 #compute metrics for model
 total_iou = []
 
+## DO THIS PER IMAGE INSTEAD
 for (x_batch_val, true_mask) in val_dataset:
     val_logits = unet(x_batch_val, training=False)
     val_probs = tf.keras.activations.sigmoid(val_logits)
