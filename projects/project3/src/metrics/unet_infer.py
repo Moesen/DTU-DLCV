@@ -87,8 +87,8 @@ for (img, mask, ax) in zip(test_img_plot, mask_img_plot, axs.ravel()):
     out, b_idx = get_boundary(pred_mask.numpy().squeeze(), is_GT=False)
     img[b_idx>1,:] = out[b_idx>1,:]
 
-    gc = mpl.colors.to_rgba((0,255,0))
-    rc = mpl.colors.to_rgba((255,0,0))
+    gc = mpl.colors.to_rgba((0,1,0))
+    rc = mpl.colors.to_rgba((1,0,0))
 
     green_patch = mpatches.Patch(color=gc, label='GT')
     red_patch = mpatches.Patch(color=rc, label='Pred')
