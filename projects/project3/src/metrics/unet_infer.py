@@ -6,6 +6,7 @@ from glob import glob
 import os 
 os.environ['DISPLAY'] = ':0'
 
+import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2
@@ -70,18 +71,33 @@ fig, axs = plt.subplots(1,4, figsize=(15,8))
 
 for (img, mask, ax) in zip(test_img_plot, mask_img_plot, axs.ravel()):
     
+    pred_logits = unet.predict(tf.expand_dims(img, 0))
+    pred_probs = tf.keras.activations.sigmoid(pred_logits)
+    pred_mask = tf.math.round(pred_probs)
+
     img = img.numpy()
     mask = mask.numpy()
 
-    out, b_idx = get_boundary(mask)
+    #change color for boundary of GT mask 
+    out, b_idx = get_boundary(mask, is_GT=True)
     img[b_idx>1,:] = out[b_idx>1,:]
     
+    #change color for bounadry of prediction
+    out, b_idx = get_boundary(pred_mask.numpy().squeeze(), is_GT=False)
+    img[b_idx>1,:] = out[b_idx>1,:]
+
+    green_patch = mpatches.Patch(color='green', label='GT')
+    red_patch = mpatches.Patch(color='red', label='Pred')
+    plt.legend(handles=[green_patch,red_patch])
+
     ax.imshow(img)
     #ax.get_xaxis().set_ticks([])
     #ax.get_yaxis().set_ticks([])
 
-    iou = 1
-    ax.set_title(f"Prediction: {iou:.2f}",fontsize=24,x=0.5,y=1.05)
+    compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
+    img_iou = compute_IoU(pred_mask, mask)
+
+    ax.set_title(f"Prediction: {img_iou:.2f}",fontsize=20,x=0.5,y=1.05)
     ax.grid(False)
     ax.axis('off')
 
@@ -95,13 +111,14 @@ total_iou = []
 
 ## DO THIS PER IMAGE INSTEAD
 for (x_batch_val, true_mask) in val_dataset:
-    val_logits = unet(x_batch_val, training=False)
-    val_probs = tf.keras.activations.sigmoid(val_logits)
-    pred_mask = tf.math.round(val_probs)
+    for (val_img, val_GT_mask) in zip(x_batch_val, true_mask):
+        val_logits = unet(tf.expand_dims(val_img, 0), training=False)
+        val_probs = tf.keras.activations.sigmoid(val_logits)
+        pred_mask = tf.math.round(val_probs)
 
-    compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
-    batch_iou = compute_IoU(pred_mask, true_mask)
-    total_iou.append( batch_iou )
+        compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
+        batch_iou = compute_IoU(pred_mask, val_GT_mask)
+        total_iou.append( batch_iou )
 
 print("IoU for entire test set: ",np.array(total_iou).mean())
 
