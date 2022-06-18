@@ -92,17 +92,19 @@ for (img, mask, ax) in zip(test_img_plot.numpy(), mask_img_plot.numpy(), axs.rav
 
 
     #cv2.imshow('out', out)
+    img[out>0] = out[out>0]
+
     ax.imshow(img)
     #ax.get_xaxis().set_ticks([])
     #ax.get_yaxis().set_ticks([])
 
-    out2 = Image.fromarray(out).convert("L")
+    #out2 = Image.fromarray(out).convert("L")
 
-    e = np.asarray(out2)
-    e[e>0] = 255
-    edge_coord = np.squeeze(np.where(e == 255))
+    #e = np.asarray(out2)
+    #e[e>0] = 255
+    #edge_coord = np.squeeze(np.where(e == 255))
 
-    plt.scatter(edge_coord[0,:], edge_coord[1,:], color="red")
+    #plt.scatter(edge_coord[0,:], edge_coord[1,:], color="red")
 
     iou = 1
     ax.set_title(f"Prediction: {iou:.2f}",fontsize=24,x=0.5,y=1.05)
