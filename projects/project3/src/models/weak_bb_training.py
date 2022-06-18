@@ -119,23 +119,25 @@ if __name__ == '__main__':
             mask_file_extension="png",
             do_normalize=True,
             validation_percentage=.2,
-            segmentation_type="2"
+            segmentation_type="1",
+            output_image_path=True,
+            validation_segmentation_type="2",
         )
-        train_dataset_weak, val_dataset_weak = dataset_loader.get_dataset(batch_size=BATCH_SIZE, shuffle=True)
+        train_dataset_weak, val_dataset_strong = dataset_loader.get_dataset(batch_size=BATCH_SIZE, shuffle=True)
 
-        dataset_loader = IsicDataSet(
-            image_folder=image_path,
-            mask_folder=mask_path,
-            image_size=IMG_SIZE,
-            image_channels=3,
-            mask_channels=1,
-            image_file_extension="jpg",
-            mask_file_extension="png",
-            do_normalize=True,
-            validation_percentage=.2,
-            segmentation_type="0"
-        )
-        train_dataset_strong, val_dataset_strong = dataset_loader.get_dataset(batch_size=BATCH_SIZE, shuffle=True)
+        # dataset_loader = IsicDataSet(
+        #     image_folder=image_path,
+        #     mask_folder=mask_path,
+        #     image_size=IMG_SIZE,
+        #     image_channels=3,
+        #     mask_channels=1,
+        #     image_file_extension="jpg",
+        #     mask_file_extension="png",
+        #     do_normalize=True,
+        #     validation_percentage=.2,
+        #     segmentation_type="0"
+        # )
+        # train_dataset_strong, val_dataset_strong = dataset_loader.get_dataset(batch_size=BATCH_SIZE, shuffle=True)
 
         ## Init U-Net and train
         unet = Pix2Pix_Unet(loss_f=focal_loss(),  #tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
@@ -182,16 +184,19 @@ if __name__ == '__main__':
             new_mask_path.mkdir()
 
         ### Now we save the predicted label segmentations of training set
-        for (x_batch_train, _) in train_dataset_weak:
+        for (x_batch_train, _, img_path) in train_dataset_weak:
             train_logits = unet(x_batch_train, training=False)
             train_probs = tf.keras.activations.sigmoid(train_logits)
             train_pred_mask = tf.math.round(train_probs)
 
-
             pred_mask = tf.cast(pred_mask, tf.uint8)
             pred_mask = tf.image.encode_png(pred_mask)
             pred_mask = pred_mask.numpy()
-            pred_mask_file = new_mask_path / (img_name + "_seg_2_expert_f" + ".png")
+
+            img_path = img_path.numpy()[0].decode("utf-8")
+            img_path = "ISIC" + img_path.split("ISIC")[1]
+            img_path = img_path[:-4]
+            pred_mask_file = new_mask_path / (img_path + "_seg_2_expert_f" + ".png")
             with open(pred_mask_file, "wb") as f:
                 f.write(train_pred_mask)
         

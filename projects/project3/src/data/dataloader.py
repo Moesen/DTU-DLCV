@@ -36,6 +36,7 @@ class IsicDataSet(object):
         validation_percentage: float | None = 0.2,
         output_image_path: bool | None = False,
         segmentation_type: str | None = None,
+        validation_segmentation_type: str | None = None,
         seed: int | None = None,
         flipping: str | None = "none",
         rotation: float | None = 0,
@@ -56,7 +57,7 @@ class IsicDataSet(object):
         self._mask_channels = mask_channels
         self._seed = seed or random.randint(0, 1000)
         self._do_normalize = do_normalize
-        self._segmentation_type = segmentation_type
+        self._train_segmentation_type = segmentation_type
         self._image_folder = image_folder
         self._mask_folder = mask_folder
         self._output_image_path = output_image_path
@@ -67,6 +68,10 @@ class IsicDataSet(object):
         self._saturation = saturation #saturation should be in interval [0, ?]
         self._hue = hue #hue should be in interval [0, 0.5]
 
+        if not validation_segmentation_type and segmentation_type:
+            self._validation_segmentation_type = segmentation_type
+        else:
+            self._validation_segmentation_type = validation_segmentation_type
         # Img decoders
         self._image_decoder = (
             tf.image.decode_jpeg
@@ -87,13 +92,13 @@ class IsicDataSet(object):
         )
 
         self._train_image_paths, self._train_mask_paths = self._match_img_mask(
-            train_img_paths
+            train_img_paths, self._train_segmentation_type
         )
         self._test_image_paths, self._test_mask_paths = self._match_img_mask(
-            val_img_paths
+            val_img_paths, self._validation_segmentation_type
         )
 
-    def _match_img_mask(self, image_paths: list[Path]) -> tuple[list[str], list[str]]:
+    def _match_img_mask(self, image_paths: list[Path], segmentation_type: str) -> tuple[list[str], list[str]]:
         img_paths_paired = []
         mask_paths_paired = []
 
@@ -119,7 +124,7 @@ class IsicDataSet(object):
                     continue
 
                 # If going by segmentation type, and not the right: continue
-                if self._segmentation_type and self._segmentation_type != seg_type:
+                if segmentation_type and segmentation_type != seg_type:
                     continue
 
                 img_paths_paired.append(image_path.as_posix())

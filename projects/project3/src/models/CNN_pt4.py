@@ -62,8 +62,8 @@ from collections import defaultdict
 
 from projects.utils import get_project3_root
 #from projects.project3.src.data.simple_dataloader import basic_loader
-from projects.project3.src.data.dataloader import IsicDataSet
-from projects.project3.src.models.Networks import Pix2Pix_Unet
+from projects.project3.src.data.dataloader_CNN import IsicDataSet
+
 from projects.project3.src.metrics.losses import *
 from projects.project3.src.metrics.eval_metrics import *
 
@@ -124,7 +124,7 @@ def create_CNN(IMG_SIZE):
                 metrics=['accuracy'])
 
     model.summary()
-    
+
     return model
     
         
@@ -140,12 +140,12 @@ if __name__ == '__main__':
 
     # Example of using dataloader and extracting datasets train and test
     proot = get_project3_root()
-    data_root = proot / "data/ISIC18"
-    image_path = data_root / "ISIC18_Task3_ims"
-    mask_path = data_root / "Segmentations"
+    data_root = proot / "data/isic"
+    lesions_path = data_root / "train_allstyles/Images"
+    background_path = data_root / "background"
     dataset_loader = IsicDataSet(
-        image_folder=image_path,
-        mask_folder=mask_path,
+        lesions_folder=lesions_path,
+        background_folder=background_path,
         image_size=(256, 256),
         image_channels=3,
         mask_channels=1,
@@ -155,12 +155,12 @@ if __name__ == '__main__':
         segmentation_type="0",
     )
 
-    train_dataset, test_dataset = dataset_loader.get_dataset(batch_size=1, shuffle=True)
-    image, mask = next(iter(test_dataset))
-    _, [a, b] = plt.subplots(1, 2)
-    a.imshow(image[0])
-    b.imshow(mask[0])
-    b.set_title(f"max val: {tf.reduce_max(mask)}, min val: {tf.reduce_min(mask)}")
+    # train_dataset, test_dataset = dataset_loader.get_dataset(batch_size=1, shuffle=True)
+    # image, image_label = next(iter(test_dataset))
+    # _, [a, b] = plt.subplots(1, 2)
+    # a.imshow(image[0])
+    # b.imshow(mask[0])
+    # b.set_title(f"max val: {tf.reduce_max(mask)}, min val: {tf.reduce_min(mask)}")
 
 
     train_dataset, val_dataset = dataset_loader.get_dataset(batch_size=BATCH_SIZE, shuffle=True)
@@ -179,15 +179,10 @@ if __name__ == '__main__':
     #loss0, accuracy0 = cnn_model.evaluate(test_data)
     
     
-    # # Compute acc for the final model
-    # (x_batch_val, true_mask) = next(iter(val_dataset))
-    # pred_logits = unet.unet.predict(x_batch_val)
-    # pred_mask = tf.keras.activations.sigmoid(pred_logits)
-
-    # compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
-    # best_iou = compute_IoU(pred_mask,true_mask)
-    # print("Best model IoU: ",best_iou)
-
+    # Compute acc for the final model
+    acc = cnn_model.evaluate(val_dataset)
+    print(f"Accuracy: {acc[1]}")
+    
 
     # Saving model
     model_name = 'CNN_'+datetime.datetime.now().strftime("%Y%m%d%H%M%S")
