@@ -95,9 +95,9 @@ for (img, mask, ax) in zip(test_img_plot.numpy(), mask_img_plot.numpy(), axs.rav
     out2 = Image.fromarray(out).convert("L")
     e = np.asarray(out2)
 
-    breakpoint()
-    img[ np.logical_and(out>0, out<255),: ] = out[ np.logical_and(out>0, out<255) ]
-
+    #img[ np.logical_and(out>0, out<255) ] = out[ np.logical_and(out>0, out<255) ]
+    img[e>1,:] = out[e>1,:]
+    
     ax.imshow(img)
     #ax.get_xaxis().set_ticks([])
     #ax.get_yaxis().set_ticks([])
