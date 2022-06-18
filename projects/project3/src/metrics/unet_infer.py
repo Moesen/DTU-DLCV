@@ -77,11 +77,11 @@ for (img, mask, ax) in zip(test_img_plot.numpy(), mask_img_plot.numpy(), axs.rav
     e = np.asarray(edges)
     edge_coord = np.where(e==255)
     plt.plot(edge_coord[0], edge_coord[1], color="red", linewidth=3)"""
-    breakpoint()
-    contours, hier = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+    contours, hier = cv2.findContours(mask.astype(np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255)]
 
-    out = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
+    out = cv2.cvtColor(mask.astype(np.uint8), cv2.COLOR_GRAY2BGR)
     k = -1
     for i, cnt in enumerate(contours):
         if (hier[0, i, 3] == -1):
