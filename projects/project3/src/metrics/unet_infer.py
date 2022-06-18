@@ -26,7 +26,9 @@ PROJECT_ROOT = get_project3_root()
 model_name = "unet_20220618123600"
 model_path = PROJECT_ROOT / "models" / model_name
 
-unet = tf.keras.models.load_model(model_path)
+loss_fn = focal_loss()
+
+unet = tf.keras.models.load_model(model_path, custom_objects={"loss": loss_fn })
 unet.summary()
 
 
