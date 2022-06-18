@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 from projects.utils import get_project3_root
 from sklearn.model_selection import train_test_split
+import numpy as np
 
 # CONSTANTS
 AUTOTUNE = tf.data.AUTOTUNE
@@ -35,6 +36,12 @@ class IsicDataSet(object):
         validation_percentage: float | None = 0.2,
         segmentation_type: str | None = None,
         seed: int | None = None,
+        flipping: str | None = "none",
+        rotation: float | None = 0,
+        brightness: float | None = 0,
+        contrast: float | None = 0,
+        saturation: float | None = 0,
+        hue: float | None = 0
     ) -> None:
         # Check if defined filetypes are supported
         assert (
@@ -51,6 +58,12 @@ class IsicDataSet(object):
         self._segmentation_type = segmentation_type
         self._image_folder = image_folder
         self._mask_folder = mask_folder
+        self._flipping = flipping #flipping should be either of ["none", "horizontal", "vertical", "horizontal_and_vertical"]
+        self._rotation = rotation #rotation should be in interval [0, 0.5]
+        self._brightness = brightness #brightness should be in interval [0, 1]
+        self._contrast = contrast #contrast should be in interval [0, 1]
+        self._saturation = saturation #saturation should be in interval [0, ?]
+        self._hue = hue #hue should be in interval [0, 0.5]
 
         # Img decoders
         self._image_decoder = (
@@ -113,12 +126,40 @@ class IsicDataSet(object):
         return img_paths_paired, mask_paths_paired
 
     def _augmentation_func(
-        self, image: tf.Tensor, mask: tf.Tensor
+        self, image: tf.Tensor, mask: tf.Tensor,
     ) -> tuple[tf.Tensor, tf.Tensor]:
         # TODO: Implement augmentations
         # Link to someone who already did some augments
         # https://github.com/HasnainRaz/SemSegPipeline/blob/master/dataloader.py
         # His augmentation function is inside the map function, but this is neater
+        
+        seed = np.random.randint(1e8) #To make sure that the mask and the image are rotated in the same way.
+        if self._do_normalize:
+            value_range = (0,1)
+        else:
+            value_range = (0,255)
+
+        rotation_augmentation_img = tf.keras.Sequential()
+        if self._flipping in ["horizontal","vertical","horizontal_and_vertical"]:
+            rotation_augmentation_img.add(tf.keras.layers.RandomFlip(mode=self._flipping, seed=seed))
+        rotation_augmentation_img.add(tf.keras.layers.RandomRotation(self._rotation, fill_mode="constant", seed=seed)) #rotation should be in interval [0, 0.5]
+
+        rotation_augmentation_mask = tf.keras.Sequential()
+        if self._flipping in ["horizontal","vertical","horizontal_and_vertical"]:
+            rotation_augmentation_mask.add(tf.keras.layers.RandomFlip(mode=self._flipping, seed=seed))
+        rotation_augmentation_mask.add(tf.keras.layers.RandomRotation(self._rotation, fill_mode="constant", seed=seed)) #rotation should be in interval [0, 0.5]
+
+        image = rotation_augmentation_img(image)
+        mask = rotation_augmentation_mask(mask)
+
+        color_augmentation = tf.keras.Sequential()
+        color_augmentation.add(tf.keras.layers.RandomBrightness(self._brightness, value_range=value_range)) #brightness should be in interval [0, 1]
+        color_augmentation.add(tf.keras.layers.RandomContrast(self._contrast)) #contrast should be in interval [0, 1]
+        
+        image = color_augmentation(image)
+        if self._saturation > 0:
+            image = tf.image.random_saturation(image, 0, self._saturation) #saturation should be in interval [0, ?]
+        image = tf.image.random_hue(image, self._hue) #hue should be in interval [0, 0.5]
 
         return image, mask
 
@@ -153,7 +194,7 @@ class IsicDataSet(object):
         return image, mask
 
     def _map_function(
-        self, image_path: str, mask_path: str
+        self, image_path: str, mask_path: str,
     ) -> tuple[tf.Tensor, tf.Tensor]:
         """Maps the data"""
 
@@ -219,6 +260,9 @@ if __name__ == "__main__":
         mask_file_extension="png",
         do_normalize=True,
         segmentation_type="0",
+        flipping="horizontal_and_vertical",
+        rotation=0.5,
+        hue=0.5,
     )
 
     train_dataset, test_dataset = dataset_loader.get_dataset(batch_size=1, shuffle=True)
