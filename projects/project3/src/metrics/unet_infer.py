@@ -90,11 +90,10 @@ for (img, mask, ax) in zip(test_img_plot.numpy(), mask_img_plot.numpy(), axs.rav
             k += 1
         cv2.drawContours(out, [cnt], -1, colors[k], 2)
 
-    breakpoint()
-    
-    cv2.imshow('out', out)
 
-    #ax.imshow(img)
+    #cv2.imshow('out', out)
+
+    ax.imshow(out)
     #ax.get_xaxis().set_ticks([])
     #ax.get_yaxis().set_ticks([])
 
