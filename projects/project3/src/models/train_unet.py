@@ -108,10 +108,9 @@ if __name__ == '__main__':
 
 
     train_dataset, val_dataset = dataset_loader.get_dataset(batch_size=BATCH_SIZE, shuffle=True)
-    #val_dataset = val_dataset_loader.get_dataset(batch_size=len(FULL_VAL),shuffle=False)
 
     ##### TRAIN MODEL ##### 
-    save_model = False
+    save_model = True
 
     num_epochs = 100
     sample_img_interval = 20
@@ -136,9 +135,10 @@ if __name__ == '__main__':
     #unet.train(epochs=num_epochs,sample_interval_epoch=sample_img_interval )
 
     # Compute IoU for the final model
-    pred_logits = unet.unet.predict(train_dataset)
+    #pred_logits = unet.unet.predict(val_dataset)
+    (x_batch_val, true_mask) = next(iter(val_dataset))
+    pred_logits = unet.unet.predict(x_batch_val)
     pred_mask = tf.keras.activations.sigmoid(pred_logits)
-    true_mask = next(iter(val_dataset))
 
     compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
     best_iou = compute_IoU(pred_mask,true_mask)
