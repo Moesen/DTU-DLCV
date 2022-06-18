@@ -80,7 +80,7 @@ for (img, mask, ax) in zip(test_img_plot.numpy(), mask_img_plot.numpy(), axs.rav
     plt.plot(edge_coord[0], edge_coord[1], color="red", linewidth=3)"""
 
     contours, hier = cv2.findContours(mask.astype(np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    colors = [(255, 0, 0)]
+    colors = [(0, 255, 0)]
 
     out = cv2.cvtColor(mask.astype(np.uint8), cv2.COLOR_GRAY2BGR)
 
@@ -92,18 +92,20 @@ for (img, mask, ax) in zip(test_img_plot.numpy(), mask_img_plot.numpy(), axs.rav
 
 
     #cv2.imshow('out', out)
-    img[ np.logical_and(out>0, out<255) ] = out[ np.logical_and(out>0, out<255) ]
+    out2 = Image.fromarray(out).convert("L")
+    e = np.asarray(out2)
+
+    breakpoint()
+    img[ np.logical_and(out>0, out<255),: ] = out[ np.logical_and(out>0, out<255) ]
 
     ax.imshow(img)
     #ax.get_xaxis().set_ticks([])
     #ax.get_yaxis().set_ticks([])
 
     #out2 = Image.fromarray(out).convert("L")
-
     #e = np.asarray(out2)
     #e[e>0] = 255
     #edge_coord = np.squeeze(np.where(e == 255))
-
     #plt.scatter(edge_coord[0,:], edge_coord[1,:], color="red")
 
     iou = 1
