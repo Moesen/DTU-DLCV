@@ -102,7 +102,7 @@ for (img, mask, ax) in zip(test_img_plot.numpy(), mask_img_plot.numpy(), axs.rav
     e[e>0] = 255
     edge_coord = np.squeeze(np.where(e == 255))
 
-    plt.plot(edge_coord[0,:], edge_coord[1,:], color="red")
+    plt.scatter(edge_coord[0,:], edge_coord[1,:], color="red")
 
     iou = 1
     ax.set_title(f"Prediction: {iou:.2f}",fontsize=24,x=0.5,y=1.05)
