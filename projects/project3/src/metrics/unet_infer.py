@@ -101,6 +101,9 @@ for (img, mask, ax) in zip(test_img_plot.numpy(), mask_img_plot.numpy(), axs.rav
     e = np.asarray(out2)
     e[e>0] = 255
     edge_coord = np.where(e==255)
+
+    breakpoint()
+    
     plt.plot(edge_coord[0], edge_coord[1], color="red", linewidth=3)
 
     iou = 1
