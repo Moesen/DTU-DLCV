@@ -150,6 +150,6 @@ if __name__ == '__main__':
 
     if save_model:
         model_path = proot / "models" / model_name
-        unet.save(model_path)
+        unet.unet.save(model_path)
     
     
