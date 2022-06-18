@@ -124,6 +124,7 @@ def create_CNN(IMG_SIZE):
                 metrics=['accuracy'])
 
     model.summary()
+    
     return model
     
         
