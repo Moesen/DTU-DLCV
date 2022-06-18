@@ -92,7 +92,7 @@ for (img, mask, ax) in zip(test_img_plot.numpy(), mask_img_plot.numpy(), axs.rav
 
 
     #cv2.imshow('out', out)
-    img[out>0 and out<255] = out[out>0 and out<255]
+    img[ np.logical_and(out>0, out<255) ] = out[ np.logical_and(out>0, out<255) ]
 
     ax.imshow(img)
     #ax.get_xaxis().set_ticks([])
