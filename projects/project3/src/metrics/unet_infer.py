@@ -7,6 +7,7 @@ import os
 
 import matplotlib.pyplot as plt
 import numpy as np
+#import cv2
 
 from tqdm import tqdm
 from collections import defaultdict
@@ -25,10 +26,10 @@ PROJECT_ROOT = get_project3_root()
 model_name = ""
 model_path = PROJECT_ROOT / "models" / model_name
 
-new_model = tf.keras.models.load_model(model_path)
+#new_model = tf.keras.models.load_model(model_path)
 
 # Check its architecture
-new_model.summary()
+#new_model.summary()
 
 
 BATCH_SIZE = 16
@@ -59,26 +60,37 @@ test_dataset = dataset_loader.get_dataset(batch_size=BATCH_SIZE, shuffle=False)
 (test_img, mask) = next(iter(test_dataset))
 
 test_img_plot = test_img
+mask_img_plot = mask
 
 
-fig, axs = plt.subplots(2,2, figsize=(15,15))
+fig, axs = plt.subplots(1,4, figsize=(8,15))
 
-for (img, pred, prob, ax) in zip(test_img_plot.numpy(), predicted_plot, probs_plot,axs.ravel()):
+import matplotlib.colors as colors
+palette = plt.cm.gray.with_extremes(over='r', under='g', bad='b')
+
+for (img, mask, ax) in zip(test_img_plot.numpy(), mask_img_plot.numpy(), axs.ravel()):
     ax.imshow(img)
-    pred_prob = np.max(prob)
-    pred_label = labels[int(pred)]
-    if pred_label == "nothotdog":
-        pred_prob = 1-pred_prob
-    ax.set_title(f"Pred: {pred_label}, p={pred_prob:.2f}",fontsize=24,x=0.5,y=1.05)
-    #ax.title.set_text(f"Pred: {pred_label}, p={pred_prob:.2f}")
+
+    ax.imshow(mask, interpolation='nearest',
+                cmap=palette,
+                norm=colors.BoundaryNorm([-1, -0.5, -0.2, 0, 0.2, 0.5, 1],
+                                         ncolors=palette.N),
+                aspect='auto',
+                origin='lower',
+                extent=[x0, x1, y0, y1])
+
+    iou = 1
+    ax.set_title(f"Prediction: {iou:.2f}",fontsize=24,x=0.5,y=1.05)
+
 
 plt.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.9, wspace=0.2, hspace=0.2)
+plt.show()
 
-fig_path = PROJECT_ROOT / "reports/figures/test.png"
+fig_path = PROJECT_ROOT / "reports/figures/1_boundary.png"
 plt.savefig(fig_path)
 
 
-hotdog_certain_idx = np.argmax( probs[:,0] )
+"""hotdog_certain_idx = np.argmax( probs[:,0] )
 nothotdog_certain_idx = np.argmax( probs[:,1] )
 
 confidences = np.max(probs,1)
@@ -90,7 +102,7 @@ idx2plot = K.cast(np.concatenate((hotdog_certain_idx, nothotdog_certain_idx, unc
 test_img_plot = tf.gather(test_img, idx2plot)
 
 probs_plot = probs[idx2plot.numpy().tolist(),:]
-predicted_plot = predicted[idx2plot.numpy().tolist()]
+predicted_plot = predicted[idx2plot.numpy().tolist()]"""
 
 
 
