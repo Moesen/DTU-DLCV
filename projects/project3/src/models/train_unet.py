@@ -129,7 +129,7 @@ if __name__ == '__main__':
 
     unet.unet.summary()
     print("MEMORY USAGE: ",get_model_memory_usage(BATCH_SIZE, unet.unet))
-
+    breakpoint()
     model_history = unet.unet.fit(train_dataset, epochs=num_epochs,validation_data=val_dataset)
     
     #unet.train(epochs=num_epochs,sample_interval_epoch=sample_img_interval )
