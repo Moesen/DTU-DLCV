@@ -88,7 +88,7 @@ for (img, mask, ax) in zip(test_img_plot, mask_img_plot, axs.ravel()):
 
     green_patch = mpatches.Patch(color='green', label='GT')
     red_patch = mpatches.Patch(color='red', label='Pred')
-    plt.legend(handles=[green_patch,red_path])
+    plt.legend(handles=[green_patch,red_patch])
 
     ax.imshow(img)
     #ax.get_xaxis().set_ticks([])
