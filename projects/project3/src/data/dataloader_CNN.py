@@ -25,16 +25,13 @@ class IsicDataSet(object):
 
     def __init__(
         self,
-        image_folder: Path,
+        lesions_folder: Path,
         background_folder: Path,
         image_channels: int,
-        mask_channels: int,
         image_file_extension: str,
-        mask_file_extension: str,
         do_normalize: bool,
         image_size: tuple[int, int],
         validation_percentage: float | None = 0.2,
-        segmentation_type: str | None = None,
         seed: int | None = None,
         flipping: str | None = "none",
         rotation: float | None = 0,
@@ -45,18 +42,15 @@ class IsicDataSet(object):
     ) -> None:
         # Check if defined filetypes are supported
         assert (
-            mask_file_extension in SUPPORTED_FILETYPES
-            and image_file_extension in SUPPORTED_FILETYPES
+            image_file_extension in SUPPORTED_FILETYPES
         )
 
         # Assignment
         self._image_size = image_size
         self._image_channels = image_channels
-        self._mask_channels = mask_channels
         self._seed = seed or random.randint(0, 1000)
         self._do_normalize = do_normalize
-        self._segmentation_type = segmentation_type
-        self._image_folder = image_folder
+        self._lesions_folder = lesions_folder
         self._background_folder = background_folder
         self._flipping = flipping #flipping should be either of ["none", "horizontal", "vertical", "horizontal_and_vertical"]
         self._rotation = rotation #rotation should be in interval [0, 0.5]
@@ -72,61 +66,18 @@ class IsicDataSet(object):
             else tf.image.decode_png
         )
 
-        self._background_folder_decoder = (
-            tf.image.decode_jpeg
-            if mask_file_extension == "jpg"
-            else tf.image.decode_png
-        )
-
         # Paths
-        img_paths = [x for x in image_folder.iterdir() if "isic" in x.name.lower()]
-        train_img_paths, val_img_paths = train_test_split(
-            img_paths, test_size=validation_percentage, random_state=self._seed
+        img_paths = [x.as_posix() for x in lesions_folder.iterdir() if "isic" in x.name.lower()]
+        classes = [1 for x in img_paths]
+        img_paths += [x.as_posix() for x in background_folder.iterdir() if "isic" in x.name.lower()]
+        classes += [0 for x in background_folder.iterdir() if "isic" in x.name.lower()]
+
+        self._train_image_paths, self._test_image_paths, self._train_classes, self._test_classes = train_test_split(
+            img_paths, classes,  test_size=validation_percentage, random_state=self._seed
         )
-
-        self._train_image_paths, self._train_mask_paths = self._match_img_mask(
-            train_img_paths
-        )
-        self._test_image_paths, self._test_mask_paths = self._match_img_mask(
-            val_img_paths
-        )
-
-    def _match_img_mask(self, image_paths: list[Path]) -> tuple[list[str], list[str]]:
-        img_paths_paired = []
-        mask_paths_paired = []
-
-        for image_path, im_fn in [(x, x.name) for x in image_paths]:
-            search = ID_EXPR.search(im_fn)
-            img_id = search and search.group(1)
-            assert img_id is not None
-
-            for mask_path in self._mask_folder.iterdir():
-                # Get filename of path, that is
-                # /.../.../.../(name.png) <--- this part
-                mask_fn = mask_path.name
-
-                # Search for expression, if not a match: continue
-                match = SEG_EXPR.search(mask_fn)
-                if match is None:
-                    continue
-
-                # Extract id and segmentation type.
-                # If not matching ids: continue
-                mask_id, seg_type = match.groups()
-                if mask_id != img_id:
-                    continue
-
-                # If going by segmentation type, and not the right: continue
-                if self._segmentation_type and self._segmentation_type != seg_type:
-                    continue
-
-                img_paths_paired.append(image_path.as_posix())
-                mask_paths_paired.append(mask_path.as_posix())
-
-        return img_paths_paired, mask_paths_paired
 
     def _augmentation_func(
-        self, image: tf.Tensor, mask: tf.Tensor,
+        self, image: tf.Tensor, image_class: tf.Tensor,
     ) -> tuple[tf.Tensor, tf.Tensor]:
         # TODO: Implement augmentations
         # Link to someone who already did some augments
@@ -144,13 +95,7 @@ class IsicDataSet(object):
             rotation_augmentation_img.add(tf.keras.layers.RandomFlip(mode=self._flipping, seed=seed))
         rotation_augmentation_img.add(tf.keras.layers.RandomRotation(self._rotation, fill_mode="constant", seed=seed)) #rotation should be in interval [0, 0.5]
 
-        rotation_augmentation_mask = tf.keras.Sequential()
-        if self._flipping in ["horizontal","vertical","horizontal_and_vertical"]:
-            rotation_augmentation_mask.add(tf.keras.layers.RandomFlip(mode=self._flipping, seed=seed))
-        rotation_augmentation_mask.add(tf.keras.layers.RandomRotation(self._rotation, fill_mode="constant", seed=seed)) #rotation should be in interval [0, 0.5]
-
         image = rotation_augmentation_img(image)
-        mask = rotation_augmentation_mask(mask)
 
         color_augmentation = tf.keras.Sequential()
         color_augmentation.add(tf.keras.layers.RandomBrightness(self._brightness, value_range=value_range)) #brightness should be in interval [0, 1]
@@ -161,29 +106,27 @@ class IsicDataSet(object):
             image = tf.image.random_saturation(image, 0, self._saturation) #saturation should be in interval [0, ?]
         image = tf.image.random_hue(image, self._hue) #hue should be in interval [0, 0.5]
 
-        return image, mask
+        return image, image_class
 
     def _normalize(
-        self, image: tf.Tensor, mask: tf.Tensor
-    ) -> tuple[tf.Tensor, tf.Tensor]:
+        self, image: tf.Tensor
+    ) -> tuple[tf.Tensor]:
         image = tf.cast(image, tf.float32) / 255.0
-        mask = tf.cast(mask, tf.float32) / 255.0
-        return image, mask
+        return image
 
     def _parse_data(
-        self, image_path: str, mask_path: str
+        self, image_path: str, image_class: int
     ) -> tuple[tf.Tensor, tf.Tensor]:
         """Loads, normalizes and returns the images"""
         image_content = tf.io.read_file(image_path)
-        mask_content = tf.io.read_file(mask_path)
 
         image = self._image_decoder(image_content, channels=self._image_channels)
-        mask = self._mask_decoder(mask_content, channels=self._mask_channels)
+        image_class = tf.convert_to_tensor(image_class)
 
         if self._do_normalize:
-            image, mask = self._normalize(image, mask)
+            image = self._normalize(image)
 
-        return image, mask
+        return image, image_class
 
     def _resize_data(
         self, image: tf.Tensor, mask: tf.Tensor
@@ -194,7 +137,7 @@ class IsicDataSet(object):
         return image, mask
 
     def _map_function(
-        self, image_path: str, mask_path: str,
+        self, image_path: str, image_class: int,
     ) -> tuple[tf.Tensor, tf.Tensor]:
         """Maps the data"""
 
@@ -203,9 +146,9 @@ class IsicDataSet(object):
         # implements data augmentation so maybe follow that
         # https://github.com/HasnainRaz/SemSegPipeline/blob/master/dataloader.py
 
-        image, mask = self._parse_data(image_path, mask_path)
+        image, image_class = self._parse_data(image_path, image_class)
         return tf.py_function(
-            self._augmentation_func, [image, mask], [tf.float32, tf.float32]
+            self._augmentation_func, [image, image_class], [tf.float32, tf.int32]
         )
 
     def get_dataset(
@@ -221,11 +164,11 @@ class IsicDataSet(object):
         """
 
         train_dataset = tf.data.Dataset.from_tensor_slices(
-            (self._train_image_paths, self._train_mask_paths)
+            (self._train_image_paths, self._train_classes)
         ).map(self._map_function, num_parallel_calls=AUTOTUNE)
 
         test_dataset = tf.data.Dataset.from_tensor_slices(
-            (self._test_image_paths, self._test_mask_paths)
+            (self._test_image_paths, self._test_classes)
         ).map(self._parse_data, num_parallel_calls=AUTOTUNE)
 
         # fmt: off
@@ -247,28 +190,35 @@ class IsicDataSet(object):
 if __name__ == "__main__":
     # Example of using dataloader and extracting datasets train and test
     proot = get_project3_root()
-    data_root = proot / "data/train_allstyles"
-    image_path = data_root / "Images"
-    mask_path = data_root / "Segmentations"
+    lesions_path = proot / "data/train_allstyles/Images"
+    background_path = proot / "data/background"
     dataset_loader = IsicDataSet(
-        image_folder=image_path,
-        mask_folder=mask_path,
+        lesions_folder=lesions_path,
+        background_folder=background_path,
         image_size=(256, 256),
         image_channels=3,
-        mask_channels=1,
         image_file_extension="jpg",
-        mask_file_extension="png",
-        do_normalize=True,
-        segmentation_type="0",
-        flipping="horizontal_and_vertical",
-        rotation=0.5,
-        hue=0.5,
+        do_normalize=True
     )
 
     train_dataset, test_dataset = dataset_loader.get_dataset(batch_size=1, shuffle=True)
-    image, mask = next(iter(test_dataset))
-    _, [a, b] = plt.subplots(1, 2)
-    a.imshow(image[0])
-    b.imshow(mask[0])
-    b.set_title(f"max val: {tf.reduce_max(mask)}, min val: {tf.reduce_min(mask)}")
+    train_iter = iter(train_dataset)
+    test_iter = iter(test_dataset)
+
+    fig, axs = plt.subplots(2, 2)
+    fig.suptitle('Training Set')
+    for i in range(4):
+        j = 1 if i >= 2 else 0
+        image, image_class = next(train_iter)
+        axs[i % 2, j].imshow(tf.squeeze(image))
+        axs[i % 2, j].set_title(f"Class: {image_class.numpy()}")
+    plt.show()
+
+    fig, axs = plt.subplots(2, 2)
+    fig.suptitle('Test Set')
+    for i in range(4):
+        j = 1 if i >= 2 else 0
+        image, image_class = next(test_iter)
+        axs[i % 2, j].imshow(tf.squeeze(image))
+        axs[i % 2, j].set_title(f"Class: {image_class.numpy()}")
     plt.show()
