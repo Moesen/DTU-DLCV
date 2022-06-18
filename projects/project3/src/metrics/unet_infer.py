@@ -4,6 +4,7 @@ import keras
 
 from glob import glob
 import os 
+os.environ['DISPLAY'] = ':0'
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -66,7 +67,7 @@ idx = tf.constant([0,4,8,12])
 test_img_plot = tf.gather(test_img, idx)
 mask_img_plot = tf.gather(mask, idx)
 
-
+print("Plotting...")
 fig, axs = plt.subplots(1,4, figsize=(15,8))
 
 for (img, mask, ax) in zip(test_img_plot.numpy(), mask_img_plot.numpy(), axs.ravel()):
