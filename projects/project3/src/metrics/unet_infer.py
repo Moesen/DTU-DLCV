@@ -97,7 +97,7 @@ for (img, mask, ax) in zip(test_img_plot, mask_img_plot, axs.ravel()):
     compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
     img_iou = compute_IoU(pred_mask, mask)
 
-    ax.set_title(f"Prediction: {img_iou:.2f}",fontsize=24,x=0.5,y=1.05)
+    ax.set_title(f"Prediction: {img_iou:.2f}",fontsize=20,x=0.5,y=1.05)
     ax.grid(False)
     ax.axis('off')
 
@@ -112,7 +112,7 @@ total_iou = []
 ## DO THIS PER IMAGE INSTEAD
 for (x_batch_val, true_mask) in val_dataset:
     for (val_img, val_GT_mask) in zip(x_batch_val, true_mask):
-        val_logits = unet(val_img, training=False)
+        val_logits = unet(tf.expand_dims(val_img, 0), training=False)
         val_probs = tf.keras.activations.sigmoid(val_logits)
         pred_mask = tf.math.round(val_probs)
 
