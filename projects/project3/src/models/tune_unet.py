@@ -215,6 +215,8 @@ def objective(trial: optuna.trial.Trial) -> float:
 
     compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
     best_iou = compute_IoU(pred_mask, true_mask)
+
+    
     print("Best model IoU: ", best_iou)
 
     run.log({"best model IoU": best_iou})  # type: ignore
