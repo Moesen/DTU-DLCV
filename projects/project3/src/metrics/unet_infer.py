@@ -85,6 +85,8 @@ for (img, mask, ax) in zip(test_img_plot, mask_img_plot, axs.ravel()):
     out, b_idx = get_boundary(pred_mask.numpy().squeeze(), is_GT=False)
     img[b_idx>1,:] = out[b_idx>1,:]
 
+    ax.legend(["GT","Pred"])
+
     ax.imshow(img)
     #ax.get_xaxis().set_ticks([])
     #ax.get_yaxis().set_ticks([])
