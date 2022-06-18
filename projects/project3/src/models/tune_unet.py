@@ -206,12 +206,12 @@ def objective(trial: optuna.trial.Trial) -> float:
 
     # Compute IoU for the best model
     # pred_logits = unet.unet.predict(val_dataset)
-    (x_batch_val, y_batch_val) = next(iter(val_dataset))
+    (x_batch_val, true_mask) = next(iter(val_dataset))
     val_logits = unet.unet(x_batch_val, training=False)
     val_probs = tf.keras.activations.sigmoid(val_logits)
     pred_logits = tf.math.round(val_probs)
     pred_mask = tf.keras.activations.sigmoid(pred_logits)
-    _, true_mask = next(iter(val_dataset))
+    #_, true_mask = next(iter(val_dataset))
 
     compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
     best_iou = compute_IoU(pred_mask, true_mask)
