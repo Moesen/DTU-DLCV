@@ -4,6 +4,7 @@ import keras
 
 from glob import glob
 import os 
+os.environ['DISPLAY'] = ':0'
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -26,7 +27,9 @@ PROJECT_ROOT = get_project3_root()
 model_name = "unet_20220618123600"
 model_path = PROJECT_ROOT / "models" / model_name
 
-unet = tf.keras.models.load_model(model_path)
+loss_fn = focal_loss()
+
+unet = tf.keras.models.load_model(model_path, custom_objects={"loss": loss_fn })
 unet.summary()
 
 
@@ -64,7 +67,7 @@ idx = tf.constant([0,4,8,12])
 test_img_plot = tf.gather(test_img, idx)
 mask_img_plot = tf.gather(mask, idx)
 
-
+print("Plotting...")
 fig, axs = plt.subplots(1,4, figsize=(15,8))
 
 for (img, mask, ax) in zip(test_img_plot.numpy(), mask_img_plot.numpy(), axs.ravel()):
@@ -76,29 +79,39 @@ for (img, mask, ax) in zip(test_img_plot.numpy(), mask_img_plot.numpy(), axs.rav
     edge_coord = np.where(e==255)
     plt.plot(edge_coord[0], edge_coord[1], color="red", linewidth=3)"""
 
-    contours, hier = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255)]
+    contours, hier = cv2.findContours(mask.astype(np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    colors = [(255, 0, 0)]
 
-    out = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
+    out = cv2.cvtColor(mask.astype(np.uint8), cv2.COLOR_GRAY2BGR)
+
     k = -1
     for i, cnt in enumerate(contours):
         if (hier[0, i, 3] == -1):
             k += 1
-        cv2.drawContours(out, [cnt], -1, colors[k], 2)
+        cv2.drawContours(out, [cnt], -1, colors[0], 2)
 
-    cv2.imshow('out', out)
 
-    #ax.imshow(img)
+    #cv2.imshow('out', out)
+    img[out>0 and out<255] = out[out>0 and out<255]
+
+    ax.imshow(img)
     #ax.get_xaxis().set_ticks([])
     #ax.get_yaxis().set_ticks([])
+
+    #out2 = Image.fromarray(out).convert("L")
+
+    #e = np.asarray(out2)
+    #e[e>0] = 255
+    #edge_coord = np.squeeze(np.where(e == 255))
+
+    #plt.scatter(edge_coord[0,:], edge_coord[1,:], color="red")
 
     iou = 1
     ax.set_title(f"Prediction: {iou:.2f}",fontsize=24,x=0.5,y=1.05)
     ax.grid(False)
-    #ax.axis('off')
+    ax.axis('off')
 
 #plt.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.9, wspace=0.2, hspace=0.2)
-plt.show()
 
 fig_path = PROJECT_ROOT / "reports/figures/1_boundary.png"
 plt.savefig(fig_path)
