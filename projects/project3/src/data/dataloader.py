@@ -198,7 +198,7 @@ class IsicDataSet(object):
                              .batch(batch_size)
                              .prefetch(AUTOTUNE))
         # fmt: on
-        test_dataset = train_dataset.batch(batch_size).prefetch(AUTOTUNE)
+        test_dataset = test_dataset.batch(batch_size).prefetch(AUTOTUNE)
 
         return train_dataset, test_dataset
 
@@ -222,7 +222,7 @@ if __name__ == "__main__":
     )
 
     train_dataset, test_dataset = dataset_loader.get_dataset(batch_size=1, shuffle=True)
-    image, mask = next(iter(train_dataset))
+    image, mask = next(iter(test_dataset))
     _, [a, b] = plt.subplots(1, 2)
     a.imshow(image[0])
     b.imshow(mask[0])
