@@ -70,12 +70,21 @@ fig, axs = plt.subplots(1,4, figsize=(15,8))
 
 for (img, mask, ax) in zip(test_img_plot, mask_img_plot, axs.ravel()):
     
+    pred_logits = unet.predict(tf.expand_dims(img, 0))
+    pred_probs = tf.keras.activations.sigmoid(pred_logits)
+    pred_mask = tf.math.round(pred_probs)
+
     img = img.numpy()
     mask = mask.numpy()
 
-    out, b_idx = get_boundary(mask)
+    #change color for boundary of GT mask 
+    out, b_idx = get_boundary(mask, is_GT=True)
     img[b_idx>1,:] = out[b_idx>1,:]
     
+    #change color for bounadry of prediction
+    out, b_idx = get_boundary(pred_mask.numpy().squeeze(), is_GT=False)
+    img[b_idx>1,:] = out[b_idx>1,:]
+
     ax.imshow(img)
     #ax.get_xaxis().set_ticks([])
     #ax.get_yaxis().set_ticks([])
