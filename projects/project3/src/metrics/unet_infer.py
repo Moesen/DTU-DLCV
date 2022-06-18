@@ -23,11 +23,11 @@ from projects.project3.src.metrics.eval_metrics import *
 
 
 PROJECT_ROOT = get_project3_root()
-model_name = ""
+model_name = "unet_20220618123600"
 model_path = PROJECT_ROOT / "models" / model_name
 
-#unet = tf.keras.models.load_model(model_path)
-#unet.summary()
+unet = tf.keras.models.load_model(model_path)
+unet.summary()
 
 
 BATCH_SIZE = 16
