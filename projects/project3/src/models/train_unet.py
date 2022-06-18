@@ -135,16 +135,21 @@ if __name__ == '__main__':
     #unet.train(epochs=num_epochs,sample_interval_epoch=sample_img_interval )
 
     # Compute IoU for the final model
-    #pred_logits = unet.unet.predict(val_dataset)
-    (x_batch_val, true_mask) = next(iter(val_dataset))
-    pred_logits = unet.unet.predict(x_batch_val)
-    pred_mask = tf.keras.activations.sigmoid(pred_logits)
+    #compute metrics for model
+    total_iou = []
 
-    compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
-    best_iou = compute_IoU(pred_mask,true_mask)
-    print("Best model IoU: ",best_iou)
+    for (x_batch_val, true_mask) in val_dataset:
+        val_logits = unet(x_batch_val, training=False)
+        val_probs = tf.keras.activations.sigmoid(val_logits)
+        pred_mask = tf.math.round(val_probs)
 
+        compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
+        batch_iou = compute_IoU(pred_mask, true_mask)
+        total_iou.append( batch_iou )
 
+    print("IoU for entire validation set: ",np.array(total_iou).mean())
+
+    
     # Saving model
     model_name = 'unet_'+datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 
