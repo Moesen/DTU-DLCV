@@ -39,7 +39,7 @@ BATCH_SIZE = 16
 IMG_SIZE = (256,256) #(256,256,3)
 
 proot = get_project3_root()
-data_root = proot / "data/isic/train_allstyles" #test_style0"
+data_root = proot / "data/isic/test_style0" #train_allstyles" #test_style0"
 image_path = data_root / "Images"
 mask_path = data_root / "Segmentations"
 
