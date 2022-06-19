@@ -36,7 +36,7 @@ unet.summary()
 
 
 BATCH_SIZE = 16
-IMG_SIZE = (256,256) #(256,256,3)
+IMG_SIZE = (256,256)
 
 proot = get_project3_root()
 data_root = proot / "data/isic/test_style0" #train_allstyles" #test_style0"
@@ -54,13 +54,14 @@ dataset_loader = IsicDataSet(
     mask_file_extension="png",
     do_normalize=True,
     seed=69,
-    #validation_percentage=.2
+    validation_percentage=.1
 )
 
-val_dataset = dataset_loader.get_dataset(batch_size=BATCH_SIZE, shuffle=False)
+test_dataset, _ = dataset_loader.get_dataset(batch_size=BATCH_SIZE, shuffle=False)
 
 breakpoint()
-test_img, mask = list(iter(val_dataset))[1]
+
+test_img, mask = list(iter(test_dataset))[0]
 
 #use these images 
 idx = tf.constant([0,4,8,12])
@@ -126,7 +127,7 @@ plt.savefig(fig_path)
 total_iou = []
 
 ## DO THIS PER IMAGE INSTEAD
-for (x_batch_val, true_mask) in val_dataset:
+for (x_batch_val, true_mask) in test_dataset:
     for (val_img, val_GT_mask) in zip(x_batch_val, true_mask):
         val_logits = unet(tf.expand_dims(val_img, 0), training=False)
         val_probs = tf.keras.activations.sigmoid(val_logits)
