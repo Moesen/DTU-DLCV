@@ -88,6 +88,8 @@ mask_img_plot = tf.gather(mask, idx)
 print("Plotting...")
 fig, axs = plt.subplots(len(unet_models),4, figsize=(15,6*len(unet_models)))
 
+breakpoint()
+
 for m, model in enumerate(unet_models):
     for n,(img, mask, ax) in enumerate(zip(test_img_plot, mask_img_plot, axs.ravel())):
 
