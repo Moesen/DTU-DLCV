@@ -35,21 +35,21 @@ unet = tf.keras.models.load_model(model_path, custom_objects={"loss": loss_fn })
 unet.summary()
 
 ### the models trained on other segmentation types 
+model_name = "unet0_20220619215224"
+model_path = PROJECT_ROOT / "models" / model_name
+unet0 = tf.keras.models.load_model(model_path, custom_objects={"loss": loss_fn })
 
 model_name = "unet1_20220619205508"
 model_path = PROJECT_ROOT / "models" / model_name
 unet1 = tf.keras.models.load_model(model_path, custom_objects={"loss": loss_fn })
 
-"""model_name = "unet2_"
+model_name = "unet2_20220619212343"
 model_path = PROJECT_ROOT / "models" / model_name
 unet2 = tf.keras.models.load_model(model_path, custom_objects={"loss": loss_fn })
 
-model_name = "unet0_"
-model_path = PROJECT_ROOT / "models" / model_name
-unet0 = tf.keras.models.load_model(model_path, custom_objects={"loss": loss_fn })"""
 
-unet_models = [unet, unet1]
-unet_seg_type = ["All", "Type 1"]
+unet_models = [unet, unet0, unet1, unet2]
+unet_seg_type = ["All", "Type 0", "Type 1", "Type 2"]
 ###
 
 
