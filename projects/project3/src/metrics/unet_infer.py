@@ -53,7 +53,7 @@ dataset_loader = IsicDataSet(
     image_file_extension="jpg",
     mask_file_extension="png",
     do_normalize=True,
-    validation_percentage=.2
+    #validation_percentage=.2
 )
 
 
@@ -108,7 +108,7 @@ for (img, mask, ax) in zip(test_img_plot, mask_img_plot, axs.ravel()):
 plt.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.9, wspace=0.2, hspace=0.2)
 
 fig_path = PROJECT_ROOT / "reports/figures/1_boundary.png"
-plt.savefig(fig_path)
+plt.savefig(fig_path,bbox_inches='tight')
 
 
 fig, axs = plt.subplots(1,4, figsize=(15,8))
