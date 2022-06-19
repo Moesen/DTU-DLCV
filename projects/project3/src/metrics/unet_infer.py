@@ -122,7 +122,7 @@ for m, model in enumerate(unet_models):
 
         ax.imshow(img_np)
 
-        if m==0:
+        if n==0:
             ax.set_ylabel(unet_seg_type[m], rotation='horizontal', fontsize=16, ha='right')
 
         #make manual legend
@@ -144,7 +144,9 @@ for m, model in enumerate(unet_models):
 
         ax.set_title(f"IoU: {img_iou:.2f}, Area diff: {p_diff:.2f}",fontsize=16,x=0.5,y=1.05)
         ax.grid(False)
-        ax.axis('off')
+        ax.get_xaxis().set_ticks([])
+        ax.get_yaxis().set_ticks([])
+        #ax.axis('off')
 
 plt.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.9, wspace=0.2, hspace=0.2)
 
