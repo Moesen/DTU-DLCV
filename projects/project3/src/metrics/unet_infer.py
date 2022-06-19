@@ -105,7 +105,7 @@ for (img, mask, ax) in zip(test_img_plot, mask_img_plot, axs.ravel()):
     ax.grid(False)
     ax.axis('off')
 
-#plt.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.9, wspace=0.2, hspace=0.2)
+plt.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.9, wspace=0.2, hspace=0.2)
 
 fig_path = PROJECT_ROOT / "reports/figures/1_boundary.png"
 plt.savefig(fig_path)
