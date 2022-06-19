@@ -59,6 +59,7 @@ dataset_loader = IsicDataSet(
 
 test_dataset, _ = dataset_loader.get_dataset(batch_size=BATCH_SIZE, shuffle=False)
 
+breakpoint()
 
 test_img, mask = list(iter(test_dataset))[0]
 
