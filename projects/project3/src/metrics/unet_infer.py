@@ -60,7 +60,7 @@ dataset_loader = IsicDataSet(
 test_dataset, _ = dataset_loader.get_dataset(batch_size=BATCH_SIZE, shuffle=False)
 
 print("Loading first batch...")
-test_img, mask = list(iter(test_dataset))[0]
+test_img, mask = list(iter(test_dataset))[1]
 
 #use these images 
 idx = tf.constant([0,4,8,12])
@@ -95,7 +95,7 @@ for n,(img, mask, ax) in enumerate(zip(test_img_plot, mask_img_plot, axs.ravel()
     red_patch = mpatches.Patch(color=rc, label='Pred')
 
     if n==2:
-        ax.legend(handles=[green_patch,red_patch], bbox_to_anchor=(0.7, -0.05), ncol=2)
+        ax.legend(handles=[green_patch,red_patch], bbox_to_anchor=(-0.2, -0.05), ncol=2)
 
     ax.imshow(img_np)
     #ax.get_xaxis().set_ticks([])
