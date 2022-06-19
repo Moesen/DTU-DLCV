@@ -53,11 +53,11 @@ dataset_loader = IsicDataSet(
     image_file_extension="jpg",
     mask_file_extension="png",
     do_normalize=True,
+    seed=69,
     #validation_percentage=.2
 )
 
-
-train_dataset, val_dataset = dataset_loader.get_dataset(batch_size=BATCH_SIZE, shuffle=False)
+val_dataset = dataset_loader.get_dataset(batch_size=BATCH_SIZE, shuffle=False)
 
 test_img, mask = list(iter(val_dataset))[1]
 
@@ -70,7 +70,7 @@ print("Plotting...")
 fig, axs = plt.subplots(1,4, figsize=(15,8))
 
 
-for (img, mask, ax) in zip(test_img_plot, mask_img_plot, axs.ravel()):
+for n,(img, mask, ax) in enumerate(zip(test_img_plot, mask_img_plot, axs.ravel())):
     
     pred_logits = unet.predict(tf.expand_dims(img, 0))
     pred_probs = tf.keras.activations.sigmoid(pred_logits)
@@ -92,7 +92,9 @@ for (img, mask, ax) in zip(test_img_plot, mask_img_plot, axs.ravel()):
 
     green_patch = mpatches.Patch(color=gc, label='GT')
     red_patch = mpatches.Patch(color=rc, label='Pred')
-    ax.legend(handles=[green_patch,red_patch], bbox_to_anchor=(0.5, -0.1), ncol=2)
+
+    if n==2:
+        ax.legend(handles=[green_patch,red_patch], bbox_to_anchor=(0.7, -0.05), ncol=2)
 
     ax.imshow(img)
     #ax.get_xaxis().set_ticks([])
