@@ -121,6 +121,7 @@ def create_CNN(IMG_SIZE):
 
     model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4),
                 loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
+
                 metrics=['accuracy'])
 
     model.summary()
@@ -143,16 +144,17 @@ if __name__ == '__main__':
     data_root = proot / "data/isic"
     lesions_path = data_root / "train_allstyles/Images"
     background_path = data_root / "background"
+
     dataset_loader = IsicDataSet(
         lesions_folder=lesions_path,
         background_folder=background_path,
         image_size=(256, 256),
         image_channels=3,
-        mask_channels=1,
+        # mask_channels=1,
         image_file_extension="jpg",
-        mask_file_extension="png",
+        # mask_file_extension="png",
         do_normalize=True,
-        segmentation_type="0",
+        # segmentation_type="0",
     )
 
     # train_dataset, test_dataset = dataset_loader.get_dataset(batch_size=1, shuffle=True)
@@ -172,10 +174,10 @@ if __name__ == '__main__':
     ##### TRAIN MODEL ##### 
     save_model = True
 
-    num_epochs = 100
+    num_epochs = 2
     sample_img_interval = 20
 
-    history = cnn_model.fit(train_dataset, epochs=100, validation_data=val_dataset)
+    history = cnn_model.fit(train_dataset, epochs=num_epochs, validation_data=val_dataset)
     #loss0, accuracy0 = cnn_model.evaluate(test_data)
     
     
