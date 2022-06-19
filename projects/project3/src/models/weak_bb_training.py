@@ -88,6 +88,7 @@ if __name__ == '__main__':
     BATCH_SIZE = 16
     IMG_SIZE = (256,256) #(256,256,3)
     GF = 32
+    seed = 10
 
     proot = get_project3_root()
     data_root = proot / "data/isic/train_allstyles"
@@ -97,7 +98,7 @@ if __name__ == '__main__':
 
     ### Setup first model
     save_model = True
-    num_epochs = 100
+    num_epochs = 1
     sample_img_interval = 20
     num_weak_runs = 10
 
@@ -120,8 +121,9 @@ if __name__ == '__main__':
             do_normalize=True,
             validation_percentage=.2,
             segmentation_type="1",
-            output_image_path=True,
+            output_image_path=False,
             validation_segmentation_type="2",
+            seed=seed,
         )
         train_dataset_weak, val_dataset_strong = dataset_loader.get_dataset(batch_size=BATCH_SIZE, shuffle=True)
 
@@ -153,13 +155,15 @@ if __name__ == '__main__':
         unet.unet.summary()
         print("MEMORY USAGE: ",get_model_memory_usage(BATCH_SIZE, unet.unet))
 
+        dataset_loader._output_image_path = True
+
         model_history = unet.unet.fit(train_dataset_weak, epochs=num_epochs,validation_data=val_dataset_strong)
         
         #unet.train(epochs=num_epochs,sample_interval_epoch=sample_img_interval )
 
         # Compute IoU for the final model
         total_iou = []
-        for (x_batch_val, true_mask) in val_dataset_strong:
+        for (x_batch_val, true_mask, img_path) in val_dataset_strong:
             val_logits = unet(x_batch_val, training=False)
             val_probs = tf.keras.activations.sigmoid(val_logits)
             pred_mask = tf.math.round(val_probs)
