@@ -190,8 +190,8 @@ class IsicDataSet(object):
 if __name__ == "__main__":
     # Example of using dataloader and extracting datasets train and test
     proot = get_project3_root()
-    lesions_path = proot / "data/train_allstyles/Images"
-    background_path = proot / "data/background"
+    lesions_path = proot / "data/isic/train_allstyles/Images"
+    background_path = proot / "data/isic/background"
     dataset_loader = IsicDataSet(
         lesions_folder=lesions_path,
         background_folder=background_path,
