@@ -103,7 +103,8 @@ if __name__ == '__main__':
         image_file_extension="jpg",
         mask_file_extension="png",
         do_normalize=True,
-        validation_percentage=.2
+        validation_percentage=.2,
+        seed=69,
     )
 
 
@@ -149,7 +150,7 @@ if __name__ == '__main__':
 
     print("IoU for entire validation set: ",np.array(total_iou).mean())
 
-    
+
     # Saving model
     model_name = 'unet_'+datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 

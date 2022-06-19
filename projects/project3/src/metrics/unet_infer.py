@@ -78,16 +78,16 @@ for n,(img, mask, ax) in enumerate(zip(test_img_plot, mask_img_plot, axs.ravel()
     pred_probs = tf.keras.activations.sigmoid(pred_logits)
     pred_mask = tf.math.round(pred_probs)
 
-    img = img.numpy()
-    mask = mask.numpy()
+    img_np = img.numpy()
+    mask_np = mask.numpy()
 
     #change color for boundary of GT mask 
-    out, b_idx = get_boundary(mask, is_GT=True)
-    img[b_idx>1,:] = out[b_idx>1,:]
+    out, b_idx = get_boundary(mask_np, is_GT=True)
+    img_np[b_idx>1,:] = out[b_idx>1,:]
     
     #change color for bounadry of prediction
     out, b_idx = get_boundary(pred_mask.numpy().squeeze(), is_GT=False)
-    img[b_idx>1,:] = out[b_idx>1,:]
+    img_np[b_idx>1,:] = out[b_idx>1,:]
 
     gc = mpl.colors.to_rgba((0,1,0))
     rc = mpl.colors.to_rgba((1,0,0))
@@ -98,12 +98,17 @@ for n,(img, mask, ax) in enumerate(zip(test_img_plot, mask_img_plot, axs.ravel()
     if n==2:
         ax.legend(handles=[green_patch,red_patch], bbox_to_anchor=(0.7, -0.05), ncol=2)
 
-    ax.imshow(img)
+    ax.imshow(img_np)
     #ax.get_xaxis().set_ticks([])
     #ax.get_yaxis().set_ticks([])
 
     compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
     img_iou = compute_IoU(pred_mask, mask)
+
+    n_seg_pixels_mask = tf.math.reduce_sum(mask).numpy()
+    n_seg_pixels_pred = tf.math.reduce_sum(pred_mask).numpy()
+
+    p_diff = (n_seg_pixels_pred - n_seg_pixels_mask) / n_seg_pixels_mask
 
     ax.set_title(f"IoU: {img_iou:.2f}",fontsize=16,x=0.5,y=1.05)
     ax.grid(False)

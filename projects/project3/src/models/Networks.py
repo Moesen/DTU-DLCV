@@ -90,7 +90,7 @@ class Pix2Pix_Unet():
         enc_blocks = []
         #ENCODER
         for i in range(self.depth):
-            block, d1 = conv2d(d1, self.gf*2**(i+1), dropout=.1)
+            block, d1 = conv2d(d1, self.gf*2**(i), dropout=.1)
             enc_blocks.append( block )
 
         #bottleneck
