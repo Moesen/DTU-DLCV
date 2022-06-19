@@ -124,6 +124,7 @@ def objective(trial: optuna.trial.Trial) -> float:
         mask_file_extension="png",
         do_normalize=True,
         validation_percentage=0.2,
+        seed=69,
     )
 
     train_dataset, val_dataset = dataset_loader.get_dataset(
@@ -204,19 +205,23 @@ def objective(trial: optuna.trial.Trial) -> float:
         callbacks=[early_stopping, image_callback],
     )  # wandb_callback])
 
+
     # Compute IoU for the best model
-    # pred_logits = unet.unet.predict(val_dataset)
-    (x_batch_val, true_mask) = next(iter(val_dataset))
-    val_logits = unet.unet(x_batch_val, training=False)
-    val_probs = tf.keras.activations.sigmoid(val_logits)
-    pred_logits = tf.math.round(val_probs)
-    pred_mask = tf.keras.activations.sigmoid(pred_logits)
-    #_, true_mask = next(iter(val_dataset))
+    total_iou = []
+    print("Computing final metrics...")
+    for (x_batch_val, true_mask) in val_dataset:
+        for (val_img, val_GT_mask) in zip(x_batch_val, true_mask):
+            val_logits = unet.unet(tf.expand_dims(val_img, 0), training=False)
+            val_probs = tf.keras.activations.sigmoid(val_logits)
+            pred_mask = tf.math.round(val_probs)
 
-    compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
-    best_iou = compute_IoU(pred_mask, true_mask)
+            compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
+            batch_iou = compute_IoU(pred_mask, val_GT_mask)
 
-    
+            total_iou.append( batch_iou )
+
+    best_iou = np.array(total_iou).mean()
+
     print("Best model IoU: ", best_iou)
 
     run.log({"best model IoU": best_iou})  # type: ignore

@@ -106,7 +106,7 @@ if __name__ == '__main__':
     print("Computing final metrics...")
     for (x_batch_val, true_mask) in val_dataset:
         for (val_img, val_GT_mask) in zip(x_batch_val, true_mask):
-            val_logits = unet(tf.expand_dims(val_img, 0), training=False)
+            val_logits = unet.unet(tf.expand_dims(val_img, 0), training=False)
             val_probs = tf.keras.activations.sigmoid(val_logits)
             pred_mask = tf.math.round(val_probs)
 
