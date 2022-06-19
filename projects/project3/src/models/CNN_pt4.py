@@ -122,7 +122,8 @@ def create_CNN(IMG_SIZE):
     model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4),
                 loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
 
-                metrics=['accuracy'])
+                # metrics=['accuracy']
+                )
 
     model.summary()
 

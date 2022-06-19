@@ -121,7 +121,7 @@ class IsicDataSet(object):
         image_content = tf.io.read_file(image_path)
 
         image = self._image_decoder(image_content, channels=self._image_channels)
-        image_class = tf.convert_to_tensor(image_class)
+        image_class = tf.expand_dims(tf.convert_to_tensor(image_class), 0)
 
         if self._do_normalize:
             image = self._normalize(image)
