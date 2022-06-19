@@ -168,7 +168,7 @@ class IsicDataSet(object):
             image = tf.image.random_saturation(image, 0, self._saturation) #saturation should be in interval [0, ?]
         image = tf.image.random_hue(image, self._hue) #hue should be in interval [0, 0.5]
 
-        if image_path != None:
+        if self._output_image_path:
             return image, mask, image_path
         else:
             return image, mask
@@ -224,7 +224,7 @@ class IsicDataSet(object):
         else:
             image, mask = self._parse_data(image_path, mask_path)
             return tf.py_function(
-                self._augmentation_func, [image, mask], [tf.float32, tf.float32, tf.string]
+                self._augmentation_func, [image, mask], [tf.float32, tf.float32]
             )      
 
     def get_dataset(
@@ -277,8 +277,8 @@ if __name__ == "__main__":
         mask_channels=1,
         image_file_extension="jpg",
         mask_file_extension="png",
-        do_normalize=True,
         segmentation_type="0",
+        do_normalize=True,
         output_image_path=False,
         flipping="horizontal_and_vertical",
         rotation=0.5,
