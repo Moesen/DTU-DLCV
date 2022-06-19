@@ -21,7 +21,7 @@ from projects.project3.src.data.dataloader import IsicDataSet
 from projects.project3.src.models.Networks import Pix2Pix_Unet
 from projects.project3.src.metrics.losses import *
 from projects.project3.src.metrics.eval_metrics import *
-
+from projects.project3.src.features.Memory import get_model_memory_usage
 
 
 # built tensorflow with GPU
@@ -46,41 +46,7 @@ if len(tf.config.list_physical_devices("GPU")) > 0:
     config.gpu_options.allow_growth = True
 
 
-def get_model_memory_usage(batch_size, model):
-    import numpy as np
-    try:
-        from keras import backend as K
-    except:
-        from tensorflow.keras import backend as K
 
-    shapes_mem_count = 0
-    internal_model_mem_count = 0
-    for l in model.layers:
-        layer_type = l.__class__.__name__
-        if layer_type == 'Model':
-            internal_model_mem_count += get_model_memory_usage(batch_size, l)
-        single_layer_mem = 1
-        out_shape = l.output_shape
-        if type(out_shape) is list:
-            out_shape = out_shape[0]
-        for s in out_shape:
-            if s is None:
-                continue
-            single_layer_mem *= s
-        shapes_mem_count += single_layer_mem
-
-    trainable_count = np.sum([K.count_params(p) for p in model.trainable_weights])
-    non_trainable_count = np.sum([K.count_params(p) for p in model.non_trainable_weights])
-
-    number_size = 4.0
-    if K.floatx() == 'float16':
-        number_size = 2.0
-    if K.floatx() == 'float64':
-        number_size = 8.0
-
-    total_memory = number_size * (batch_size * shapes_mem_count + trainable_count + non_trainable_count)
-    gbytes = np.round(total_memory / (1024.0 ** 3), 3) + internal_model_mem_count
-    return gbytes
 
 
 if __name__ == '__main__':
@@ -129,24 +95,25 @@ if __name__ == '__main__':
                         )
 
     unet.unet.summary()
-    print("MEMORY USAGE: ",get_model_memory_usage(BATCH_SIZE, unet.unet))
+    print("MEMORY USAGE in GB: ",get_model_memory_usage(BATCH_SIZE, unet.unet))
 
     model_history = unet.unet.fit(train_dataset, epochs=num_epochs,validation_data=val_dataset)
     
     #unet.train(epochs=num_epochs,sample_interval_epoch=sample_img_interval )
 
     # Compute IoU for the final model
-    #compute metrics for model
     total_iou = []
-
+    print("Computing final metrics...")
     for (x_batch_val, true_mask) in val_dataset:
-        val_logits = unet(x_batch_val, training=False)
-        val_probs = tf.keras.activations.sigmoid(val_logits)
-        pred_mask = tf.math.round(val_probs)
+        for (val_img, val_GT_mask) in zip(x_batch_val, true_mask):
+            val_logits = unet(tf.expand_dims(val_img, 0), training=False)
+            val_probs = tf.keras.activations.sigmoid(val_logits)
+            pred_mask = tf.math.round(val_probs)
 
-        compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
-        batch_iou = compute_IoU(pred_mask, true_mask)
-        total_iou.append( batch_iou )
+            compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
+            batch_iou = compute_IoU(pred_mask, val_GT_mask)
+
+            total_iou.append( batch_iou )
 
     print("IoU for entire validation set: ",np.array(total_iou).mean())
 
