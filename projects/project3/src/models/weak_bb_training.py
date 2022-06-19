@@ -88,7 +88,7 @@ if __name__ == '__main__':
     BATCH_SIZE = 16
     IMG_SIZE = (256,256) #(256,256,3)
     GF = 32
-    seed = 10
+    seed = 69
 
     proot = get_project3_root()
     data_root = proot / "data/isic/train_allstyles"
@@ -98,7 +98,7 @@ if __name__ == '__main__':
 
     ### Setup first model
     save_model = True
-    num_epochs = 1
+    num_epochs = 100
     sample_img_interval = 20
     num_weak_runs = 10
 
@@ -108,7 +108,7 @@ if __name__ == '__main__':
         if run_ind == 0:
             new_mask_path = data_root / "Segmentations"
         else:
-            new_mask_path = data_root / "Segmentations" + "_run_" + str(run_ind)
+            new_mask_path = data_root / "Weak_BB" / ("run_" + str(run_ind-1))
 
         dataset_loader = IsicDataSet(
             image_folder=image_path,
@@ -126,20 +126,6 @@ if __name__ == '__main__':
             seed=seed,
         )
         train_dataset_weak, val_dataset_strong = dataset_loader.get_dataset(batch_size=BATCH_SIZE, shuffle=True)
-
-        # dataset_loader = IsicDataSet(
-        #     image_folder=image_path,
-        #     mask_folder=mask_path,
-        #     image_size=IMG_SIZE,
-        #     image_channels=3,
-        #     mask_channels=1,
-        #     image_file_extension="jpg",
-        #     mask_file_extension="png",
-        #     do_normalize=True,
-        #     validation_percentage=.2,
-        #     segmentation_type="0"
-        # )
-        # train_dataset_strong, val_dataset_strong = dataset_loader.get_dataset(batch_size=BATCH_SIZE, shuffle=True)
 
         ## Init U-Net and train
         unet = Pix2Pix_Unet(loss_f=focal_loss(),  #tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
@@ -159,12 +145,13 @@ if __name__ == '__main__':
 
         model_history = unet.unet.fit(train_dataset_weak, epochs=num_epochs,validation_data=val_dataset_strong)
         
+        train_dataset_weak, val_dataset_strong = dataset_loader.get_dataset(batch_size=BATCH_SIZE, shuffle=True)
         #unet.train(epochs=num_epochs,sample_interval_epoch=sample_img_interval )
 
         # Compute IoU for the final model
         total_iou = []
         for (x_batch_val, true_mask, img_path) in val_dataset_strong:
-            val_logits = unet(x_batch_val, training=False)
+            val_logits = unet.unet(x_batch_val, training=False)
             val_probs = tf.keras.activations.sigmoid(val_logits)
             pred_mask = tf.math.round(val_probs)
 
@@ -176,40 +163,34 @@ if __name__ == '__main__':
 
         
         # Saving model
-        model_name = 'weak_unet_'+run_ind+'_'+datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+        model_name = f'weak_unet_{run_ind}_{datetime.datetime.now().strftime("%Y%m%d%H%M%S")}'
 
         if save_model:
             model_path = proot / "models" / model_name
             unet.unet.save(model_path)
         
         ### Save predicted masks in new folder
-        new_mask_path = data_root / "Segmentations" + "_run_" + str(run_ind)
+        new_mask_path = data_root / "Weak_BB" / ("run_" + str(run_ind))
         if not new_mask_path.exists():
             new_mask_path.mkdir()
 
         ### Now we save the predicted label segmentations of training set
         for (x_batch_train, _, img_path) in train_dataset_weak:
-            train_logits = unet(x_batch_train, training=False)
+            train_logits = unet.unet(x_batch_train, training=False)
             train_probs = tf.keras.activations.sigmoid(train_logits)
             train_pred_mask = tf.math.round(train_probs)
 
-            pred_mask = tf.cast(pred_mask, tf.uint8)
-            pred_mask = tf.image.encode_png(pred_mask)
-            pred_mask = pred_mask.numpy()
+            pred_mask = tf.cast(train_pred_mask, tf.uint8)
+            for i, img in enumerate(x_batch_train):
+                pred_mask_i = pred_mask[i]
+                pred_mask_i = tf.image.encode_png(pred_mask_i)
+                pred_mask_i = pred_mask_i.numpy()
 
-            img_path = img_path.numpy()[0].decode("utf-8")
-            img_path = "ISIC" + img_path.split("ISIC")[1]
-            img_path = img_path[:-4]
-            pred_mask_file = new_mask_path / (img_path + "_seg_2_expert_f" + ".png")
-            with open(pred_mask_file, "wb") as f:
-                f.write(train_pred_mask)
-        
-
-
-        # for i in range(len(train_dataset_weak)):
-        #     img_name = train_dataset_weak.image_names[i]
-        #     img_path = train_dataset_weak.image_paths[i]
-        #     mask_path = train_dataset_weak.mask_paths[i]
-        #     pred_mask = train_pred_mask[i]
+                img_path_i = img_path[i].numpy().decode("utf-8")
+                img_path_i = "ISIC" + img_path_i.split("ISIC")[1]
+                img_path_i = img_path_i[:-4]
+                pred_mask_file = new_mask_path / (img_path_i + "_seg_2_expert_f" + ".png")
+                with open(pred_mask_file, "wb") as f:
+                    f.write(pred_mask_i)
     
     
