@@ -71,8 +71,8 @@ dataset_loader = IsicDataSet(
     image_file_extension="jpg",
     mask_file_extension="png",
     do_normalize=True,
+    validation_percentage=.1,
     seed=69,
-    validation_percentage=.1
 )
 
 test_dataset, _ = dataset_loader.get_dataset(batch_size=BATCH_SIZE, shuffle=False)
@@ -82,13 +82,22 @@ test_img, mask = list(iter(test_dataset))[0]
 
 #use these images 
 idx = tf.constant([0,4,8,12])
-test_img_plot = tf.gather(test_img, idx)
-mask_img_plot = tf.gather(mask, idx)
+test_img_plot1 = tf.gather(test_img, idx)
+mask_img_plot1 = tf.gather(mask, idx)
+
+img_list = []
+mask_list = []
+for _ in range(len(unet_models)):
+    img_list.append(test_img_plot1)
+    mask_list.append(mask_img_plot1)
+
+test_img_plot = tf.concat(img_list, axis=0)
+mask_img_plot = tf.concat(mask_list, axis=0)
 
 print("Plotting...")
-fig, axs = plt.subplots(len(unet_models),4, figsize=(15,6*len(unet_models)))
+fig, axs = plt.subplots(len(unet_models), 4, figsize=(15,15) )
 
-breakpoint()
+
 
 for m, model in enumerate(unet_models):
     for n,(img, mask, ax) in enumerate(zip(test_img_plot, mask_img_plot, axs.ravel())):
@@ -97,6 +106,7 @@ for m, model in enumerate(unet_models):
         pred_logits = model.predict(tf.expand_dims(img, 0))
         pred_probs = tf.keras.activations.sigmoid(pred_logits)
         pred_mask = tf.math.round(pred_probs)
+
 
         img_np = img.numpy()
         mask_np = mask.numpy()
@@ -120,7 +130,7 @@ for m, model in enumerate(unet_models):
             rc = mpl.colors.to_rgba((1,0,0))
             green_patch = mpatches.Patch(color=gc, label='GT')
             red_patch = mpatches.Patch(color=rc, label='Pred')
-            ax.legend(handles=[green_patch,red_patch], bbox_to_anchor=(0.7, -0.05), ncol=2)
+            ax.legend(handles=[green_patch,red_patch], bbox_to_anchor=(-0.5, -0.05), ncol=2)
 
         #plot the iou and area difference in title
         compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
@@ -152,26 +162,30 @@ plt.savefig(fig_path)
 
 
 #compute metrics for model
-total_iou = []
-total_p_diff = []
+
 
 print("Computing final metrics...")
-for (x_batch_val, true_mask) in test_dataset:
-    for (val_img, val_GT_mask) in zip(x_batch_val, true_mask):
-        val_logits = unet(tf.expand_dims(val_img, 0), training=False)
-        val_probs = tf.keras.activations.sigmoid(val_logits)
-        pred_mask = tf.math.round(val_probs)
+for m, model in enumerate(unet_models):
+    total_iou = []
+    total_p_diff = []
 
-        compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
-        batch_iou = compute_IoU(pred_mask, val_GT_mask)
+    for (x_batch_val, true_mask) in test_dataset:
+        for (val_img, val_GT_mask) in zip(x_batch_val, true_mask):
+            val_logits = model(tf.expand_dims(val_img, 0), training=False)
+            val_probs = tf.keras.activations.sigmoid(val_logits)
+            pred_mask = tf.math.round(val_probs)
 
-        total_iou.append( batch_iou )
+            compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
+            batch_iou = compute_IoU(pred_mask, val_GT_mask)
 
-        n_seg_pixels_mask = tf.math.reduce_sum(mask).numpy()
-        n_seg_pixels_pred = tf.math.reduce_sum(pred_mask).numpy()
-        p_diff = (n_seg_pixels_pred - n_seg_pixels_mask) / n_seg_pixels_mask
-        total_p_diff.append( p_diff )
+            total_iou.append( batch_iou )
 
-print("IoU for entire test set: ",np.array(total_iou).mean())
-print("Pixel diff entire test set: ",np.array(total_p_diff).mean())
+            n_seg_pixels_mask = tf.math.reduce_sum(mask).numpy()
+            n_seg_pixels_pred = tf.math.reduce_sum(pred_mask).numpy()
+            p_diff = (n_seg_pixels_pred - n_seg_pixels_mask) / n_seg_pixels_mask
+            total_p_diff.append( p_diff )
+
+    print(unet_models[m])
+    print("IoU for entire test set: ",np.array(total_iou).mean())
+    print("Pixel diff entire test set: ",np.array(total_p_diff).mean())
 
