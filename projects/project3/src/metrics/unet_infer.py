@@ -100,6 +100,7 @@ fig, axs = plt.subplots(len(unet_models), 4, figsize=(15,15) )
 
 
 for m, model in enumerate(unet_models):
+    img_np = []
     for n,(img, mask, ax) in enumerate(zip(test_img_plot, mask_img_plot, axs.ravel())):
 
         #make segmentation predictions
@@ -130,7 +131,7 @@ for m, model in enumerate(unet_models):
             rc = mpl.colors.to_rgba((1,0,0))
             green_patch = mpatches.Patch(color=gc, label='GT')
             red_patch = mpatches.Patch(color=rc, label='Pred')
-            ax.legend(handles=[green_patch,red_patch], bbox_to_anchor=(-0.5, -0.05), ncol=2)
+            ax.legend(handles=[green_patch,red_patch], bbox_to_anchor=(-0.1, -0.05), ncol=2)
 
         #plot the iou and area difference in title
         compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
@@ -185,7 +186,7 @@ for m, model in enumerate(unet_models):
             p_diff = (n_seg_pixels_pred - n_seg_pixels_mask) / n_seg_pixels_mask
             total_p_diff.append( p_diff )
 
-    print(unet_models[m])
+    print(unet_seg_type[m])
     print("IoU for entire test set: ",np.array(total_iou).mean())
     print("Pixel diff entire test set: ",np.array(total_p_diff).mean())
 
