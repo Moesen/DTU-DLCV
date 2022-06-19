@@ -35,17 +35,17 @@ unet = tf.keras.models.load_model(model_path, custom_objects={"loss": loss_fn })
 unet.summary()
 
 ### the models trained on other segmentation types 
-model_name = "unet0_20220619215224"
-model_path = PROJECT_ROOT / "models" / model_name
-unet0 = tf.keras.models.load_model(model_path, custom_objects={"loss": loss_fn })
+model_name0 = "unet0_20220619215224"
+model_path0 = PROJECT_ROOT / "models" / model_name0
+unet0 = tf.keras.models.load_model(model_path0, custom_objects={"loss": loss_fn })
 
-model_name = "unet1_20220619205508"
-model_path = PROJECT_ROOT / "models" / model_name
-unet1 = tf.keras.models.load_model(model_path, custom_objects={"loss": loss_fn })
+model_name1 = "unet1_20220619205508"
+model_path1 = PROJECT_ROOT / "models" / model_name1
+unet1 = tf.keras.models.load_model(model_path1, custom_objects={"loss": loss_fn })
 
-model_name = "unet2_20220619212343"
-model_path = PROJECT_ROOT / "models" / model_name
-unet2 = tf.keras.models.load_model(model_path, custom_objects={"loss": loss_fn })
+model_name2 = "unet2_20220619212343"
+model_path2 = PROJECT_ROOT / "models" / model_name2
+unet2 = tf.keras.models.load_model(model_path2, custom_objects={"loss": loss_fn })
 
 
 unet_models = [unet, unet0, unet1, unet2]
@@ -156,16 +156,13 @@ plt.savefig(fig_path,bbox_inches='tight')
 
 #plot a figure of the GT segmentations to check implementation
 fig, axs = plt.subplots(1,4, figsize=(15,8))
-
 for n, (mask, ax) in enumerate(zip(mask_img_plot, axs.ravel())):
     ax.imshow(mask)
-
 fig_path = PROJECT_ROOT / "reports/figures/GT_boundary.png"
 plt.savefig(fig_path)
 
 
 #compute metrics for model
-
 
 print("Computing final metrics...")
 for m, model in enumerate(unet_models):
