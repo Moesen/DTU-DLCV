@@ -7,13 +7,10 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 from pathlib import Path
 
-import joblib
 import optuna
 import tensorflow as tf
 from dotenv import find_dotenv, load_dotenv
-from keras.models import Model
 from tensorflow import keras
-from tqdm import tqdm
 import json
 
 import wandb
@@ -23,14 +20,10 @@ from projects.color_logger import init_logger
 import tensorflow as tf
 from tensorflow.python.client import device_lib
 
-from glob import glob
-import datetime
-
 import matplotlib.pyplot as plt
 import numpy as np
 
 from tqdm import tqdm
-from collections import defaultdict
 
 from projects.utils import get_project3_root
 
@@ -59,12 +52,6 @@ def objective(trial: optuna.trial.Trial) -> float:
         depth=trial.suggest_int("Depth", 2, 5),
         # Kernels
         num_kernels=trial.suggest_int("Convolutinal layers", 1, 3),
-        # kernel_regularizer_strength=trial.suggest_loguniform(
-        #    "kernel regularizer strength", 1e-10, 1e-2
-        # ),
-        # kernel_initializer=trial.suggest_categorical(
-        #    "kernel initializer", ["he_normal", "glorot_uniform"]
-        # ),
         # Learning
         dropout_percentage=trial.suggest_float("dropout_percentage", 0.1, 0.8),
         learning_rate=trial.suggest_loguniform("learning rate", 1e-6, 1e-3),
@@ -95,21 +82,6 @@ def objective(trial: optuna.trial.Trial) -> float:
         f"config:\n{json.dumps(c, indent=4)}",
     )
 
-    """img_size = (c["image_size"], c["image_size"])
-    img_shape = (*img_size, 3)
-
-    train_ds, val_ds = load_dataset(
-        train=True,
-        batch_size=c["batch_size"],
-        image_size=img_size,
-        shuffle=True,
-        validation_split=0.2,
-        augmentation_flip="vertical",
-        augmentation_rotation=c["augmentation_rotation"],
-        augmentation_contrast=c["augmentation_contrast"],
-    )"""
-
-    proot = get_project3_root()
     data_root = Path("/dtu/datasets1/02514/isic/train_allstyles")
     image_path = data_root / "Images"
     mask_path = data_root / "Segmentations"

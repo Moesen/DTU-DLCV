@@ -22,29 +22,28 @@ SEG_EXPR = re.compile(r"(^\w*?_\d*).*?_(\d+)")
 
 class IsicDataSet(object):
     """Tensorflow implementation of isic dataloader"""
-
     def __init__(
         self,
-        image_folder: Path,
-        mask_folder: Path,
-        image_channels: int,
-        mask_channels: int,
-        image_file_extension: str,
-        mask_file_extension: str,
-        do_normalize: bool,
-        image_size: tuple[int, int],
-        validation_percentage: float | None = 0.2,
-        output_image_path: bool | None = False,
-        segmentation_type: str | None = None,
-        validation_segmentation_type: str | None = None,
-        seed: int | None = None,
-        flipping: str | None = "none",
-        rotation: float | None = 0,
-        brightness: float | None = 0,
-        contrast: float | None = 0,
-        saturation: float | None = 0,
-        hue: float | None = 0
-    ) -> None:
+        image_folder                 : Path,
+        mask_folder                  : Path,
+        image_channels               : int,
+        mask_channels                : int,
+        image_file_extension         : str,
+        mask_file_extension          : str,
+        do_normalize                 : bool,
+        image_size                   : tuple[int, int],
+        validation_percentage        : float | None = 0.2,
+        output_image_path            : bool  | None = False,
+        segmentation_type            : str   | None = None,
+        validation_segmentation_type : str   | None = None,
+        seed                         : int   | None = None,
+        flipping                     : str   | None = "none",
+        rotation                     : float | None = 0,
+        brightness                   : float | None = 0,
+        contrast                     : float | None = 0,
+        saturation                   : float | None = 0,
+        hue                          : float | None = 0,
+        ) -> None:
         # Check if defined filetypes are supported
         assert (
             mask_file_extension in SUPPORTED_FILETYPES
@@ -61,12 +60,12 @@ class IsicDataSet(object):
         self._image_folder = image_folder
         self._mask_folder = mask_folder
         self._output_image_path = output_image_path
-        self._flipping = flipping #flipping should be either of ["none", "horizontal", "vertical", "horizontal_and_vertical"]
-        self._rotation = rotation #rotation should be in interval [0, 0.5]
-        self._brightness = brightness #brightness should be in interval [0, 1]
-        self._contrast = contrast #contrast should be in interval [0, 1]
-        self._saturation = saturation #saturation should be in interval [0, ?]
-        self._hue = hue #hue should be in interval [0, 0.5]
+        self._flipping = flipping  # flipping should be either of ["none", "horizontal", "vertical", "horizontal_and_vertical"]
+        self._rotation = rotation  # rotation should be in interval [0, 0.5]
+        self._brightness = brightness  # brightness should be in interval [0, 1]
+        self._contrast = contrast  # contrast should be in interval [0, 1]
+        self._saturation = saturation  # saturation should be in interval [0, ?]
+        self._hue = hue  # hue should be in interval [0, 0.5]
 
         if not validation_segmentation_type and segmentation_type:
             self._validation_segmentation_type = segmentation_type
@@ -98,7 +97,9 @@ class IsicDataSet(object):
             val_img_paths, self._validation_segmentation_type
         )
 
-    def _match_img_mask(self, image_paths: list[Path], segmentation_type: str) -> tuple[list[str], list[str]]:
+    def _match_img_mask(
+        self, image_paths: list[Path], segmentation_type: str | None
+    ) -> tuple[list[str], list[str]]:
         img_paths_paired = []
         mask_paths_paired = []
 
@@ -133,40 +134,56 @@ class IsicDataSet(object):
         return img_paths_paired, mask_paths_paired
 
     def _augmentation_func(
-        self, image: tf.Tensor, mask: tf.Tensor, image_path: tf.Tensor = None
-    ) -> tuple[tf.Tensor, tf.Tensor, tf.Tensor]:
-        # TODO: Implement augmentations
-        # Link to someone who already did some augments
-        # https://github.com/HasnainRaz/SemSegPipeline/blob/master/dataloader.py
-        # His augmentation function is inside the map function, but this is neater
-        
-        seed = np.random.randint(1e8) #To make sure that the mask and the image are rotated in the same way.
+        self, image: tf.Tensor, mask: tf.Tensor, image_path: tf.Tensor
+    ) -> tuple[tf.Tensor, tf.Tensor, tf.Tensor] | tuple[tf.Tensor, tf.Tensor]:
+        # To make sure that the mask and the image are rotated in the same way.
+
         if self._do_normalize:
-            value_range = (0,1)
+            value_range = (0, 1)
         else:
-            value_range = (0,255)
+            value_range = (0, 255)
 
         rotation_augmentation_img = tf.keras.Sequential()
-        if self._flipping in ["horizontal","vertical","horizontal_and_vertical"]:
-            rotation_augmentation_img.add(tf.keras.layers.RandomFlip(mode=self._flipping, seed=seed))
-        rotation_augmentation_img.add(tf.keras.layers.RandomRotation(self._rotation, fill_mode="constant", seed=seed)) #rotation should be in interval [0, 0.5]
+        if self._flipping in ["horizontal", "vertical", "horizontal_and_vertical"]:
+            rotation_augmentation_img.add(
+                tf.keras.layers.RandomFlip(mode=self._flipping, seed=self._seed)
+            )
+        rotation_augmentation_img.add(
+            tf.keras.layers.RandomRotation(
+                self._rotation, fill_mode="constant", seed=self._seed
+            )
+        )  # rotation should be in interval [0, 0.5]
 
         rotation_augmentation_mask = tf.keras.Sequential()
-        if self._flipping in ["horizontal","vertical","horizontal_and_vertical"]:
-            rotation_augmentation_mask.add(tf.keras.layers.RandomFlip(mode=self._flipping, seed=seed))
-        rotation_augmentation_mask.add(tf.keras.layers.RandomRotation(self._rotation, fill_mode="constant", seed=seed)) #rotation should be in interval [0, 0.5]
+        if self._flipping in ["horizontal", "vertical", "horizontal_and_vertical"]:
+            rotation_augmentation_mask.add(
+                tf.keras.layers.RandomFlip(mode=self._flipping, seed=self._seed)
+            )
+        rotation_augmentation_mask.add(
+            tf.keras.layers.RandomRotation(
+                self._rotation, fill_mode="constant", seed=self._seed
+            )
+        )  # rotation should be in interval [0, 0.5]
 
         image = rotation_augmentation_img(image)
         mask = rotation_augmentation_mask(mask)
 
         color_augmentation = tf.keras.Sequential()
-        color_augmentation.add(tf.keras.layers.RandomBrightness(self._brightness, value_range=value_range)) #brightness should be in interval [0, 1]
-        color_augmentation.add(tf.keras.layers.RandomContrast(self._contrast)) #contrast should be in interval [0, 1]
-        
+        color_augmentation.add(
+            tf.keras.layers.RandomBrightness(self._brightness, value_range=value_range)
+        )  # brightness should be in interval [0, 1]
+        color_augmentation.add(
+            tf.keras.layers.RandomContrast(self._contrast)
+        )  # contrast should be in interval [0, 1]
+
         image = color_augmentation(image)
-        if self._saturation > 0:
-            image = tf.image.random_saturation(image, 0, self._saturation) #saturation should be in interval [0, ?]
-        image = tf.image.random_hue(image, self._hue) #hue should be in interval [0, 0.5]
+        if self._saturation and self._saturation > 0:
+            image = tf.image.random_saturation(
+                image, 0, self._saturation
+            )  # saturation should be in interval [0, ?]
+        image = tf.image.random_hue(
+            image, self._hue
+        )  # hue should be in interval [0, 0.5]
 
         if self._output_image_path:
             return image, mask, image_path
@@ -182,7 +199,7 @@ class IsicDataSet(object):
 
     def _parse_data(
         self, image_path: str, mask_path: str
-    ) -> tuple[tf.Tensor, tf.Tensor]:
+    ) -> tuple[tf.Tensor, tf.Tensor] | tuple[tf.Tensor, tf.Tensor, str]:
         """Loads, normalizes and returns the images"""
         image_content = tf.io.read_file(image_path)
         mask_content = tf.io.read_file(mask_path)
@@ -208,24 +225,24 @@ class IsicDataSet(object):
         return image, mask
 
     def _map_function(
-        self, image_path: str, mask_path: str,
+        self,
+        image_path: str,
+        mask_path: str,
     ) -> tuple[tf.Tensor, tf.Tensor]:
         """Maps the data"""
 
-        # TODO: Implement data augmentation
-        # This file is heavily inspired by link below, which also
-        # implements data augmentation so maybe follow that
-        # https://github.com/HasnainRaz/SemSegPipeline/blob/master/dataloader.py
         if self._output_image_path:
             image, mask, image_path = self._parse_data(image_path, mask_path)
             return tf.py_function(
-                self._augmentation_func, [image, mask, image_path], [tf.float32, tf.float32, tf.string]
+                self._augmentation_func,
+                [image, mask, image_path],
+                [tf.float32, tf.float32, tf.string],
             )
         else:
             image, mask = self._parse_data(image_path, mask_path)
             return tf.py_function(
                 self._augmentation_func, [image, mask], [tf.float32, tf.float32]
-            )      
+            )
 
     def get_dataset(
         self, batch_size: int, shuffle: bool = False
