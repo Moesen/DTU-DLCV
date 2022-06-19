@@ -59,8 +59,7 @@ dataset_loader = IsicDataSet(
 
 test_dataset, _ = dataset_loader.get_dataset(batch_size=BATCH_SIZE, shuffle=False)
 
-breakpoint()
-
+print("Loading first batch...")
 test_img, mask = list(iter(test_dataset))[0]
 
 #use these images 
@@ -110,7 +109,7 @@ for n,(img, mask, ax) in enumerate(zip(test_img_plot, mask_img_plot, axs.ravel()
 
     p_diff = (n_seg_pixels_pred - n_seg_pixels_mask) / n_seg_pixels_mask
 
-    ax.set_title(f"IoU: {img_iou:.2f}",fontsize=16,x=0.5,y=1.05)
+    ax.set_title(f"IoU: {img_iou:.2f}, Area diff: {p_diff:.2f}",fontsize=16,x=0.5,y=1.05)
     ax.grid(False)
     ax.axis('off')
 
@@ -130,8 +129,9 @@ plt.savefig(fig_path)
 
 #compute metrics for model
 total_iou = []
+total_p_diff = []
 
-## DO THIS PER IMAGE INSTEAD
+print("Computing final metrics...")
 for (x_batch_val, true_mask) in test_dataset:
     for (val_img, val_GT_mask) in zip(x_batch_val, true_mask):
         val_logits = unet(tf.expand_dims(val_img, 0), training=False)
@@ -140,7 +140,14 @@ for (x_batch_val, true_mask) in test_dataset:
 
         compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
         batch_iou = compute_IoU(pred_mask, val_GT_mask)
+
         total_iou.append( batch_iou )
 
+        n_seg_pixels_mask = tf.math.reduce_sum(mask).numpy()
+        n_seg_pixels_pred = tf.math.reduce_sum(pred_mask).numpy()
+        p_diff = (n_seg_pixels_pred - n_seg_pixels_mask) / n_seg_pixels_mask
+        total_p_diff.append( p_diff )
+
 print("IoU for entire test set: ",np.array(total_iou).mean())
+print("Pixel diff entire test set: ",np.array(total_p_diff).mean())
 
