@@ -101,7 +101,7 @@ fig, axs = plt.subplots(len(unet_models), 4, figsize=(15,15) )
 for m, model in enumerate(unet_models):
     print("Plotting model ",m)
     img_np = []
-    for n,(img, mask, ax) in enumerate(zip(test_img_plot, mask_img_plot, axs.ravel())):
+    for n,(img, mask) in enumerate(zip(test_img_plot, mask_img_plot)):
 
         #make segmentation predictions
         pred_logits = model.predict(tf.expand_dims(img, 0))
@@ -119,11 +119,10 @@ for m, model in enumerate(unet_models):
         out, b_idx = get_boundary(pred_mask.numpy().squeeze(), is_GT=False)
         img_np[b_idx>1,:] = out[b_idx>1,:]
 
-        breakpoint()
-        ax.imshow(img_np)
+        axs[m,n].imshow(img_np / 255.)
 
         if n==0:
-            ax.set_ylabel(unet_seg_type[m], rotation='horizontal', fontsize=16, ha='right')
+            axs[m,n].set_ylabel(unet_seg_type[m], rotation='horizontal', fontsize=16, ha='right')
 
         #make manual legend
         if n==2 and m==len(unet_models)-1:
@@ -142,10 +141,10 @@ for m, model in enumerate(unet_models):
 
         p_diff = (n_seg_pixels_pred - n_seg_pixels_mask) / n_seg_pixels_mask
 
-        ax.set_title(f"IoU: {img_iou:.2f}, Area diff: {p_diff:.2f}",fontsize=16,x=0.5,y=1.05)
-        ax.grid(False)
-        ax.get_xaxis().set_ticks([])
-        ax.get_yaxis().set_ticks([])
+        axs[m,n].set_title(f"IoU: {img_iou:.2f}, Area diff: {p_diff:.2f}",fontsize=16,x=0.5,y=1.05)
+        axs[m,n].grid(False)
+        axs[m,n].get_xaxis().set_ticks([])
+        axs[m,n].get_yaxis().set_ticks([])
         #ax.axis('off')
 
 plt.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.9, wspace=0.2, hspace=0.2)

@@ -199,6 +199,11 @@ if __name__ == "__main__":
     axs[1].imshow(heatmap_out.squeeze(), cmap=cmap)
     axs[2].imshow(superimposed_img)
     axs[3].imshow(pred_mask)
+    
+    axs[0].axis('off')
+    axs[1].axis('off')
+    axs[2].axis('off')
+    axs[3].axis('off')
 
     saliency_fig_path = proot / "reports/figures/smoothgrad_saliency.png"
     plt.savefig(saliency_fig_path)
