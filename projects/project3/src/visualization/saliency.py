@@ -115,7 +115,7 @@ if __name__ == "__main__":
     proot = get_project3_root()
     #model_path = proot / "models" / "CNN_1" / "saved_model.pb"
 
-    model_path = proot / "models/" / "CNN_model_20220620105359"
+    model_path = proot / "models/" / "CNN_model_20220620112147"
     cnn_model = tf.keras.models.load_model(model_path)
 
     #cnn_model = tf.keras.models.load_model('/home/augustsemrau/drive/M1semester/02514_DLinCV/DTU-DLCV/projects/project3/models/CNN_20220619212559.h5')
@@ -188,7 +188,7 @@ if __name__ == "__main__":
     pred_mask = heatmap>150
     pred_mask = pred_mask*1
 
-    
+
     cmap = mpl.cm.jet
     fig, axs = plt.subplots(1,4,figsize=(15,8))
     axs[0].imshow(img_np/255)
