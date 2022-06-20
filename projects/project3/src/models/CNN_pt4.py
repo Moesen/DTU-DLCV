@@ -189,8 +189,8 @@ if __name__ == '__main__':
     
 
     # Saving model
-    model_name = 'CNN_model_'+datetime.datetime.now().strftime("%Y%m%d%H%M%S")+'.h5'
-    weights_name = 'CNN_weights_'+datetime.datetime.now().strftime("%Y%m%d%H%M%S")+'.h5'
+    model_name = 'CNN_model_'+datetime.datetime.now().strftime("%Y%m%d%H%M%S")#+'.h5'
+    weights_name = 'CNN_weights_'+datetime.datetime.now().strftime("%Y%m%d%H%M%S")#+'.h5'
     if save_model:
         model_path = proot / "models" / model_name
         #weights_path = proot / "models" / weights_name
