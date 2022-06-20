@@ -97,7 +97,7 @@ if __name__ == '__main__':
 
     ### Setup first model
     save_model = True
-    num_epochs = 20
+    num_epochs = 50
     sample_img_interval = 20
     num_weak_runs = 10
 
@@ -109,7 +109,7 @@ if __name__ == '__main__':
         if run_ind == 0:
             new_mask_path = data_root / "train_style2/Segmentations"
         else:
-            new_mask_path = data_root / "Weak_BB" / ("run_" + str(run_ind-1))
+            new_mask_path = data_root / "train_allstyles/Weak_BB" / ("run_" + str(run_ind-1))
 
         dataset_loader = IsicDataSet(
             image_folder=image_path,
@@ -171,7 +171,7 @@ if __name__ == '__main__':
         #     unet.unet.save(model_path)
         
         ### Save predicted masks in new folder
-        new_mask_path = data_root / "Weak_BB" / ("run_" + str(run_ind))
+        new_mask_path = data_root / "train_allstyles/Weak_BB" / ("run_" + str(run_ind))
         if not new_mask_path.exists():
             new_mask_path.mkdir()
 
