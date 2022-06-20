@@ -134,7 +134,7 @@ if __name__ == "__main__":
         mask_channels=1,
         image_file_extension="jpg",
         mask_file_extension="png",
-        do_normalize=True,
+        do_normalize=False,
         validation_percentage=.1,
         seed=69,
     )
@@ -161,7 +161,9 @@ if __name__ == "__main__":
     # saliency_map = saliency.get_saliency_map(score=score, img=img, )
         # smooth_samples=20,  # The number of calculating gradients iterations.
         # smooth_noise=0.20,)  # noise spread level.
+    # Remove last layer's softmax
     
+    cnn_model.layers[-1].activation = None
     lcl = "global_average_pooling2d"
 
     heatmap = make_gradcam_heatmap(img_array=img.numpy(), model=cnn_model, last_conv_layer_name=lcl, pred_index=None)
