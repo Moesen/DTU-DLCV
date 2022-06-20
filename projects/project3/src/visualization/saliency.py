@@ -21,6 +21,10 @@ import numpy as np
 
 from projects.project3.src.data.dataloader import IsicDataSet
 
+from keras import backend as K
+from tf_keras_vis.saliency import Saliency
+from tf_keras_vis.utils.scores import CategoricalScore
+
 
 
 print("TENSORFLOW BUILT WITH CUDA: ", tf.test.is_built_with_cuda())
@@ -142,17 +146,24 @@ if __name__ == "__main__":
     test_dataset, _ = dataset_loader.get_dataset(batch_size=16, shuffle=False)
 
     imgs, mask = next(iter(test_dataset))
-    img = tf.expand_dims(imgs[0,...], 0)
-    #img = get_img_array(img_path=lesions_path, size=IMG_SIZE)
+    img = tf.expand_dims(imgs[img_idx,...], 0)
+    mask = tf.expand_dims(mask[img_idx,...], 0)
+
+    logits = cnn_model(img)
+    predicted = K.cast(K.argmax(logits, axis=1), "uint8").numpy()
+    class_pred = predicted[0]
+
+    score = CategoricalScore([class_pred])
+    saliency = Saliency(cnn_model, clone=True)
 
     # img = tf.reshape(img, [-1] + img.shape.as_list())
 
-    #logits = cnn_model(img)
+    heatmap_out = saliency_map.squeeze()
 
     #logits = cnn_model(img, training=False)
 
-    #predicted = K.cast(K.argmax(logits, axis=1), "uint8").numpy()
-    #class_pred = predicted[0]
+    # Rescale heatmap to a range 0-255
+    heatmap = np.uint8(255 * heatmap_out)
 
     #score = CategoricalScore([class_pred])
 
@@ -170,9 +181,17 @@ if __name__ == "__main__":
 
 
     cmap = mpl.cm.jet
-    fig, axs = plt.subplots(1,2,figsize=(15,8))
-    axs[0].imshow(img.numpy().squeeze())
-    axs[1].imshow(img.numpy().squeeze())
-    axs[1].imshow(heatmap.squeeze(), cmap=cmap, alpha=0.5)
-    saliency_fig_path = proot / "reports/figures/gradcam_saliency.png"
+    fig, axs = plt.subplots(1,4,figsize=(15,8))
+    axs[0].imshow(img_np/255)
+    #axs[1].imshow(jet_heatmap,cmap=cmap)
+    axs[1].imshow(heatmap_out.squeeze(), cmap=cmap)
+    axs[2].imshow(superimposed_img)
+    axs[3].imshow(pred_mask)
+    
+    axs[0].axis('off')
+    axs[1].axis('off')
+    axs[2].axis('off')
+    axs[3].axis('off')
+
+    saliency_fig_path = proot / "reports/figures/smoothgrad_saliency.png"
     plt.savefig(saliency_fig_path)
