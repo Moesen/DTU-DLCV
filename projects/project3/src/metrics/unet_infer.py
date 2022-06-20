@@ -137,12 +137,12 @@ for m, model in enumerate(unet_models):
 
         #plot the iou and area difference in title
         compute_IoU = tf.keras.metrics.BinaryIoU()
-        pred_mask = tf.squeeze(tf.cast( pred_mask, tf.uint8))
-        GT_mask = tf.squeeze(tf.cast( mask , tf.uint8))
+        #pred_mask = tf.squeeze(tf.cast( pred_mask, tf.uint8))
+        #GT_mask = tf.squeeze(tf.cast( mask , tf.uint8))
 
-        img_iou = compute_IoU(pred_mask, GT_mask)
+        img_iou = compute_IoU(pred_mask, mask)
 
-        n_seg_pixels_mask = tf.math.reduce_sum(GT_mask).numpy()
+        n_seg_pixels_mask = tf.math.reduce_sum(mask).numpy()
         n_seg_pixels_pred = tf.math.reduce_sum(pred_mask).numpy()
 
         p_diff = ((n_seg_pixels_pred - n_seg_pixels_mask) / n_seg_pixels_mask)*100
