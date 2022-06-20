@@ -101,10 +101,10 @@ def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index=None
     # with respect to the activations of the last conv layer
     with tf.GradientTape() as tape:
         last_conv_layer_output, preds = grad_model(img_array)
-        breakpoint()
-        if pred_index is None:
-            pred_index = tf.argmax(preds[0])
-        class_channel = preds[:, pred_index]
+        #if pred_index is None:
+        #    pred_index = tf.argmax(preds[0])
+        #class_channel = preds[:, pred_index]
+        class_channel = pred_index
 
     # This is the gradient of the output neuron (top predicted or chosen)
     # with regard to the output feature map of the last conv layer
@@ -190,7 +190,7 @@ if __name__ == "__main__":
     #lcl = "global_average_pooling2d"
     lcl = "conv2d"
 
-    heatmap = make_gradcam_heatmap(img_array=img.numpy(), model=cnn_model, last_conv_layer_name=lcl, pred_index=None)
+    heatmap = make_gradcam_heatmap(img_array=img.numpy(), model=cnn_model, last_conv_layer_name=lcl, pred_index=0)
 
     #class_idx = 0
     #smap = get_saliency_map(cnn_model, img, class_idx)
