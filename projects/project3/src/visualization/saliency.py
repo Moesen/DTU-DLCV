@@ -43,29 +43,6 @@ if len(tf.config.list_physical_devices("GPU")) > 0:
     config.gpu_options.allow_growth = True
 
 
-"""class GradCamModel:
-    def __init__(self, new_model, layer_name):
-        self.gradcam = Gradcam(model=new_model, clone=True)  # (model=new_model, model_modifier=replace2linear, clone=True)
-        self.layer_name = layer_name
-
-    # def __call__(self, x):
-        # return Gradcam(self.model, self.layer_name)(x)
-
-    # Generate heatmap with GradCAM
-    def get_saliency_map(self, score, img, class_idx):
-        cam = self.gradcam(score, img, penultimate_layer=-1)
-        return cam"""
-
-
-"""def get_img_array(img_path, size):
-    # `img` is a PIL image of size 299x299
-    img = keras.preprocessing.image.load_img(img_path, target_size=size)
-    # `array` is a float32 Numpy array of shape (299, 299, 3)
-    array = keras.preprocessing.image.img_to_array(img)
-    # We add a dimension to transform our array into a "batch"
-    # of size (1, 299, 299, 3)
-    array = np.expand_dims(array, axis=0)
-    return array"""
 
 
 def get_saliency_map(model, image, class_idx):
@@ -164,31 +141,10 @@ if __name__ == "__main__":
 
     test_dataset, _ = dataset_loader.get_dataset(batch_size=16, shuffle=False)
 
+    img_idx = 1
     imgs, mask = next(iter(test_dataset))
-    img = tf.expand_dims(imgs[0,...], 0)
-    mask = tf.expand_dims(mask[0,...], 0)
-    #img = get_img_array(img_path=lesions_path, size=IMG_SIZE)
-
-    # img = tf.reshape(img, [-1] + img.shape.as_list())
-
-    #logits = cnn_model(img)
-
-    #logits = cnn_model(img, training=False)
-
-    #predicted = K.cast(K.argmax(logits, axis=1), "uint8").numpy()
-    #class_pred = predicted[0]
-
-    #score = CategoricalScore([class_pred])
-
-    # saliency = GradCamModel(new_model=cnn_model, clone=True)
-
-    # saliency_map = saliency.get_saliency_map(score=score, img=img, )
-        # smooth_samples=20,  # The number of calculating gradients iterations.
-        # smooth_noise=0.20,)  # noise spread level.
-
-    #lcl = "conv2d"
-    #heatmap = make_gradcam_heatmap(img_array=img.numpy(), model=cnn_model, last_conv_layer_name=lcl, pred_index=0)
-
+    img = tf.expand_dims(imgs[img_idx,...], 0)
+    mask = tf.expand_dims(mask[img_idx,...], 0)
 
     from keras import backend as K
     from tf_keras_vis.saliency import Saliency
@@ -204,14 +160,9 @@ if __name__ == "__main__":
     saliency_map = saliency(
         score,
         img,
-        smooth_samples=20,  # The number of calculating gradients iterations.
-        smooth_noise=0.20,
+        smooth_samples=100,  # The number of calculating gradients iterations.
+        smooth_noise=0.5,
     )  # noise spread level.
-
-
-    #class_idx = 0
-    #heatmap = get_saliency_map(cnn_model, img, class_idx)
-    #heatmap = heatmap.squeeze()
 
     heatmap = saliency_map.squeeze()
 
