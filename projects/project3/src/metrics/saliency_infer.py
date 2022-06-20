@@ -89,7 +89,7 @@ total_p_diff = []
 for (x_batch_val, true_mask) in test_dataset:
     print("New batch...")
     for (val_img, val_GT_mask) in zip(x_batch_val, true_mask):
-
+        breakpoint()
         img = tf.expand_dims(val_img, 0)
         val_logits = cnn_model(img, training=False)
         #val_probs = tf.keras.activations.sigmoid(val_logits)
