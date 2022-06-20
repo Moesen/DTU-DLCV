@@ -104,16 +104,15 @@ def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index=None
         #if pred_index is None:
         #    pred_index = tf.argmax(preds[0])
         #class_channel = preds[:, pred_index]
-        class_channel = tf.constant([pred_index])
+        class_channel = preds[:, pred_index]
 
-    # This is the gradient of the output neuron (top predicted or chosen)
-    # with regard to the output feature map of the last conv layer
-    grads = tape.gradient(class_channel, last_conv_layer_output)
+        # This is the gradient of the output neuron (top predicted or chosen)
+        # with regard to the output feature map of the last conv layer
+        grads = tape.gradient(class_channel, last_conv_layer_output)
 
-    # This is a vector where each entry is the mean intensity of the gradient
-    # over a specific feature map channel
-    breakpoint()
-    pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
+        # This is a vector where each entry is the mean intensity of the gradient
+        # over a specific feature map channel
+        pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
 
     # We multiply each channel in the feature map array
     # by "how important this channel is" with regard to the top predicted class
@@ -187,7 +186,7 @@ if __name__ == "__main__":
         # smooth_noise=0.20,)  # noise spread level.
     # Remove last layer's softmax
 
-    cnn_model.layers[-1].activation = None
+    #cnn_model.layers[-1].activation = None
     #lcl = "global_average_pooling2d"
     lcl = "conv2d"
 
