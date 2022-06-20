@@ -164,12 +164,12 @@ if __name__ == "__main__":
         smooth_noise=0.2,
     )  # noise spread level.
 
-    heatmap = saliency_map.squeeze()
+    heatmap_out = saliency_map.squeeze()
 
     img_np = img.numpy().squeeze()
 
     # Rescale heatmap to a range 0-255
-    heatmap = np.uint8(255 * heatmap)
+    heatmap = np.uint8(255 * heatmap_out)
 
     # Use jet colormap to colorize heatmap
     jet = cm.get_cmap("jet")
@@ -195,7 +195,8 @@ if __name__ == "__main__":
     cmap = mpl.cm.jet
     fig, axs = plt.subplots(1,4,figsize=(15,8))
     axs[0].imshow(img_np/255)
-    axs[1].imshow(jet_heatmap,cmap=cmap)
+    #axs[1].imshow(jet_heatmap,cmap=cmap)
+    axs[1].imshow(heatmap_out.squeeze(), cmap=cmap)
     axs[2].imshow(superimposed_img)
     axs[3].imshow(pred_mask)
 
