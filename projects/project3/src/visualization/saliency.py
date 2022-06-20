@@ -21,6 +21,10 @@ import numpy as np
 
 from projects.project3.src.data.dataloader import IsicDataSet
 
+from keras import backend as K
+from tf_keras_vis.saliency import Saliency
+from tf_keras_vis.utils.scores import CategoricalScore
+
 
 
 print("TENSORFLOW BUILT WITH CUDA: ", tf.test.is_built_with_cuda())
@@ -145,10 +149,6 @@ if __name__ == "__main__":
     imgs, mask = next(iter(test_dataset))
     img = tf.expand_dims(imgs[img_idx,...], 0)
     mask = tf.expand_dims(mask[img_idx,...], 0)
-
-    from keras import backend as K
-    from tf_keras_vis.saliency import Saliency
-    from tf_keras_vis.utils.scores import CategoricalScore
 
     logits = cnn_model(img)
     predicted = K.cast(K.argmax(logits, axis=1), "uint8").numpy()

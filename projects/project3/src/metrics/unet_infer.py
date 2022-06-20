@@ -177,10 +177,9 @@ for m, model in enumerate(unet_models):
 
             compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
             batch_iou = compute_IoU(pred_mask, val_GT_mask)
-
             total_iou.append( batch_iou )
 
-            n_seg_pixels_mask = tf.math.reduce_sum(mask).numpy()
+            n_seg_pixels_mask = tf.math.reduce_sum(val_GT_mask).numpy()
             n_seg_pixels_pred = tf.math.reduce_sum(pred_mask).numpy()
             p_diff = (n_seg_pixels_pred - n_seg_pixels_mask) / n_seg_pixels_mask
             total_p_diff.append( p_diff )
