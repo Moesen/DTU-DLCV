@@ -6,6 +6,7 @@ import os
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 import json
+import time
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -21,8 +22,6 @@ from projects.project3.src.metrics.losses import *
 from projects.project3.src.models.Networks import Pix2Pix_Unet
 from projects.utils import get_project3_root
 from tensorflow import keras
-from tensorflow.python.client import device_lib
-from tqdm import tqdm
 from wandb.keras import WandbCallback
 
 log_path = Path("./log")
@@ -30,11 +29,41 @@ logger = init_logger(__name__, True, log_path)
 
 study_name = "unet_test_100"
 
+NUM_EPOCHS = 100
 IMG_SIZE = (256, 256)  # (256,256,3)
+
+
+class Timer:
+    def __init__(self):
+        self._last_time = time.time()
+        self._timings = []
+        self._sections = []
+        self._training_time = []
+        self._epoch_sections = []
+
+    def add_new(self, name: str):
+        self._timings += [time.time() - self._last_time]
+        self._sections += [name]
+        self._last_time = time.time()
+
+    def add_new_training_time(self, epoch: str | int):
+        self._epoch_sections += [epoch]
+        self._training_time += [time.time() - self._last_time]
+        self._last_time = time.time()
+
+    def log_time(self):
+        log_msg = "#" * 10 + " " * 5 + "TIMINGS" + " " * 5 + "#" * 10 + "\n"
+        for s, t in zip(self._sections, self._timings):
+            log_msg += f"\t{s}: \t{t} seconds \t\n"
+        log_msg += "#" * 10 + " " * 5 + "TRAINING" + " " * 5 + "#" * 10 + "\n"
+        for s, t in zip(self._epoch_sections, self._training_time):
+            log_msg += f"\t{s}: \t{t} seconds \t\n"
+        logger.info(log_msg)
 
 
 def objective(trial: optuna.trial.Trial) -> float:
     logger.info(f"starting {trial.number = }")
+    timer = Timer()
 
     # config
     c = dict(
@@ -44,16 +73,14 @@ def objective(trial: optuna.trial.Trial) -> float:
         # Kernels
         num_kernels=trial.suggest_int("Convolutinal layers", 1, 3),
         # Learning
-        dropout_percentage=trial.suggest_float("dropout_percentage", 0.1, 0.8),
-        learning_rate=trial.suggest_loguniform("learning rate", 1e-6, 1e-3),
+        dropout_percentage=trial.suggest_float("dropout_percentage", 0.1, 0.4),
+        learning_rate=trial.suggest_loguniform("learning rate", 1e-5, 1e-3),
         batch_size=trial.suggest_int("batch size", 4, 16, 4),
         batchnorm=trial.suggest_categorical("batch norm", [True, False]),
+        # TODO: Add binary crossentropy (keras)
         loss_func=trial.suggest_categorical(
             "Loss function", ["focal_loss", "dice_loss", "weighted_cross_entropy"]
         ),
-        # "cross_entroy": tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-        # Img attributes
-        # image_size=trial.suggest_int("image size", 64, 256, 16),
         # Augmentations
         # augmentation_flip=trial.suggest_categorical(
         #    "augmentation_flip",
@@ -62,6 +89,7 @@ def objective(trial: optuna.trial.Trial) -> float:
         # augmentation_rotation=trial.suggest_float("augmentation_rotation", 0.0, 0.2),
         # augmentation_contrast=trial.suggest_float("augmentation_contrast", 0.0, 0.6),
     )
+    timer.add_new("creating config")
     switch = {
         "focal_loss": focal_loss,
         "dice_loss": dice_loss,
@@ -89,10 +117,13 @@ def objective(trial: optuna.trial.Trial) -> float:
         validation_percentage=0.2,
         seed=69,
     )
+    timer.add_new("Dataset class")
 
     train_dataset, val_dataset = dataset_loader.get_dataset(
         batch_size=c["batch_size"], shuffle=True
     )
+
+    timer.add_new("Dataset Loader")
 
     run = wandb.init(
         project="project3",
@@ -101,6 +132,8 @@ def objective(trial: optuna.trial.Trial) -> float:
         config=c,
         reinit=True,
     )
+
+    timer.add_new("Wandb")
 
     # metrics
     # metric = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
@@ -118,7 +151,7 @@ def objective(trial: optuna.trial.Trial) -> float:
         batchnorm=c["batchnorm"],
     )
 
-    unet.unet.summary()
+    timer.add_new("Unet creation")
 
     def log_image(epoch, logs):
         (x_batch_val, y_batch_val) = next(iter(val_dataset))
@@ -143,21 +176,24 @@ def objective(trial: optuna.trial.Trial) -> float:
             plt.axis("off")
         wandb.log({"Validation:": plt}, step=epoch)
 
-    image_callback = keras.callbacks.LambdaCallback(on_epoch_end=log_image)
-
-    num_epochs = 100
-    # unet.train(epochs=num_epochs)
-
     # Callbacks
+    image_callback = keras.callbacks.LambdaCallback(on_epoch_end=log_image)
+    wandb_callback = WandbCallback(
+        monitor="val_loss",
+        log_evaluation=False,
+        save_model=False,
+        validation_steps=len(val_dataset),
+    )
+    image_callback = keras.callbacks.LambdaCallback(on_epoch_end=log_image)
     early_stopping = tf.keras.callbacks.EarlyStopping(
         monitor="val_loss",
         patience=10,
         verbose=1,
         mode="min",
-        restore_best_weights=True
+        restore_best_weights=True,
     )
-    wandb_callback = WandbCallback(monitor="val_loss", log_evaluation=False, save_model=False, validation_steps = len(val_dataset))
-    image_callback = keras.callbacks.LambdaCallback(on_epoch_end=log_image)
+
+    timer.add_new("Callback init")
     history = unet.unet.fit(
         train_dataset,
         validation_data=val_dataset,
@@ -175,10 +211,12 @@ def objective(trial: optuna.trial.Trial) -> float:
             val_probs = tf.keras.activations.sigmoid(val_logits)
             pred_mask = tf.squeeze(tf.math.round(val_probs))
 
-            compute_IoU = tf.keras.metrics.BinaryIoU()# tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
+            compute_IoU = (
+                tf.keras.metrics.BinaryIoU()
+            )  # tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
             batch_iou = compute_IoU(pred_mask, val_GT_mask)
 
-            total_iou.append( batch_iou )
+            total_iou.append(batch_iou)
 
     best_iou = np.array(total_iou).mean()
 
