@@ -193,8 +193,8 @@ if __name__ == "__main__":
 
     heatmap = make_gradcam_heatmap(img_array=img.numpy(), model=cnn_model, last_conv_layer_name=lcl, pred_index=0)
 
-    #class_idx = 0
-    #smap = get_saliency_map(cnn_model, img, class_idx)
+    class_idx = 0
+    heatmap = get_saliency_map(cnn_model, img, class_idx)
 
 
     img_np = img.numpy().squeeze()
@@ -227,11 +227,12 @@ if __name__ == "__main__":
     gray_heatmap = keras.preprocessing.image.array_to_img(gray_heatmap)
     gray_heatmap = gray_heatmap.resize((img_np.shape[1], img_np.shape[0]))
     gray_heatmap = keras.preprocessing.image.img_to_array(gray_heatmap)
-    pred_mask = gray_heatmap>150
+    from PIL import Image
+    out2 = Image.fromarray(gray_heatmap).convert("L")
+    e = np.asarray(out2)
+    pred_mask = e>2
     pred_mask = pred_mask*1
-    #from PIL import Image
-    #out2 = Image.fromarray(jet_heatmap).convert("L")
-    #e = np.asarray(out2)
+
     
 
     cmap = mpl.cm.jet
