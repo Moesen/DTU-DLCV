@@ -204,6 +204,7 @@ if __name__ == "__main__":
 
     # Use jet colormap to colorize heatmap
     jet = cm.get_cmap("jet")
+    gray = cm.get_cmap("gray")
 
     # Use RGB values of the colormap
     jet_colors = jet(np.arange(256))[:, :3]
@@ -219,7 +220,11 @@ if __name__ == "__main__":
     superimposed_img = keras.preprocessing.image.array_to_img(superimposed_img)
 
     #predict a mask 
-    gray_heatmap = keras.preprocessing.image.array_to_img(heatmap)
+    # Use RGB values of the colormap
+    gray_colors = gray(np.arange(256))[:, :3]
+    gray_heatmap = gray_colors[heatmap]
+    #predict a mask 
+    gray_heatmap = keras.preprocessing.image.array_to_img(gray_heatmap)
     gray_heatmap = gray_heatmap.resize((img_np.shape[1], img_np.shape[0]))
     gray_heatmap = keras.preprocessing.image.img_to_array(gray_heatmap)
     pred_mask = gray_heatmap>150
