@@ -134,7 +134,7 @@ class IsicDataSet(object):
         return img_paths_paired, mask_paths_paired
 
     def _augmentation_func(
-        self, image: tf.Tensor, mask: tf.Tensor, image_path: tf.Tensor
+        self, image: tf.Tensor, mask: tf.Tensor, image_path: tf.Tensor = None
     ) -> tuple[tf.Tensor, tf.Tensor, tf.Tensor] | tuple[tf.Tensor, tf.Tensor]:
         # To make sure that the mask and the image are rotated in the same way.
 
