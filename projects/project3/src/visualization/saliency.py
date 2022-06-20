@@ -166,6 +166,7 @@ if __name__ == "__main__":
 
     imgs, mask = next(iter(test_dataset))
     img = tf.expand_dims(imgs[0,...], 0)
+    mask = tf.expand_dims(mask[0,...], 0)
     #img = get_img_array(img_path=lesions_path, size=IMG_SIZE)
 
     # img = tf.reshape(img, [-1] + img.shape.as_list())
@@ -220,12 +221,16 @@ if __name__ == "__main__":
 
 
     cmap = mpl.cm.jet
-    fig, axs = plt.subplots(1,2,figsize=(15,8))
+    fig, axs = plt.subplots(1,3,figsize=(15,8))
     axs[0].imshow(img_np)
     axs[1].imshow(img_np)
     axs[1].imshow(superimposed_img, cmap=cmap, alpha=0.5)
+    axs[2].imshow(mask.numpy().squeeze())
+
     saliency_fig_path = proot / "reports/figures/gradcam_saliency.png"
     plt.savefig(saliency_fig_path)
+
+    breakpoint()
 
 
 
