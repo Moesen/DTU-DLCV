@@ -154,7 +154,7 @@ if __name__ == '__main__':
         # mask_channels=1,
         image_file_extension="jpg",
         # mask_file_extension="png",
-        do_normalize=True,
+        do_normalize=False,
         # segmentation_type="0",
     )
 
@@ -175,9 +175,10 @@ if __name__ == '__main__':
     ##### TRAIN MODEL ##### 
     save_model = True
 
-    num_epochs = 1
-    sample_img_interval = 20
+    num_epochs = 50
+    #sample_img_interval = 20
 
+    print("Training...")
     history = cnn_model.fit(train_dataset, epochs=num_epochs, validation_data=val_dataset)
     #loss0, accuracy0 = cnn_model.evaluate(test_data)
     
@@ -192,8 +193,8 @@ if __name__ == '__main__':
     weights_name = 'CNN_weights_'+datetime.datetime.now().strftime("%Y%m%d%H%M%S")+'.h5'
     if save_model:
         model_path = proot / "models" / model_name
-        weights_path = proot / "models" / weights_name
+        #weights_path = proot / "models" / weights_name
         cnn_model.save(model_path)
         # save
-        cnn_model.save_weights(weights_path)
+        #cnn_model.save_weights(weights_path)
     

@@ -41,7 +41,7 @@ if len(tf.config.list_physical_devices("GPU")) > 0:
     config.gpu_options.allow_growth = True
 
 
-class GradCamModel:
+"""class GradCamModel:
     def __init__(self, new_model, layer_name):
         self.gradcam = Gradcam(model=new_model, clone=True)  # (model=new_model, model_modifier=replace2linear, clone=True)
         self.layer_name = layer_name
@@ -52,10 +52,10 @@ class GradCamModel:
     # Generate heatmap with GradCAM
     def get_saliency_map(self, score, img, class_idx):
         cam = self.gradcam(score, img, penultimate_layer=-1)
-        return cam
+        return cam"""
 
 
-def get_img_array(img_path, size):
+"""def get_img_array(img_path, size):
     # `img` is a PIL image of size 299x299
     img = keras.preprocessing.image.load_img(img_path, target_size=size)
     # `array` is a float32 Numpy array of shape (299, 299, 3)
@@ -63,7 +63,7 @@ def get_img_array(img_path, size):
     # We add a dimension to transform our array into a "batch"
     # of size (1, 299, 299, 3)
     array = np.expand_dims(array, axis=0)
-    return array
+    return array"""
 
 
 def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index=None):
@@ -106,9 +106,12 @@ if __name__ == "__main__":
     # Load model
     print("Testing GradCam Implementation")
     proot = get_project3_root()
-    model_path = proot / "models" / "CNN_1" / "saved_model.pb"
+    #model_path = proot / "models" / "CNN_1" / "saved_model.pb"
 
-    cnn_model = tf.keras.models.load_model('/home/augustsemrau/drive/M1semester/02514_DLinCV/DTU-DLCV/projects/project3/models/CNN_20220619212559.h5')
+    model_path = proot / "models/CNN_1"
+    cnn_model = tf.keras.models.load_model(model_path)
+
+    #cnn_model = tf.keras.models.load_model('/home/augustsemrau/drive/M1semester/02514_DLinCV/DTU-DLCV/projects/project3/models/CNN_20220619212559.h5')
     # cnn_model = cnn_model.load_weights('/home/augustsemrau/drive/M1semester/02514_DLinCV/DTU-DLCV/projects/project3/models/CNN_weights_20220619212559.h5')
     print(cnn_model.summary())
 
