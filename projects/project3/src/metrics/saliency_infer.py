@@ -116,21 +116,16 @@ for (x_batch_val, true_mask) in tqdm(test_dataset, total=len(test_dataset)):
         #predict a mask 
         pred_mask = heatmap>50
         pred_mask = pred_mask*1
+        pred_mask = tf.convert_to_tensor(pred_mask, dtype=tf.int64) 
+        val_GT_mask = tf.convert_to_tensor(val_GT_mask.numpy() / 255., dtype=tf.int64) 
 
-        breakpoint()
-        pred_mask = tf.convert_to_tensor(pred_mask, dtype=tf.int8) 
-        val_GT_mask = tf.convert_to_tensor(val_GT_mask.numpy() / 255., dtype=tf.int8) 
-
-        pred_mask = tf.squeeze(tf.cast( pred_mask, tf.uint8))
-        val_GT_mask = tf.squeeze(tf.cast( val_GT_mask , tf.uint8))
-
-        compute_IoU = tf.keras.metrics.BinaryIoU() #compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
+        compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
         batch_iou = compute_IoU(pred_mask, val_GT_mask)
         total_iou.append( batch_iou )
 
         n_seg_pixels_mask = tf.math.reduce_sum(val_GT_mask).numpy()
         n_seg_pixels_pred = tf.math.reduce_sum(pred_mask).numpy()
-        p_diff = ((n_seg_pixels_pred - n_seg_pixels_mask) / n_seg_pixels_mask)*100
+        p_diff = (n_seg_pixels_pred - n_seg_pixels_mask) / n_seg_pixels_mask
         total_p_diff.append( p_diff )
 
 print("IoU for entire test set: ",np.array(total_iou).mean())
