@@ -21,6 +21,7 @@ import numpy as np
 from projects.project3.src.data.dataloader import IsicDataSet
 
 from tqdm import tqdm
+from timeit import default_timer as timer
 
 
 print("TENSORFLOW BUILT WITH CUDA: ", tf.test.is_built_with_cuda())
@@ -85,7 +86,7 @@ total_iou = []
 total_p_diff = []
 
 
-for (x_batch_val, true_mask) in tqdm(test_dataset, total=len(test_dataset)):
+for (x_batch_val, true_mask) in test_dataset:
     print("New batch...")
     for (val_img, val_GT_mask) in zip(x_batch_val, true_mask):
 
@@ -100,12 +101,18 @@ for (x_batch_val, true_mask) in tqdm(test_dataset, total=len(test_dataset)):
         score = CategoricalScore([class_pred])
         saliency = Saliency(cnn_model, clone=True)
 
+        print("Generating saliency map...")
+        start = timer()
+
         saliency_map = saliency(
             score,
             img,
-            smooth_samples=100,  # The number of calculating gradients iterations.
+            smooth_samples=20,  # The number of calculating gradients iterations.
             smooth_noise=0.2,
         )  # noise spread level.
+
+        end = timer()
+        print("Time spend computing saliency map:", end - start)
 
         heatmap = saliency_map.squeeze()
 
