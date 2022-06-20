@@ -20,6 +20,7 @@ from tensorflow.keras.models import Model
 import numpy as np
 
 from projects.project3.src.data.dataloader import IsicDataSet
+from projects.project3.src.visualization.make_boundary import get_boundary
 
 from keras import backend as K
 from tf_keras_vis.saliency import Saliency
@@ -150,7 +151,7 @@ if __name__ == "__main__":
     img = tf.expand_dims(imgs[img_idx,...], 0)
     mask = tf.expand_dims(mask[img_idx,...], 0)
     img_np = img.numpy().squeeze()
-
+    img_boundary = img.numpy().squeeze()
 
     logits = cnn_model(img)
     predicted = K.cast(K.argmax(logits, axis=1), "uint8").numpy()
@@ -191,22 +192,35 @@ if __name__ == "__main__":
     superimposed_img = keras.preprocessing.image.array_to_img(superimposed_img)
 
     #predict a mask 
-    pred_mask = heatmap>150
+    pred_mask = heatmap>50
     pred_mask = pred_mask*1
 
 
+    mask_np = mask.numpy().squeeze()
+    #change color for boundary of GT mask 
+    out, b_idx = get_boundary(mask_np, is_GT=True)
+    img_boundary[b_idx>1,:] = out[b_idx>1,:]
+    
+    #change color for bounadry of prediction
+    out, b_idx = get_boundary(pred_mask, is_GT=False)
+    img_boundary[b_idx>1,:] = out[b_idx>1,:]
+
+
+
     cmap = mpl.cm.jet
-    fig, axs = plt.subplots(1,4,figsize=(15,8))
+    fig, axs = plt.subplots(1,5,figsize=(15,8))
     axs[0].imshow(img_np/255)
-    #axs[1].imshow(jet_heatmap,cmap=cmap)
     axs[1].imshow(heatmap_out.squeeze(), cmap=cmap)
     axs[2].imshow(superimposed_img)
-    axs[3].imshow(pred_mask)
-    
+    axs[3].imshow(pred_mask, cmap="gray")
+    axs[4].imshow( img_boundary/255 )
+
+
     axs[0].axis('off')
     axs[1].axis('off')
     axs[2].axis('off')
     axs[3].axis('off')
+    axs[4].axis('off')
 
     saliency_fig_path = proot / "reports/figures/smoothgrad_saliency.png"
     plt.savefig(saliency_fig_path)

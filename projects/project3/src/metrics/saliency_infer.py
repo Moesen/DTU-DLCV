@@ -86,6 +86,7 @@ total_p_diff = []
 
 
 for (x_batch_val, true_mask) in tqdm(test_dataset, total=len(test_dataset)):
+    print("New batch...")
     for (val_img, val_GT_mask) in zip(x_batch_val, true_mask):
 
         img = tf.expand_dims(val_img, 0)
@@ -102,7 +103,7 @@ for (x_batch_val, true_mask) in tqdm(test_dataset, total=len(test_dataset)):
         saliency_map = saliency(
             score,
             img,
-            smooth_samples=500,  # The number of calculating gradients iterations.
+            smooth_samples=100,  # The number of calculating gradients iterations.
             smooth_noise=0.2,
         )  # noise spread level.
 
