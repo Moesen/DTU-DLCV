@@ -38,7 +38,7 @@ class IsicDataSet(object):
         segmentation_type            : str   | None = None,
         validation_segmentation_type : str   | None = None,
         seed                         : int   | None = None,
-        flipping                     : str   | None = "none",
+        flipping                     : str          = "none",
         rotation                     : float | None = 0,
         brightness                   : float | None = 0,
         contrast                     : float | None = 0,
