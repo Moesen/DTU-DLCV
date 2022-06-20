@@ -141,7 +141,7 @@ if __name__ == "__main__":
 
     test_dataset, _ = dataset_loader.get_dataset(batch_size=16, shuffle=False)
 
-    img_idx = 1
+    img_idx = 2
     imgs, mask = next(iter(test_dataset))
     img = tf.expand_dims(imgs[img_idx,...], 0)
     mask = tf.expand_dims(mask[img_idx,...], 0)
@@ -160,8 +160,8 @@ if __name__ == "__main__":
     saliency_map = saliency(
         score,
         img,
-        smooth_samples=100,  # The number of calculating gradients iterations.
-        smooth_noise=0.5,
+        smooth_samples=500,  # The number of calculating gradients iterations.
+        smooth_noise=0.2,
     )  # noise spread level.
 
     heatmap = saliency_map.squeeze()
@@ -188,19 +188,18 @@ if __name__ == "__main__":
     superimposed_img = keras.preprocessing.image.array_to_img(superimposed_img)
 
     #predict a mask 
-    pred_mask = heatmap>150
+    pred_mask = heatmap>50
     pred_mask = pred_mask*1
 
     
-
     cmap = mpl.cm.jet
     fig, axs = plt.subplots(1,4,figsize=(15,8))
-    axs[0].imshow(img_np)
-    axs[1].imshow(jet_heatmap)
+    axs[0].imshow(img_np/255)
+    axs[1].imshow(jet_heatmap,cmap=cmap)
     axs[2].imshow(superimposed_img)
     axs[3].imshow(pred_mask)
 
-    saliency_fig_path = proot / "reports/figures/gradcam_saliency.png"
+    saliency_fig_path = proot / "reports/figures/smoothgrad_saliency.png"
     plt.savefig(saliency_fig_path)
 
     breakpoint()
