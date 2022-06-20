@@ -125,7 +125,7 @@ for m, model in enumerate(unet_models):
         axs[m,n].imshow(img_np / 255.)
 
         if n==0:
-            axs[m,n].set_ylabel(unet_seg_type[m], rotation='horizontal', fontsize=16, ha='right')
+            axs[m,n].set_ylabel(unet_seg_type[m], rotation='horizontal', fontsize=20, ha='right')
 
         #make manual legend
         if n==2 and m==len(unet_models)-1:
@@ -133,19 +133,19 @@ for m, model in enumerate(unet_models):
             rc = mpl.colors.to_rgba((1,0,0))
             green_patch = mpatches.Patch(color=gc, label='GT')
             red_patch = mpatches.Patch(color=rc, label='Pred')
-            axs[m,n].legend(handles=[green_patch,red_patch], bbox_to_anchor=(0.2, -0.05), ncol=2, prop={'size': 16})
+            axs[m,n].legend(handles=[green_patch,red_patch], bbox_to_anchor=(0.35, -0.05), ncol=2, prop={'size': 20})
 
         #plot the iou and area difference in title
         compute_IoU = tf.keras.metrics.BinaryIoU()
         pred_mask = tf.squeeze(tf.cast( pred_mask, tf.uint8))
         GT_mask = tf.squeeze(tf.cast( mask , tf.uint8))
-        
+
         img_iou = compute_IoU(pred_mask, GT_mask)
 
         n_seg_pixels_mask = tf.math.reduce_sum(GT_mask).numpy()
         n_seg_pixels_pred = tf.math.reduce_sum(pred_mask).numpy()
 
-        p_diff = (n_seg_pixels_pred - n_seg_pixels_mask) / n_seg_pixels_mask
+        p_diff = ((n_seg_pixels_pred - n_seg_pixels_mask) / n_seg_pixels_mask)*100
 
         axs[m,n].set_title(f"IoU: {img_iou:.2f}, Area diff: {p_diff:.2f}%",fontsize=14,x=0.5,y=1.05)
         axs[m,n].grid(False)
@@ -186,7 +186,7 @@ for m, model in enumerate(unet_models):
 
             n_seg_pixels_mask = tf.math.reduce_sum(val_GT_mask).numpy()
             n_seg_pixels_pred = tf.math.reduce_sum(pred_mask).numpy()
-            p_diff = (n_seg_pixels_pred - n_seg_pixels_mask) / n_seg_pixels_mask
+            p_diff = ((n_seg_pixels_pred - n_seg_pixels_mask) / n_seg_pixels_mask)*100
             total_p_diff.append( p_diff )
 
     print(unet_seg_type[m])
