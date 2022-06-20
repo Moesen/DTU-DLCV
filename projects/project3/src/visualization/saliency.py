@@ -170,7 +170,6 @@ if __name__ == "__main__":
     pred_mask = pred_mask*1
 
     mask_np = mask.numpy().squeeze()
-    breakpoint()
     #change color for boundary of GT mask 
     out, b_idx = get_boundary(mask_np, is_GT=True)
     img_boundary[np.logical_and(b_idx>1,b_idx<255),:] = out[np.logical_and(b_idx>1,b_idx<255),:]
