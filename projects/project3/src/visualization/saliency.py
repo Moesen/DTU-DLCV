@@ -104,7 +104,7 @@ def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index=None
         #if pred_index is None:
         #    pred_index = tf.argmax(preds[0])
         #class_channel = preds[:, pred_index]
-        class_channel = pred_index
+        class_channel = tf.constant([pred_index])
 
     # This is the gradient of the output neuron (top predicted or chosen)
     # with regard to the output feature map of the last conv layer
