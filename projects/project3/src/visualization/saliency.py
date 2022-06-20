@@ -196,10 +196,36 @@ if __name__ == "__main__":
     #smap = get_saliency_map(cnn_model, img, class_idx)
 
 
+    img_np = img.numpy().squeeze()
+
+    # Rescale heatmap to a range 0-255
+    heatmap = np.uint8(255 * heatmap)
+
+    # Use jet colormap to colorize heatmap
+    jet = cm.get_cmap("jet")
+
+    # Use RGB values of the colormap
+    jet_colors = jet(np.arange(256))[:, :3]
+    jet_heatmap = jet_colors[heatmap]
+
+    # Create an image with RGB colorized heatmap
+    jet_heatmap = keras.preprocessing.image.array_to_img(jet_heatmap)
+    jet_heatmap = jet_heatmap.resize((img_np.shape[1], img_np.shape[0]))
+    jet_heatmap = keras.preprocessing.image.img_to_array(jet_heatmap)
+
+    # Superimpose the heatmap on original image
+    superimposed_img = jet_heatmap * 0.5 + img_np
+    superimposed_img = keras.preprocessing.image.array_to_img(superimposed_img)
+
+
+
     cmap = mpl.cm.jet
     fig, axs = plt.subplots(1,2,figsize=(15,8))
-    axs[0].imshow(img.numpy().squeeze())
-    axs[1].imshow(img.numpy().squeeze())
-    axs[1].imshow(heatmap.squeeze(), cmap=cmap, alpha=0.5)
+    axs[0].imshow(img_np)
+    axs[1].imshow(img_np)
+    axs[1].imshow(superimposed_img, cmap=cmap, alpha=0.5)
     saliency_fig_path = proot / "reports/figures/gradcam_saliency.png"
     plt.savefig(saliency_fig_path)
+
+
+
