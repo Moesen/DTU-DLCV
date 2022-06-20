@@ -135,9 +135,6 @@ def objective(trial: optuna.trial.Trial) -> float:
 
     timer.add_new("Wandb")
 
-    # metrics
-    # metric = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
-
     unet = Pix2Pix_Unet(
         loss_f=loss_func,
         train_dataset=[],  # given in fit below
@@ -153,31 +150,39 @@ def objective(trial: optuna.trial.Trial) -> float:
 
     timer.add_new("Unet creation")
 
+    # Callback functions
     def log_image(epoch, logs):
         (x_batch_val, y_batch_val) = next(iter(val_dataset))
         val_logits = unet.unet(x_batch_val, training=False)
         val_probs = tf.keras.activations.sigmoid(val_logits)
         val_probs = tf.math.round(val_probs)
+        
+        num_plots = 4
+        _, axs = plt.subplots(3, num_plots)
 
-        for k in range(6):
-            plt.subplot(3, 6, k + 1)
-            plt.imshow(x_batch_val[k, :, :, :], cmap="gray")
-            plt.title("Input")
-            plt.axis("off")
+        for i in range(num_plots):
+            ax = axs[0, i]
+            ax.imshow(x_batch_val[i, :, :, :], cmap="gray")
+            ax.set_title("Input")
+            ax.axis("off")
 
-            plt.subplot(3, 6, k + 7)
-            plt.imshow(y_batch_val[k, :, :, :], cmap="gray")
-            plt.title("GT")
-            plt.axis("off")
+            ax = axs[1, i]
+            ax.imshow(y_batch_val[i, :, :, :], cmap="gray")
+            ax.set_title("GT")
+            ax.axis("off")
 
-            plt.subplot(3, 6, k + 13)
-            plt.imshow(val_probs[k, :, :, :], cmap="gray")
-            plt.title("Pred")
-            plt.axis("off")
+            ax = axs[2, i]
+            ax.imshow(val_probs[i, :, :, :], cmap="gray")
+            ax.set_title("Pred")
+            ax.axis("off")
         wandb.log({"Validation:": plt}, step=epoch)
+
+    def log_time(epoch, logs):
+        timer.add_new_training_time(epoch)
 
     # Callbacks
     image_callback = keras.callbacks.LambdaCallback(on_epoch_end=log_image)
+    time_callback = keras.callbacks.LambdaCallback(on_epoch_end=log_time)
     wandb_callback = WandbCallback(
         monitor="val_loss",
         log_evaluation=False,
@@ -198,8 +203,8 @@ def objective(trial: optuna.trial.Trial) -> float:
         train_dataset,
         validation_data=val_dataset,
         epochs=NUM_EPOCHS,
-        callbacks=[early_stopping, image_callback, wandb_callback],
-    )  # ])
+        callbacks=[early_stopping, image_callback, wandb_callback, time_callback],
+    )
     # fmt: on
 
     # Compute IoU for the best model
@@ -219,16 +224,16 @@ def objective(trial: optuna.trial.Trial) -> float:
             total_iou.append(batch_iou)
 
     best_iou = np.array(total_iou).mean()
-
-    print("Best model IoU: ", best_iou)
-
+    
+    timer.log_time()
     run.log({"best model IoU": best_iou})  # type: ignore
     run.finish()  # type: ignore
 
-    return best_iou  # max(history.history["val_loss"])
+    return best_iou 
 
 
 if __name__ == "__main__":
+    # Loading environment from .env file
     load_dotenv(find_dotenv())
     os.environ["WANDB_START_METHOD"] = "thread"
 
