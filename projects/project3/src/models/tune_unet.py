@@ -183,13 +183,13 @@ def objective(trial: optuna.trial.Trial) -> float:
         mode="min",
         restore_best_weights=True,
     )
-
+    wandb_callback = WandbCallback(monitor="val_loss", log_evaluation=False, save_model=False, validation_steps = len(val_dataset))
     image_callback = keras.callbacks.LambdaCallback(on_epoch_end=log_image)
     history = unet.unet.fit(
         train_dataset,
         validation_data=val_dataset,
         epochs=NUM_EPOCHS,
-        callbacks=[early_stopping, image_callback],
+        callbacks=[early_stopping, image_callback, wandb_callback],
     )  # ])
     # fmt: on
 
