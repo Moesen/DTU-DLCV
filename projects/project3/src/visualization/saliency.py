@@ -218,14 +218,23 @@ if __name__ == "__main__":
     superimposed_img = jet_heatmap * 0.5 + img_np
     superimposed_img = keras.preprocessing.image.array_to_img(superimposed_img)
 
-
+    #predict a mask 
+    gray_heatmap = keras.preprocessing.image.array_to_img(heatmap)
+    gray_heatmap = gray_heatmap.resize((img_np.shape[1], img_np.shape[0]))
+    gray_heatmap = keras.preprocessing.image.img_to_array(gray_heatmap)
+    pred_mask = gray_heatmap>150
+    pred_mask = pred_mask*1
+    #from PIL import Image
+    #out2 = Image.fromarray(jet_heatmap).convert("L")
+    #e = np.asarray(out2)
+    
 
     cmap = mpl.cm.jet
-    fig, axs = plt.subplots(1,3,figsize=(15,8))
+    fig, axs = plt.subplots(1,4,figsize=(15,8))
     axs[0].imshow(img_np)
-    axs[1].imshow(img_np)
-    axs[1].imshow(superimposed_img, cmap=cmap, alpha=0.5)
-    axs[2].imshow(mask.numpy().squeeze())
+    axs[1].imshow(jet_heatmap)
+    axs[2].imshow(superimposed_img)
+    axs[3].imshow(pred_mask)
 
     saliency_fig_path = proot / "reports/figures/gradcam_saliency.png"
     plt.savefig(saliency_fig_path)
