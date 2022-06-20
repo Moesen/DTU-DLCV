@@ -137,8 +137,8 @@ for m, model in enumerate(unet_models):
 
         #plot the iou and area difference in title
         compute_IoU = tf.keras.metrics.BinaryIoU()
-        pred_mask = tf.squeeze(tf.cast( pred_mask, tf.uint8))
-        GT_mask = tf.squeeze(tf.cast( mask , tf.uint8))
+        pred_mask = tf.squeeze(pred_mask)
+        GT_mask = tf.squeeze(mask)
         
         img_iou = compute_IoU(pred_mask, GT_mask)
 
@@ -180,7 +180,7 @@ for m, model in enumerate(unet_models):
             val_probs = tf.keras.activations.sigmoid(val_logits)
             pred_mask = tf.math.round(val_probs)
 
-            compute_IoU = tf.keras.metrics.BinaryIoU()#compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
+            compute_IoU = tf.keras.metrics.BinaryIoU() #compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
             batch_iou = compute_IoU(pred_mask, val_GT_mask)
             total_iou.append( batch_iou )
 
