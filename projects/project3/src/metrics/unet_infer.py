@@ -139,7 +139,7 @@ for m, model in enumerate(unet_models):
         compute_IoU = tf.keras.metrics.BinaryIoU()
         pred_mask = tf.squeeze(tf.cast( pred_mask, tf.uint8))
         GT_mask = tf.squeeze(tf.cast( mask , tf.uint8))
-        breakpoint()
+        
         img_iou = compute_IoU(pred_mask, GT_mask)
 
         n_seg_pixels_mask = tf.math.reduce_sum(GT_mask).numpy()
