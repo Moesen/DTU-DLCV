@@ -157,9 +157,15 @@ if __name__ == "__main__":
     class_pred = predicted[0]
 
     score = CategoricalScore([class_pred])
-    saliency_map = Saliency(cnn_model, clone=True)
+    saliency = Saliency(cnn_model, clone=True)
 
     # img = tf.reshape(img, [-1] + img.shape.as_list())
+
+    saliency_map = saliency(score,
+                            img,
+                            smooth_samples=500,  # The number of calculating gradients iterations.
+                            smooth_noise=0.2,
+                            )  # noise spread level.
 
     heatmap_out = saliency_map.squeeze()
 
