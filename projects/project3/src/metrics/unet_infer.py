@@ -133,12 +133,15 @@ for m, model in enumerate(unet_models):
             rc = mpl.colors.to_rgba((1,0,0))
             green_patch = mpatches.Patch(color=gc, label='GT')
             red_patch = mpatches.Patch(color=rc, label='Pred')
-            axs[m,n].legend(handles=[green_patch,red_patch], bbox_to_anchor=(-0.1, -0.05), ncol=2)
+            axs[m,n].legend(handles=[green_patch,red_patch], bbox_to_anchor=(0.2, -0.05), ncol=2)
 
         #plot the iou and area difference in title
         compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
+        pred_mask = tf.cast( pred_mask, tf.uint32)
+        mask = tf.cast( mask, tf.uint32) 
         img_iou = compute_IoU(pred_mask, mask)
 
+        breakpoint()
         n_seg_pixels_mask = tf.math.reduce_sum(mask).numpy()
         n_seg_pixels_pred = tf.math.reduce_sum(pred_mask).numpy()
 
