@@ -1,28 +1,23 @@
 #from keras_contrib.layers.normalization.instancenormalization import InstanceNormalization
 
-import tensorflow as tf
-from tensorflow.python.client import device_lib
-import keras 
-
-from glob import glob
 import datetime
-import os 
+import os
+from collections import defaultdict
+from glob import glob
 
+import keras
 import matplotlib.pyplot as plt
 import numpy as np
-
-from tqdm import tqdm
-from collections import defaultdict
-
-
-from projects.utils import get_project3_root
+import tensorflow as tf
 #from projects.project3.src.data.simple_dataloader import basic_loader
 from projects.project3.src.data.dataloader import IsicDataSet
-from projects.project3.src.models.Networks import Pix2Pix_Unet
-from projects.project3.src.metrics.losses import *
-from projects.project3.src.metrics.eval_metrics import *
 from projects.project3.src.features.Memory import get_model_memory_usage
-
+from projects.project3.src.metrics.eval_metrics import *
+from projects.project3.src.metrics.losses import *
+from projects.project3.src.models.Networks import Pix2Pix_Unet
+from projects.utils import get_project3_root
+from tensorflow.python.client import device_lib
+from tqdm import tqdm
 
 # built tensorflow with GPU
 

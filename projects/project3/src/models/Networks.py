@@ -1,19 +1,17 @@
-import tensorflow as tf
-
-from keras.layers import Conv2D,Conv2DTranspose, Dropout, Input, Activation, BatchNormalization, concatenate, add
-#from keras import backend as K, regularizers
-from keras.models import Sequential, Model
-from keras.optimizers import Adam
+from collections import defaultdict
 
 import matplotlib.pyplot as plt
 import numpy as np
-
-from tqdm import tqdm
-from collections import defaultdict
-
-from projects.utils import get_project3_root
-from projects.project3.src.metrics.losses import *
+import tensorflow as tf
+from keras.layers import (Activation, BatchNormalization, Conv2D,
+                          Conv2DTranspose, Dropout, Input, add, concatenate)
+#from keras import backend as K, regularizers
+from keras.models import Model, Sequential
+from keras.optimizers import Adam
 from projects.project3.src.metrics.eval_metrics import *
+from projects.project3.src.metrics.losses import *
+from projects.utils import get_project3_root
+from tqdm import tqdm
 
 
 class Pix2Pix_Unet():
