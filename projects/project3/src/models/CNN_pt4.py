@@ -1,9 +1,24 @@
+import datetime
+import os
 import ssl
+from collections import defaultdict
+from glob import glob
 
+import keras
+import matplotlib.pyplot as plt
+import numpy as np
 import tensorflow as tf
 from keras import backend as K
 from keras import regularizers
 from keras.layers import Conv2D
+#from projects.project3.src.data.simple_dataloader import basic_loader
+from projects.project3.src.data.dataloader_CNN import IsicDataSet
+from projects.project3.src.metrics.eval_metrics import *
+from projects.project3.src.metrics.losses import *
+from projects.utils import get_project3_root
+from tensorflow.python.client import device_lib
+from tqdm import tqdm
+
 # img_size_loader = (128,128)
 # img_size = (128,128,3)
 # batch_size = 64
@@ -45,27 +60,12 @@ from keras.layers import Conv2D
 
 
 
-import tensorflow as tf
-from tensorflow.python.client import device_lib
-import keras
-
-from glob import glob
-import datetime
-import os
-
-import matplotlib.pyplot as plt
-import numpy as np
-
-from tqdm import tqdm
-from collections import defaultdict
 
 
-from projects.utils import get_project3_root
-#from projects.project3.src.data.simple_dataloader import basic_loader
-from projects.project3.src.data.dataloader_CNN import IsicDataSet
 
-from projects.project3.src.metrics.losses import *
-from projects.project3.src.metrics.eval_metrics import *
+
+
+
 
 # built tensorflow with GPU
 

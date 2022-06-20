@@ -5,34 +5,25 @@ import os
 # Turn off tensorflow warnings
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
-from pathlib import Path
-
-import optuna
-import tensorflow as tf
-from dotenv import find_dotenv, load_dotenv
-from tensorflow import keras
 import json
-
-import wandb
-from wandb.keras import WandbCallback
-from projects.color_logger import init_logger
-
-import tensorflow as tf
-from tensorflow.python.client import device_lib
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
-
-from tqdm import tqdm
-
-from projects.utils import get_project3_root
-
-# from projects.project3.src.data.simple_dataloader import basic_loader
+import optuna
+import tensorflow as tf
+import wandb
+from dotenv import find_dotenv, load_dotenv
+from projects.color_logger import init_logger
 from projects.project3.src.data.dataloader import IsicDataSet
-from projects.project3.src.models.Networks import Pix2Pix_Unet
-from projects.project3.src.metrics.losses import *
 from projects.project3.src.metrics.eval_metrics import *
-
+from projects.project3.src.metrics.losses import *
+from projects.project3.src.models.Networks import Pix2Pix_Unet
+from projects.utils import get_project3_root
+from tensorflow import keras
+from tensorflow.python.client import device_lib
+from tqdm import tqdm
+from wandb.keras import WandbCallback
 
 log_path = Path("./log")
 logger = init_logger(__name__, True, log_path)
