@@ -138,7 +138,7 @@ def create_CNN(IMG_SIZE):
 if __name__ == '__main__':
 
     BATCH_SIZE = 16
-    IMG_SIZE = (256,256)
+    IMG_SIZE = (256,256,3)
 
     # Example of using dataloader and extracting datasets train and test
     proot = get_project3_root()
@@ -149,7 +149,7 @@ if __name__ == '__main__':
     dataset_loader = IsicDataSet(
         lesions_folder=lesions_path,
         background_folder=background_path,
-        image_size=(*IMG_SIZE, 3),
+        image_size=IMG_SIZE,
         image_channels=3,
         # mask_channels=1,
         image_file_extension="jpg",
@@ -175,7 +175,7 @@ if __name__ == '__main__':
     ##### TRAIN MODEL ##### 
     save_model = True
 
-    num_epochs = 50
+    num_epochs = 20
     #sample_img_interval = 20
 
     print("Training...")
