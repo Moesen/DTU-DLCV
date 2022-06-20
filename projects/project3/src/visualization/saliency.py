@@ -68,6 +68,28 @@ if len(tf.config.list_physical_devices("GPU")) > 0:
     return array"""
 
 
+def get_saliency_map(model, image, class_idx):
+    with tf.GradientTape() as tape:
+        tape.watch(image)
+        logits = model(image)
+        loss = logits[:, class_idx]
+
+    # Get the gradients of the loss w.r.t to the input image.
+    gradient = tape.gradient(loss, image)
+
+    # take maximum across channels
+    gradient = tf.reduce_max(gradient, axis=-1)
+
+    # convert to numpy
+    gradient = gradient.numpy()
+
+    # normaliz between 0 and 1
+    min_val, max_val = np.min(gradient), np.max(gradient)
+    smap = (gradient - min_val) / (max_val - min_val + K.epsilon())
+
+    return smap
+
+
 def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index=None):
     # First, we create a model that maps the input image to the activations
     # of the last conv layer as well as the output predictions
@@ -112,7 +134,7 @@ if __name__ == "__main__":
     proot = get_project3_root()
     #model_path = proot / "models" / "CNN_1" / "saved_model.pb"
 
-    model_path = proot / "models/" / "CNN_model_20220620105359"
+    model_path = proot / "models/" / "CNN_model_20220620112147"
     cnn_model = tf.keras.models.load_model(model_path)
 
     #cnn_model = tf.keras.models.load_model('/home/augustsemrau/drive/M1semester/02514_DLinCV/DTU-DLCV/projects/project3/models/CNN_20220619212559.h5')
@@ -166,9 +188,12 @@ if __name__ == "__main__":
 
     cnn_model.layers[-1].activation = None
     #lcl = "global_average_pooling2d"
-    lcl = ""
+    lcl = "conv2d"
 
     heatmap = make_gradcam_heatmap(img_array=img.numpy(), model=cnn_model, last_conv_layer_name=lcl, pred_index=None)
+
+    #class_idx = 0
+    #smap = get_saliency_map(cnn_model, img, class_idx)
 
 
     cmap = mpl.cm.jet
