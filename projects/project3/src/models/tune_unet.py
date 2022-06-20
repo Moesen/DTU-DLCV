@@ -163,7 +163,7 @@ def objective(trial: optuna.trial.Trial) -> float:
         patience=10,
         verbose=1,
         mode="min",
-        restore_best_weights=True,
+        restore_best_weights=True
     )
     wandb_callback = WandbCallback(monitor="val_loss", log_evaluation=False, save_model=False, validation_steps = len(val_dataset))
     image_callback = keras.callbacks.LambdaCallback(on_epoch_end=log_image)
