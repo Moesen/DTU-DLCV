@@ -122,7 +122,7 @@ for m, model in enumerate(unet_models):
         out, b_idx = get_boundary(pred_mask.numpy().squeeze(), is_GT=False)
         img_np[b_idx>1,:] = out[b_idx>1,:]
 
-        axs[m,n].imshow(img_np)
+        axs[m,n].imshow(img_np / 255.)
 
         if n==0:
             axs[m,n].set_ylabel(unet_seg_type[m], rotation='horizontal', fontsize=16, ha='right')
