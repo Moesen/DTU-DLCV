@@ -209,6 +209,7 @@ if __name__ == "__main__":
     # Use RGB values of the colormap
     jet_colors = jet(np.arange(256))[:, :3]
     jet_heatmap = jet_colors[heatmap]
+    jet_heatmap = jet_heatmap.squeeze()
 
     # Create an image with RGB colorized heatmap
     jet_heatmap = keras.preprocessing.image.array_to_img(jet_heatmap)
