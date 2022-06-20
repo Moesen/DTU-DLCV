@@ -195,7 +195,7 @@ if __name__ == "__main__":
 
     class_idx = 0
     heatmap = get_saliency_map(cnn_model, img, class_idx)
-
+    heatmap = heatmap.squeeze()
 
     img_np = img.numpy().squeeze()
 
@@ -209,7 +209,6 @@ if __name__ == "__main__":
     # Use RGB values of the colormap
     jet_colors = jet(np.arange(256))[:, :3]
     jet_heatmap = jet_colors[heatmap]
-    jet_heatmap = jet_heatmap.squeeze()
 
     # Create an image with RGB colorized heatmap
     jet_heatmap = keras.preprocessing.image.array_to_img(jet_heatmap)
