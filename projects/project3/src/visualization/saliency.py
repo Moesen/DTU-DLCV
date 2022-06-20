@@ -202,6 +202,8 @@ if __name__ == "__main__":
     # Rescale heatmap to a range 0-255
     heatmap = np.uint8(255 * heatmap)
 
+    breakpoint()
+
     # Use jet colormap to colorize heatmap
     jet = cm.get_cmap("jet")
     gray = cm.get_cmap("gray")
