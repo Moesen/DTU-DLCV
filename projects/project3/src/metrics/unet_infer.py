@@ -111,7 +111,7 @@ for m, model in enumerate(unet_models):
         pred_probs = tf.keras.activations.sigmoid(pred_logits)
         pred_mask = tf.math.round(pred_probs)
 
-        img_np = img.numpy()
+        img_np = img.numpy()*255
         mask_np = mask.numpy()
 
         #change color for boundary of GT mask 
@@ -122,7 +122,7 @@ for m, model in enumerate(unet_models):
         out, b_idx = get_boundary(pred_mask.numpy().squeeze(), is_GT=False)
         img_np[b_idx>1,:] = out[b_idx>1,:]
 
-        axs[m,n].imshow(img_np / 255.)
+        axs[m,n].imshow(img_np)
 
         if n==0:
             axs[m,n].set_ylabel(unet_seg_type[m], rotation='horizontal', fontsize=16, ha='right')
@@ -137,11 +137,10 @@ for m, model in enumerate(unet_models):
 
         #plot the iou and area difference in title
         compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
-        pred_mask = tf.cast( pred_mask, tf.uint32)
-        mask = tf.cast( mask, tf.uint32) 
+        pred_mask = tf.squeeze(tf.cast( pred_mask, tf.uint32))
+        mask = tf.squeeze(tf.cast( mask, tf.uint32))
         img_iou = compute_IoU(pred_mask, mask)
 
-        breakpoint()
         n_seg_pixels_mask = tf.math.reduce_sum(mask).numpy()
         n_seg_pixels_pred = tf.math.reduce_sum(pred_mask).numpy()
 
