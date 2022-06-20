@@ -156,22 +156,25 @@ def objective(trial: optuna.trial.Trial) -> float:
         val_logits = unet.unet(x_batch_val, training=False)
         val_probs = tf.keras.activations.sigmoid(val_logits)
         val_probs = tf.math.round(val_probs)
+        
+        num_plots = 4
+        _, axs = plt.subplots(3, num_plots)
 
-        for k in range(4):
-            plt.subplot(3, 4, k + 1)
-            plt.imshow(x_batch_val[k, :, :, :], cmap="gray")
-            plt.title("Input")
-            plt.axis("off")
+        for i in range(num_plots):
+            ax = axs[0, i]
+            ax.imshow(x_batch_val[i, :, :, :], cmap="gray")
+            ax.set_title("Input")
+            ax.axis("off")
 
-            plt.subplot(3, 4, k + 7)
-            plt.imshow(y_batch_val[k, :, :, :], cmap="gray")
-            plt.title("GT")
-            plt.axis("off")
+            ax = axs[1, i]
+            ax.imshow(y_batch_val[i, :, :, :], cmap="gray")
+            ax.set_title("GT")
+            ax.axis("off")
 
-            plt.subplot(3, 4, k + 13)
-            plt.imshow(val_probs[k, :, :, :], cmap="gray")
-            plt.title("Pred")
-            plt.axis("off")
+            ax = axs[2, i]
+            ax.imshow(val_probs[i, :, :, :], cmap="gray")
+            ax.set_title("Pred")
+            ax.axis("off")
         wandb.log({"Validation:": plt}, step=epoch)
 
     def log_time(epoch, logs):
