@@ -175,7 +175,7 @@ if __name__ == '__main__':
     ##### TRAIN MODEL ##### 
     save_model = True
 
-    num_epochs = 2
+    num_epochs = 1
     sample_img_interval = 20
 
     history = cnn_model.fit(train_dataset, epochs=num_epochs, validation_data=val_dataset)
@@ -184,12 +184,16 @@ if __name__ == '__main__':
     
     # Compute acc for the final model
     acc = cnn_model.evaluate(val_dataset)
-    print(f"Accuracy: {acc[1]}")
+    print(f"Accuracy: {acc}")
     
 
     # Saving model
-    model_name = 'CNN_'+datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    model_name = 'CNN_model_'+datetime.datetime.now().strftime("%Y%m%d%H%M%S")+'.h5'
+    weights_name = 'CNN_weights_'+datetime.datetime.now().strftime("%Y%m%d%H%M%S")+'.h5'
     if save_model:
         model_path = proot / "models" / model_name
+        weights_path = proot / "models" / weights_name
         cnn_model.save(model_path)
+        # save
+        cnn_model.save_weights(weights_path)
     
