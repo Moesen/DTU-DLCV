@@ -133,7 +133,7 @@ for m, model in enumerate(unet_models):
             rc = mpl.colors.to_rgba((1,0,0))
             green_patch = mpatches.Patch(color=gc, label='GT')
             red_patch = mpatches.Patch(color=rc, label='Pred')
-            ax.legend(handles=[green_patch,red_patch], bbox_to_anchor=(-0.1, -0.05), ncol=2)
+            axs[m,n].legend(handles=[green_patch,red_patch], bbox_to_anchor=(-0.1, -0.05), ncol=2)
 
         #plot the iou and area difference in title
         compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
