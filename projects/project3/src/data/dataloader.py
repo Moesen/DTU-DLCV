@@ -32,6 +32,7 @@ class IsicDataSet(object):
         mask_file_extension          : str,
         do_normalize                 : bool,
         image_size                   : tuple[int, int],
+        validation_mask_folder       : Path | None = None,
         validation_percentage        : float | None = 0.2,
         output_image_path            : bool  | None = False,
         segmentation_type            : str   | None = None,
@@ -71,6 +72,11 @@ class IsicDataSet(object):
             self._validation_segmentation_type = segmentation_type
         else:
             self._validation_segmentation_type = validation_segmentation_type
+        
+        if validation_mask_folder:
+            self._validation_mask_folder = validation_mask_folder
+        else:
+            self._validation_mask_folder = mask_folder
         # Img decoders
         self._image_decoder = (
             tf.image.decode_jpeg
@@ -91,24 +97,27 @@ class IsicDataSet(object):
         )
 
         self._train_image_paths, self._train_mask_paths = self._match_img_mask(
-            train_img_paths, self._train_segmentation_type
+            train_img_paths, self._train_segmentation_type, self._mask_folder
         )
         self._test_image_paths, self._test_mask_paths = self._match_img_mask(
-            val_img_paths, self._validation_segmentation_type
+            val_img_paths, self._validation_segmentation_type, self._validation_mask_folder
         )
 
     def _match_img_mask(
-        self, image_paths: list[Path], segmentation_type: str | None
+        self, image_paths: list[Path], segmentation_type: str | None, mask_folder: Path | None
     ) -> tuple[list[str], list[str]]:
         img_paths_paired = []
         mask_paths_paired = []
+
+        if mask_folder == None:
+            mask_folder = self._mask_folder
 
         for image_path, im_fn in [(x, x.name) for x in image_paths]:
             search = ID_EXPR.search(im_fn)
             img_id = search and search.group(1)
             assert img_id is not None
 
-            for mask_path in self._mask_folder.iterdir():
+            for mask_path in mask_folder.iterdir():
                 # Get filename of path, that is
                 # /.../.../.../(name.png) <--- this part
                 mask_fn = mask_path.name

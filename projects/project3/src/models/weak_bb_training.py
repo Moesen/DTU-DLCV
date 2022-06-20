@@ -98,13 +98,15 @@ if __name__ == '__main__':
 
     ### Setup first model
     save_model = True
-    num_epochs = 3
+    num_epochs = 50
     sample_img_interval = 20
     num_weak_runs = 10
 
     ### Run U-Net training multiple times, after each run saving a new set of masks
     for run_ind in range(num_weak_runs):
         
+        original_mask_path = data_root / "Segmentations"
+
         if run_ind == 0:
             new_mask_path = data_root / "Segmentations"
         else:
@@ -113,6 +115,7 @@ if __name__ == '__main__':
         dataset_loader = IsicDataSet(
             image_folder=image_path,
             mask_folder=new_mask_path,
+            validation_mask_folder=original_mask_path,
             image_size=IMG_SIZE,
             image_channels=3,
             mask_channels=1,
@@ -162,12 +165,12 @@ if __name__ == '__main__':
         print("IoU for entire validation set: ",np.array(total_iou).mean())
 
         
-        # Saving model
-        model_name = f'weak_unet_{run_ind}_{datetime.datetime.now().strftime("%Y%m%d%H%M%S")}'
+        # # Saving model
+        # model_name = f'weak_unet_{run_ind}_{datetime.datetime.now().strftime("%Y%m%d%H%M%S")}'
 
-        if save_model:
-            model_path = proot / "models" / model_name
-            unet.unet.save(model_path)
+        # if save_model:
+        #     model_path = proot / "models" / model_name
+        #     unet.unet.save(model_path)
         
         ### Save predicted masks in new folder
         new_mask_path = data_root / "Weak_BB" / ("run_" + str(run_ind))
@@ -189,7 +192,7 @@ if __name__ == '__main__':
                 img_path_i = img_path[i].numpy().decode("utf-8")
                 img_path_i = "ISIC" + img_path_i.split("ISIC")[1]
                 img_path_i = img_path_i[:-4]
-                pred_mask_file = new_mask_path / (img_path_i + "_seg_2_expert_f" + ".png")
+                pred_mask_file = new_mask_path / (img_path_i + "_seg_1_expert_f" + ".png")
                 with open(pred_mask_file, "wb") as f:
                     f.write(pred_mask_i)
     
