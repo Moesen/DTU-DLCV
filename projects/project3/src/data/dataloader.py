@@ -35,8 +35,6 @@ class IsicDataSet(object):
         validation_mask_folder       : Path | None = None,
         validation_percentage        : float | None = 0.2,
         output_image_path            : bool  | None = False,
-        segmentation_type            : str   | None = None,
-        validation_segmentation_type : str   | None = None,
         seed                         : int   | None = None,
         flipping                     : str          = "none",
         rotation                     : float | None = 0,
@@ -57,7 +55,6 @@ class IsicDataSet(object):
         self._mask_channels = mask_channels
         self._seed = seed or random.randint(0, 1000)
         self._do_normalize = do_normalize
-        self._train_segmentation_type = segmentation_type
         self._image_folder = image_folder
         self._mask_folder = mask_folder
         self._output_image_path = output_image_path
@@ -68,11 +65,6 @@ class IsicDataSet(object):
         self._saturation = saturation  # saturation should be in interval [0, ?]
         self._hue = hue  # hue should be in interval [0, 0.5]
 
-        if not validation_segmentation_type and segmentation_type:
-            self._validation_segmentation_type = segmentation_type
-        else:
-            self._validation_segmentation_type = validation_segmentation_type
-        
         if validation_mask_folder:
             self._validation_mask_folder = validation_mask_folder
         else:
@@ -97,20 +89,17 @@ class IsicDataSet(object):
         )
 
         self._train_image_paths, self._train_mask_paths = self._match_img_mask(
-            train_img_paths, self._train_segmentation_type, self._mask_folder
+            train_img_paths, self._mask_folder
         )
         self._test_image_paths, self._test_mask_paths = self._match_img_mask(
-            val_img_paths, self._validation_segmentation_type, self._validation_mask_folder
+            val_img_paths, self._validation_mask_folder
         )
 
     def _match_img_mask(
-        self, image_paths: list[Path], segmentation_type: str | None, mask_folder: Path | None
+        self, image_paths: list[Path], mask_folder: Path 
     ) -> tuple[list[str], list[str]]:
         img_paths_paired = []
         mask_paths_paired = []
-
-        if mask_folder == None:
-            mask_folder = self._mask_folder
 
         for image_path, im_fn in [(x, x.name) for x in image_paths]:
             search = ID_EXPR.search(im_fn)
@@ -133,9 +122,9 @@ class IsicDataSet(object):
                 if mask_id != img_id:
                     continue
 
-                # If going by segmentation type, and not the right: continue
-                if segmentation_type and segmentation_type != seg_type:
-                    continue
+                # # If going by segmentation type, and not the right: continue
+                # if segmentation_type and segmentation_type != seg_type:
+                #     continue
 
                 img_paths_paired.append(image_path.as_posix())
                 mask_paths_paired.append(mask_path.as_posix())
@@ -292,8 +281,11 @@ class IsicDataSet(object):
 if __name__ == "__main__":
     # Example of using dataloader and extracting datasets train and test
     proot = get_project3_root()
-    data_root = proot / "data/train_allstyles"
+    data_root = proot / "data/isic/train_allstyles"
     image_path = data_root / "Images"
+    mask_path = proot / "data/isic/train_style0/Segmentations"
+    mask_path = proot / "data/isic/train_style1/Segmentations"
+    mask_path = proot / "data/isic/train_style2/Segmentations"
     mask_path = data_root / "Segmentations"
     dataset_loader = IsicDataSet(
         image_folder=image_path,
@@ -303,7 +295,6 @@ if __name__ == "__main__":
         mask_channels=1,
         image_file_extension="jpg",
         mask_file_extension="png",
-        segmentation_type="0",
         do_normalize=True,
         output_image_path=False,
         flipping="horizontal_and_vertical",
