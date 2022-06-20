@@ -81,7 +81,7 @@ print("Loading first batch...")
 test_img, mask = list(iter(test_dataset))[0]
 
 #use these images 
-idx = tf.constant([0,4,8,12])
+idx = tf.constant([0,4,8,15])
 test_img_plot1 = tf.gather(test_img, idx)
 mask_img_plot1 = tf.gather(mask, idx)
 
@@ -133,20 +133,20 @@ for m, model in enumerate(unet_models):
             rc = mpl.colors.to_rgba((1,0,0))
             green_patch = mpatches.Patch(color=gc, label='GT')
             red_patch = mpatches.Patch(color=rc, label='Pred')
-            axs[m,n].legend(handles=[green_patch,red_patch], bbox_to_anchor=(0.2, -0.05), ncol=2)
+            axs[m,n].legend(handles=[green_patch,red_patch], bbox_to_anchor=(0.2, -0.05), ncol=2, prop={'size': 16})
 
         #plot the iou and area difference in title
-        compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
-        pred_mask = tf.squeeze(tf.cast( pred_mask, tf.uint32))
-        mask = tf.squeeze(tf.cast( mask, tf.uint32))
-        img_iou = compute_IoU(pred_mask, mask)
+        compute_IoU = tf.keras.metrics.BinaryIoU()
+        pred_mask = tf.squeeze(tf.cast( pred_mask, tf.uint8))
+        GT_mask = tf.squeeze(tf.cast( mask, tf.uint8))
+        img_iou = compute_IoU(pred_mask, GT_mask)
 
-        n_seg_pixels_mask = tf.math.reduce_sum(mask).numpy()
+        n_seg_pixels_mask = tf.math.reduce_sum(GT_mask).numpy()
         n_seg_pixels_pred = tf.math.reduce_sum(pred_mask).numpy()
 
         p_diff = (n_seg_pixels_pred - n_seg_pixels_mask) / n_seg_pixels_mask
 
-        axs[m,n].set_title(f"IoU: {img_iou:.2f}, Area diff: {p_diff:.2f}",fontsize=16,x=0.5,y=1.05)
+        axs[m,n].set_title(f"IoU: {img_iou:.2f}, Area diff: {p_diff:.2f}%",fontsize=14,x=0.5,y=1.05)
         axs[m,n].grid(False)
         axs[m,n].get_xaxis().set_ticks([])
         axs[m,n].get_yaxis().set_ticks([])
@@ -179,7 +179,7 @@ for m, model in enumerate(unet_models):
             val_probs = tf.keras.activations.sigmoid(val_logits)
             pred_mask = tf.math.round(val_probs)
 
-            compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
+            compute_IoU = tf.keras.metrics.BinaryIoU()#compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
             batch_iou = compute_IoU(pred_mask, val_GT_mask)
             total_iou.append( batch_iou )
 
