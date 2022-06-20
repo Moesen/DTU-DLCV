@@ -182,9 +182,9 @@ def objective(trial: optuna.trial.Trial) -> float:
         for (val_img, val_GT_mask) in zip(x_batch_val, true_mask):
             val_logits = unet.unet(tf.expand_dims(val_img, 0), training=False)
             val_probs = tf.keras.activations.sigmoid(val_logits)
-            pred_mask = tf.math.round(val_probs)
+            pred_mask = tf.squeeze(tf.math.round(val_probs))
 
-            compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
+            compute_IoU = tf.keras.metrics.BinaryIoU()# tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
             batch_iou = compute_IoU(pred_mask, val_GT_mask)
 
             total_iou.append( batch_iou )
