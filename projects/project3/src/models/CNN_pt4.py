@@ -3,7 +3,7 @@ import ssl
 import tensorflow as tf
 from keras import backend as K
 from keras import regularizers
-
+from keras.layers import Conv2D
 # img_size_loader = (128,128)
 # img_size = (128,128,3)
 # batch_size = 64
@@ -107,6 +107,7 @@ def create_CNN(IMG_SIZE):
 
     inputs = tf.keras.Input(shape=IMG_SIZE)
     x = base_model(inputs)
+    x = Conv2D(32, kernel_size=3, padding='same', strides=1)(x)
     x = tf.keras.layers.GlobalAveragePooling2D()(x) ##
     x = tf.keras.layers.Dense(200,kernel_regularizer=regularizers.l2(1e-3), kernel_initializer='he_normal')(x) ##
     x = tf.keras.layers.Dropout(0.2)(x)
@@ -138,7 +139,6 @@ if __name__ == '__main__':
 
     BATCH_SIZE = 16
     IMG_SIZE = (256,256,3)
-    GF = 32
 
     # Example of using dataloader and extracting datasets train and test
     proot = get_project3_root()
@@ -149,7 +149,7 @@ if __name__ == '__main__':
     dataset_loader = IsicDataSet(
         lesions_folder=lesions_path,
         background_folder=background_path,
-        image_size=(256, 256),
+        image_size=IMG_SIZE,
         image_channels=3,
         # mask_channels=1,
         image_file_extension="jpg",
@@ -175,7 +175,7 @@ if __name__ == '__main__':
     ##### TRAIN MODEL ##### 
     save_model = True
 
-    num_epochs = 50
+    num_epochs = 20
     #sample_img_interval = 20
 
     print("Training...")
