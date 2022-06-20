@@ -145,16 +145,19 @@ if __name__ == "__main__":
 
     test_dataset, _ = dataset_loader.get_dataset(batch_size=16, shuffle=False)
 
+    img_idx = 2 
     imgs, mask = next(iter(test_dataset))
     img = tf.expand_dims(imgs[img_idx,...], 0)
     mask = tf.expand_dims(mask[img_idx,...], 0)
+    img_np = img.numpy().squeeze()
+
 
     logits = cnn_model(img)
     predicted = K.cast(K.argmax(logits, axis=1), "uint8").numpy()
     class_pred = predicted[0]
 
     score = CategoricalScore([class_pred])
-    saliency = Saliency(cnn_model, clone=True)
+    saliency_map = Saliency(cnn_model, clone=True)
 
     # img = tf.reshape(img, [-1] + img.shape.as_list())
 
@@ -165,21 +168,27 @@ if __name__ == "__main__":
     # Rescale heatmap to a range 0-255
     heatmap = np.uint8(255 * heatmap_out)
 
-    #score = CategoricalScore([class_pred])
+    # Use jet colormap to colorize heatmap
+    jet = cm.get_cmap("jet")
 
-    # saliency = GradCamModel(new_model=cnn_model, clone=True)
+    # Use RGB values of the colormap
+    jet_colors = jet(np.arange(256))[:, :3]
+    jet_heatmap = jet_colors[heatmap]
 
-    # saliency_map = saliency.get_saliency_map(score=score, img=img, )
-        # smooth_samples=20,  # The number of calculating gradients iterations.
-        # smooth_noise=0.20,)  # noise spread level.
-    # Remove last layer's softmax
+    # Create an image with RGB colorized heatmap
+    jet_heatmap = keras.preprocessing.image.array_to_img(jet_heatmap)
+    jet_heatmap = jet_heatmap.resize((img_np.shape[1], img_np.shape[0]))
+    jet_heatmap = keras.preprocessing.image.img_to_array(jet_heatmap)
+
+    # Superimpose the heatmap on original image
+    superimposed_img = jet_heatmap * 0.5 + img_np
+    superimposed_img = keras.preprocessing.image.array_to_img(superimposed_img)
+
+    #predict a mask 
+    pred_mask = heatmap>150
+    pred_mask = pred_mask*1
+
     
-    cnn_model.layers[-1].activation = None
-    lcl = "global_average_pooling2d"
-
-    heatmap = make_gradcam_heatmap(img_array=img.numpy(), model=cnn_model, last_conv_layer_name=lcl, pred_index=None)
-
-
     cmap = mpl.cm.jet
     fig, axs = plt.subplots(1,4,figsize=(15,8))
     axs[0].imshow(img_np/255)
