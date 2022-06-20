@@ -185,17 +185,35 @@ if __name__ == "__main__":
     # saliency_map = saliency.get_saliency_map(score=score, img=img, )
         # smooth_samples=20,  # The number of calculating gradients iterations.
         # smooth_noise=0.20,)  # noise spread level.
-    # Remove last layer's softmax
 
-    #cnn_model.layers[-1].activation = None
-    #lcl = "global_average_pooling2d"
-    lcl = "conv2d"
+    #lcl = "conv2d"
+    #heatmap = make_gradcam_heatmap(img_array=img.numpy(), model=cnn_model, last_conv_layer_name=lcl, pred_index=0)
 
-    heatmap = make_gradcam_heatmap(img_array=img.numpy(), model=cnn_model, last_conv_layer_name=lcl, pred_index=0)
 
-    class_idx = 0
-    heatmap = get_saliency_map(cnn_model, img, class_idx)
-    heatmap = heatmap.squeeze()
+    from keras import backend as K
+    from tf_keras_vis.saliency import Saliency
+    from tf_keras_vis.utils.scores import CategoricalScore
+
+    logits = cnn_model(img)
+    predicted = K.cast(K.argmax(logits, axis=1), "uint8").numpy()
+    class_pred = predicted[0]
+
+    score = CategoricalScore([class_pred])
+    saliency = Saliency(cnn_model, clone=True)
+
+    saliency_map = saliency(
+        score,
+        img,
+        smooth_samples=20,  # The number of calculating gradients iterations.
+        smooth_noise=0.20,
+    )  # noise spread level.
+
+
+    #class_idx = 0
+    #heatmap = get_saliency_map(cnn_model, img, class_idx)
+    #heatmap = heatmap.squeeze()
+
+    heatmap = saliency_map.squeeze()
 
     img_np = img.numpy().squeeze()
 
@@ -204,7 +222,6 @@ if __name__ == "__main__":
 
     # Use jet colormap to colorize heatmap
     jet = cm.get_cmap("jet")
-    gray = cm.get_cmap("gray")
 
     # Use RGB values of the colormap
     jet_colors = jet(np.arange(256))[:, :3]
