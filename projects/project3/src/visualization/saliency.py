@@ -19,6 +19,8 @@ import os
 from tensorflow.keras.models import Model
 import numpy as np
 
+from projects.project3.src.data.dataloader import IsicDataSet
+
 
 
 print("TENSORFLOW BUILT WITH CUDA: ", tf.test.is_built_with_cuda())
@@ -101,6 +103,7 @@ def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index=None
     return heatmap.numpy()
 
 
+
 if __name__ == "__main__":
 
     # Load model
@@ -108,7 +111,7 @@ if __name__ == "__main__":
     proot = get_project3_root()
     #model_path = proot / "models" / "CNN_1" / "saved_model.pb"
 
-    model_path = proot / "models/CNN_1"
+    model_path = proot / "models/" / "CNN_model_20220620105359"
     cnn_model = tf.keras.models.load_model(model_path)
 
     #cnn_model = tf.keras.models.load_model('/home/augustsemrau/drive/M1semester/02514_DLinCV/DTU-DLCV/projects/project3/models/CNN_20220619212559.h5')
@@ -119,25 +122,49 @@ if __name__ == "__main__":
     IMG_SIZE = (256,256)#,3)
     lesions_path = proot / "data/isic" / "train_allstyles/Images" / "ISIC_0000013.jpg"
 
-    img = get_img_array(img_path=lesions_path, size=IMG_SIZE)
+    data_root = proot / "data/isic/test_style0" #train_allstyles" #test_style0"
+    image_path = data_root / "Images"
+    mask_path = data_root / "Segmentations"
+
+    dataset_loader = IsicDataSet(
+        image_folder=image_path,
+        mask_folder=mask_path,
+        image_size=IMG_SIZE,
+        image_channels=3,
+        mask_channels=1,
+        image_file_extension="jpg",
+        mask_file_extension="png",
+        do_normalize=True,
+        validation_percentage=.1,
+        seed=69,
+    )
+
+    test_dataset, _ = dataset_loader.get_dataset(batch_size=16, shuffle=False)
+
+    imgs, mask = next(iter(test_dataset))
+    img = tf.expand_dims(imgs[0,...], 0)
+    #img = get_img_array(img_path=lesions_path, size=IMG_SIZE)
 
     # img = tf.reshape(img, [-1] + img.shape.as_list())
 
-    logits = cnn_model(img)
+    #logits = cnn_model(img)
 
-    logits = cnn_model(img, training=False).numpy()
+    #logits = cnn_model(img, training=False)
 
-    predicted = K.cast(K.argmax(logits, axis=1), "uint8").numpy()
-    class_pred = predicted[0]
+    #predicted = K.cast(K.argmax(logits, axis=1), "uint8").numpy()
+    #class_pred = predicted[0]
 
-    score = CategoricalScore([class_pred])
+    #score = CategoricalScore([class_pred])
 
     # saliency = GradCamModel(new_model=cnn_model, clone=True)
 
     # saliency_map = saliency.get_saliency_map(score=score, img=img, )
         # smooth_samples=20,  # The number of calculating gradients iterations.
         # smooth_noise=0.20,)  # noise spread level.
-    heatmap = make_gradcam_heatmap(img_array=img, model=cnn_model, last_conv_layer_name="dense_1", pred_index=None)
+    
+    lcl = "dense_1"
+
+    heatmap = make_gradcam_heatmap(img_array=img.numpy(), model=cnn_model, last_conv_layer_name=lcl, pred_index=None)
 
 
     cmap = mpl.cm.jet
@@ -145,5 +172,5 @@ if __name__ == "__main__":
     axs[0].imshow(img.numpy().squeeze())
     axs[1].imshow(img.numpy().squeeze())
     axs[1].imshow(heatmap.squeeze(), cmap=cmap, alpha=0.5)
-    # saliency_fig_path = PROJECT_ROOT / "reports/figures/smoothgrad_saliency.png"
-    # plt.savefig(saliency_fig_path)
+    saliency_fig_path = proot / "reports/figures/gradcam_saliency.png"
+    plt.savefig(saliency_fig_path)
