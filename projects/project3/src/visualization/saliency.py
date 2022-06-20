@@ -162,7 +162,7 @@ if __name__ == "__main__":
         # smooth_samples=20,  # The number of calculating gradients iterations.
         # smooth_noise=0.20,)  # noise spread level.
     
-    lcl = "dense_1"
+    lcl = "global_average_pooling2d"
 
     heatmap = make_gradcam_heatmap(img_array=img.numpy(), model=cnn_model, last_conv_layer_name=lcl, pred_index=None)
 
