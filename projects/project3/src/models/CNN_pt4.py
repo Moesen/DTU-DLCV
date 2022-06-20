@@ -138,7 +138,7 @@ def create_CNN(IMG_SIZE):
 if __name__ == '__main__':
 
     BATCH_SIZE = 16
-    IMG_SIZE = (256,256,3)
+    IMG_SIZE = (256,256)
 
     # Example of using dataloader and extracting datasets train and test
     proot = get_project3_root()
@@ -170,7 +170,7 @@ if __name__ == '__main__':
     
 
     # plt.imshow(train_dataset[0][0][0])
-    cnn_model = create_CNN(IMG_SIZE=IMG_SIZE)
+    cnn_model = create_CNN(IMG_SIZE=(*IMG_SIZE,3))
 
     ##### TRAIN MODEL ##### 
     save_model = True

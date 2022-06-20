@@ -79,6 +79,7 @@ def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index=None
     # with respect to the activations of the last conv layer
     with tf.GradientTape() as tape:
         last_conv_layer_output, preds = grad_model(img_array)
+        breakpoint()
         if pred_index is None:
             pred_index = tf.argmax(preds[0])
         class_channel = preds[:, pred_index]
@@ -119,8 +120,8 @@ if __name__ == "__main__":
     print(cnn_model.summary())
 
     # Load image
-    IMG_SIZE = (256,256)#,3)
-    lesions_path = proot / "data/isic" / "train_allstyles/Images" / "ISIC_0000013.jpg"
+    IMG_SIZE = (256,256)
+    #lesions_path = proot / "data/isic" / "train_allstyles/Images" / "ISIC_0000013.jpg"
 
     data_root = proot / "data/isic/test_style0" #train_allstyles" #test_style0"
     image_path = data_root / "Images"
@@ -162,9 +163,10 @@ if __name__ == "__main__":
         # smooth_samples=20,  # The number of calculating gradients iterations.
         # smooth_noise=0.20,)  # noise spread level.
     # Remove last layer's softmax
-    
+
     cnn_model.layers[-1].activation = None
-    lcl = "global_average_pooling2d"
+    #lcl = "global_average_pooling2d"
+    lcl = ""
 
     heatmap = make_gradcam_heatmap(img_array=img.numpy(), model=cnn_model, last_conv_layer_name=lcl, pred_index=None)
 
