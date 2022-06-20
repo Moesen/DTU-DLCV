@@ -222,17 +222,7 @@ if __name__ == "__main__":
     superimposed_img = keras.preprocessing.image.array_to_img(superimposed_img)
 
     #predict a mask 
-    # Use RGB values of the colormap
-    gray_colors = gray(np.arange(256))[:, :3]
-    gray_heatmap = gray_colors[heatmap]
-    #predict a mask 
-    gray_heatmap = keras.preprocessing.image.array_to_img(gray_heatmap)
-    gray_heatmap = gray_heatmap.resize((img_np.shape[1], img_np.shape[0]))
-    gray_heatmap = keras.preprocessing.image.img_to_array(gray_heatmap)
-    from PIL import Image
-    out2 = Image.fromarray(gray_heatmap).convert("L")
-    e = np.asarray(out2)
-    pred_mask = e>2
+    pred_mask = heatmap>150
     pred_mask = pred_mask*1
 
     
