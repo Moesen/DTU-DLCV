@@ -125,7 +125,7 @@ if __name__ == "__main__":
 
     # Load image
     IMG_SIZE = (256,256)#,3)
-    lesions_path = proot / "data/isic" / "train_allstyles/Images" / "ISIC_0000013.jpg"
+    #lesions_path = proot / "data/isic" / "train_allstyles/Images" / "ISIC_0000013.jpg"
 
     data_root = proot / "data/isic/test_style0" #train_allstyles" #test_style0"
     image_path = data_root / "Images"

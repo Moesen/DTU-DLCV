@@ -105,6 +105,7 @@ if __name__ == '__main__':
         model_history = unet.unet.fit(train_dataset, epochs=num_epochs,validation_data=val_dataset)
         
         # Saving model
+        print("Saving model...")
         model_name = 'unet_'+sn+'_'+datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 
         if save_model:
