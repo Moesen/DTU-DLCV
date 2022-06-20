@@ -53,7 +53,7 @@ if __name__ == '__main__':
     ##### TRAIN MODEL ##### 
     save_model = True
 
-    num_epochs = 80
+    num_epochs = 100
 
     proot = get_project3_root()
     data_root = proot / "data/isic/train_allstyles"
@@ -70,12 +70,12 @@ if __name__ == '__main__':
 
         print("Initiating model for style " + sn)
 
-        unet = Pix2Pix_Unet(loss_f=tf.keras.losses.BinaryCrossentropy(),  #tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+        unet = Pix2Pix_Unet(loss_f=focal_loss(),#tf.keras.losses.BinaryCrossentropy(),  #tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
                     train_dataset=[],
                     test_data=[],
                     img_size=(*IMG_SIZE, 3),
                     gf=GF,
-                    num_conv=2,
+                    num_conv=3,
                     depth=5,
                     batchnorm=True,
                     )
