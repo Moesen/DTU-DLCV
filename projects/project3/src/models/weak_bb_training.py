@@ -98,7 +98,7 @@ if __name__ == '__main__':
 
     ### Setup first model
     save_model = True
-    num_epochs = 100
+    num_epochs = 3
     sample_img_interval = 20
     num_weak_runs = 10
 
@@ -178,7 +178,7 @@ if __name__ == '__main__':
         for (x_batch_train, _, img_path) in train_dataset_weak:
             train_logits = unet.unet(x_batch_train, training=False)
             train_probs = tf.keras.activations.sigmoid(train_logits)
-            train_pred_mask = tf.math.round(train_probs)
+            train_pred_mask = tf.math.round(train_probs) * 255
 
             pred_mask = tf.cast(train_pred_mask, tf.uint8)
             for i, img in enumerate(x_batch_train):
