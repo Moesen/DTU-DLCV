@@ -112,6 +112,7 @@ def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index=None
 
     # This is a vector where each entry is the mean intensity of the gradient
     # over a specific feature map channel
+    breakpoint()
     pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
 
     # We multiply each channel in the feature map array
