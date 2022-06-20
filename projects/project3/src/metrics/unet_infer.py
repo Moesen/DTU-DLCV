@@ -119,6 +119,7 @@ for m, model in enumerate(unet_models):
         out, b_idx = get_boundary(pred_mask.numpy().squeeze(), is_GT=False)
         img_np[b_idx>1,:] = out[b_idx>1,:]
 
+        breakpoint()
         axs[m,n].imshow(img_np / 255.)
 
         if n==0:
