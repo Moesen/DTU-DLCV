@@ -161,7 +161,7 @@ if __name__ == "__main__":
     saliency = Saliency(cnn_model, clone=True)
 
     # img = tf.reshape(img, [-1] + img.shape.as_list())
-
+    print("Generating saliency map...")
     saliency_map = saliency(score,
                             img,
                             smooth_samples=500,  # The number of calculating gradients iterations.
@@ -195,8 +195,8 @@ if __name__ == "__main__":
     pred_mask = heatmap>50
     pred_mask = pred_mask*1
 
-
     mask_np = mask.numpy().squeeze()
+    breakpoint()
     #change color for boundary of GT mask 
     out, b_idx = get_boundary(mask_np, is_GT=True)
     img_boundary[b_idx>1,:] = out[b_idx>1,:]
@@ -223,4 +223,4 @@ if __name__ == "__main__":
     axs[4].axis('off')
 
     saliency_fig_path = proot / "reports/figures/smoothgrad_saliency.png"
-    plt.savefig(saliency_fig_path)
+    plt.savefig(saliency_fig_path,bbox_inches='tight')
