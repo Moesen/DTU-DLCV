@@ -116,6 +116,8 @@ for (x_batch_val, true_mask) in tqdm(test_dataset, total=len(test_dataset)):
         #predict a mask 
         pred_mask = heatmap>50
         pred_mask = pred_mask*1
+        pred_mask = tf.convert_to_tensor(pred_mask, dtype=tf.int64) 
+        val_GT_mask = tf.convert_to_tensor(val_GT_mask.numpy() / 255., dtype=tf.int64) 
 
         compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
         batch_iou = compute_IoU(pred_mask, val_GT_mask)

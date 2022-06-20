@@ -98,8 +98,8 @@ print("Plotting...")
 fig, axs = plt.subplots(len(unet_models), 4, figsize=(15,15) )
 
 
-
 for m, model in enumerate(unet_models):
+    print("Plotting model ",m)
     img_np = []
     for n,(img, mask, ax) in enumerate(zip(test_img_plot, mask_img_plot, axs.ravel())):
 
@@ -107,7 +107,6 @@ for m, model in enumerate(unet_models):
         pred_logits = model.predict(tf.expand_dims(img, 0))
         pred_probs = tf.keras.activations.sigmoid(pred_logits)
         pred_mask = tf.math.round(pred_probs)
-
 
         img_np = img.numpy()
         mask_np = mask.numpy()
@@ -168,7 +167,7 @@ print("Computing final metrics...")
 for m, model in enumerate(unet_models):
     total_iou = []
     total_p_diff = []
-
+    print("... for model " + unet_seg_type[m])
     for (x_batch_val, true_mask) in test_dataset:
         for (val_img, val_GT_mask) in zip(x_batch_val, true_mask):
             val_logits = model(tf.expand_dims(val_img, 0), training=False)
