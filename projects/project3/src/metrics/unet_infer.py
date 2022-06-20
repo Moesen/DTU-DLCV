@@ -85,14 +85,17 @@ idx = tf.constant([0,4,8,12])
 test_img_plot1 = tf.gather(test_img, idx)
 mask_img_plot1 = tf.gather(mask, idx)
 
-img_list = []
+"""img_list = []
 mask_list = []
 for _ in range(len(unet_models)):
     img_list.append(test_img_plot1)
     mask_list.append(mask_img_plot1)
 
 test_img_plot = tf.concat(img_list, axis=0)
-mask_img_plot = tf.concat(mask_list, axis=0)
+mask_img_plot = tf.concat(mask_list, axis=0)"""
+
+test_img_plot = test_img_plot1
+mask_img_plot = mask_img_plot1
 
 print("Plotting...")
 fig, axs = plt.subplots(len(unet_models), 4, figsize=(15,15) )
@@ -119,7 +122,6 @@ for m, model in enumerate(unet_models):
         out, b_idx = get_boundary(pred_mask.numpy().squeeze(), is_GT=False)
         img_np[b_idx>1,:] = out[b_idx>1,:]
 
-        breakpoint()
         axs[m,n].imshow(img_np / 255.)
 
         if n==0:
