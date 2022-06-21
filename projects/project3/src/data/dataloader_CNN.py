@@ -20,7 +20,7 @@ ID_EXPR = re.compile(r"(^\w*?_\d*)")
 SEG_EXPR = re.compile(r"(^\w*?_\d*).*?_(\d+)")
 
 
-class IsicDataSet(object):
+class IsicDataSet_cnn(object):
     """Tensorflow implementation of isic dataloader"""
 
     def __init__(

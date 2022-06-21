@@ -12,7 +12,7 @@ from keras import backend as K
 from keras import regularizers
 from keras.layers import Conv2D
 #from projects.project3.src.data.simple_dataloader import basic_loader
-from projects.project3.src.data.dataloader_CNN import IsicDataSet
+from projects.project3.src.data.dataloader_CNN import IsicDataSet_cnn
 from projects.project3.src.metrics.eval_metrics import *
 from projects.project3.src.metrics.losses import *
 from projects.utils import get_project3_root
@@ -146,7 +146,7 @@ if __name__ == '__main__':
     lesions_path = data_root / "train_allstyles/Images"
     background_path = data_root / "background"
 
-    dataset_loader = IsicDataSet(
+    dataset_loader = IsicDataSet_cnn(
         lesions_folder=lesions_path,
         background_folder=background_path,
         image_size=IMG_SIZE,

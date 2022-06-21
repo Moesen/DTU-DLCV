@@ -145,7 +145,7 @@ for m, model in enumerate(unet_models):
         n_seg_pixels_mask = tf.math.reduce_sum(GT_mask).numpy()
         n_seg_pixels_pred = tf.math.reduce_sum(pred_mask).numpy()
 
-        p_diff = (n_seg_pixels_pred - n_seg_pixels_mask) / n_seg_pixels_mask
+        p_diff = ((n_seg_pixels_pred - n_seg_pixels_mask) / n_seg_pixels_mask)*100
 
         axs[m,n].set_title(f"IoU: {img_iou:.2f}, Area diff: {p_diff:.2f}%",fontsize=14,x=0.5,y=1.05)
         axs[m,n].grid(False)

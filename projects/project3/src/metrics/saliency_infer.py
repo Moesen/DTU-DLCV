@@ -19,6 +19,7 @@ from tensorflow.keras.models import Model
 import numpy as np
 
 from projects.project3.src.data.dataloader import IsicDataSet
+from projects.project3.src.data.dataloader_CNN import IsicDataSet_cnn
 
 from tqdm import tqdm
 from timeit import default_timer as timer
@@ -66,7 +67,7 @@ if __name__ == "__main__":
     lesions_path = data_root / "train_allstyles/Images"
     background_path = data_root / "background"
 
-    dataset_loader = IsicDataSet(
+    dataset_loader = IsicDataSet_cnn(
         lesions_folder=lesions_path,
         background_folder=background_path,
         image_size=IMG_SIZE,
@@ -85,7 +86,7 @@ if __name__ == "__main__":
     for (x_batch_val, y_label) in val_dataset:
         val_logits = cnn_model(x_batch_val, training=False)
         predicted = K.cast(K.argmax(val_logits, axis=1), "uint8").numpy()
-        
+
         breakpoint()
     ##
 
