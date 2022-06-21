@@ -48,12 +48,12 @@ if __name__ == '__main__':
     
     BATCH_SIZE = 8
     IMG_SIZE = (256,256) #(256,256,3)
-    GF = 32
+    GF = 20
 
     ##### TRAIN MODEL ##### 
     save_model = True
 
-    num_epochs = 80
+    num_epochs = 100
 
     proot = get_project3_root()
     data_root = proot / "data/isic/train_allstyles"
@@ -63,8 +63,8 @@ if __name__ == '__main__':
     mask_path2 = proot / "data/isic/train_style2/Segmentations"
     mask_path_all = data_root / "Segmentations"
 
-    mask_path_list = [mask_path0, mask_path1, mask_path2]#, mask_path_all]
-    style_names = ["0","1","2","all"]
+    mask_path_list = [mask_path1, mask_path_all] #[mask_path0, mask_path1, mask_path2, mask_path_all]
+    style_names = ["1", "all"] #["0","1","2","all"]
 
     for sn, mask_path in zip(style_names, mask_path_list):
 
