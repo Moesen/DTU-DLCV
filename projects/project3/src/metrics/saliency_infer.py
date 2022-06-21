@@ -81,15 +81,21 @@ if __name__ == "__main__":
         # segmentation_type="0",
     )
 
-    _, val_dataset = dataset_loader.get_dataset(batch_size=16, shuffle=False)
+    _, val_dataset = dataset_loader.get_dataset(batch_size=16, shuffle=True)
+
+    n_correct = 0
+    n_datapoints = 0
 
     for (x_batch_val, y_label) in val_dataset:
         val_logits = cnn_model(x_batch_val, training=False)
         predicted = K.cast(K.argmax(val_logits, axis=1), "uint8").numpy()
 
-        breakpoint()
-    ##
+        true_labels = y_label.numpy().squeeze()
 
+        n_correct += (true_labels==predicted).sum()
+        n_datapoints += len(true_labels)
+
+    print("Accuracy: ", n_correct/n_datapoints)
 
     data_root = proot / "data/isic/test_style0" #train_allstyles" #test_style0"
     image_path = data_root / "Images"
