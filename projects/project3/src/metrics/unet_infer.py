@@ -42,7 +42,7 @@ model_name1 = "unet_1_20220621002000" #"unet_1_20220621191602"#"unet_1_202206211
 model_path1 = PROJECT_ROOT / "models" / model_name1
 unet1 = tf.keras.models.load_model(model_path1, custom_objects={"loss": loss_fn })
 
-model_name2 = "unet_2_20220621193037"#"unet_2_20220621170446"#"unet_2_20220621131331"#"unet_2_20220621004926"
+model_name2 = "unet_2_20220621170446"#"unet_2_20220621193037"#"unet_2_20220621170446"#"unet_2_20220621131331"#"unet_2_20220621004926"
 model_path2 = PROJECT_ROOT / "models" / model_name2
 unet2 = tf.keras.models.load_model(model_path2, custom_objects={"loss": loss_fn })
 
