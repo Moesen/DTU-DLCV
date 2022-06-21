@@ -123,8 +123,9 @@ total_iou = []
 total_p_diff = []
 
 
-for (x_batch_val, true_mask) in test_dataset:
-    print("New batch...")
+for n,(x_batch_val, true_mask) in enumerate(test_dataset):
+    print("New batch...",n)
+    print("out of ",len(test_dataset))
     for (val_img, val_GT_mask) in zip(x_batch_val, true_mask):
         img = tf.expand_dims(val_img, 0)
         val_logits = cnn_model(img, training=False)
@@ -167,8 +168,9 @@ for (x_batch_val, true_mask) in test_dataset:
         batch_iou = compute_IoU(pred_mask, val_GT_mask)
         total_iou.append( batch_iou )
 
-        n_seg_pixels_mask = tf.math.reduce_sum(val_GT_mask).numpy()
-        n_seg_pixels_pred = tf.math.reduce_sum(pred_mask).numpy()
+        n_seg_pixels_mask = int(val_GT_mask.numpy().sum())
+        n_seg_pixels_pred = int(pred_mask.numpy().sum())
+
         p_diff = ((n_seg_pixels_pred - n_seg_pixels_mask) / n_seg_pixels_mask)*100
         total_p_diff.append( p_diff )
 

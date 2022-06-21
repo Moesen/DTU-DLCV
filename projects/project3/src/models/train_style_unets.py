@@ -103,7 +103,15 @@ if __name__ == '__main__':
 
         train_dataset, val_dataset = dataset_loader.get_dataset(batch_size=BATCH_SIZE, shuffle=True)
 
-        model_history = unet.unet.fit(train_dataset, epochs=num_epochs,validation_data=val_dataset)
+        early_stopping = tf.keras.callbacks.EarlyStopping(
+        monitor="val_loss",
+        patience=10,
+        verbose=1,
+        mode="min",
+        restore_best_weights=True,
+        )
+
+        model_history = unet.unet.fit(train_dataset, epochs=num_epochs,validation_data=val_dataset,callbacks=early_stopping)
         
         # Saving model
         print("Saving model...")
