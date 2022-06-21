@@ -38,7 +38,7 @@ model_name0 = "unet_0_20220621190637"#"unet_0_20220621161247"#"unet_0_2022062111
 model_path0 = PROJECT_ROOT / "models" / model_name0
 unet0 = tf.keras.models.load_model(model_path0, custom_objects={"loss": loss_fn })
 
-model_name1 = "unet_1_20220621191602"#"unet_1_20220621163655"#"unet_1_20220621123347"#"unet_1_20220621002000"
+model_name1 = "unet_1_20220621123347" #"unet_1_20220621191602"#"unet_1_20220621163655"#"unet_1_20220621123347"#"unet_1_20220621002000"
 model_path1 = PROJECT_ROOT / "models" / model_name1
 unet1 = tf.keras.models.load_model(model_path1, custom_objects={"loss": loss_fn })
 
@@ -100,7 +100,7 @@ print("Loading first batch...")
 test_img, mask = list(iter(test_dataset))[0]
 
 #use these images 
-idx = tf.constant([8,15,19, 24])
+idx = tf.constant([8,15,24,28])
 test_img_plot1 = tf.gather(test_img, idx)
 mask_img_plot1 = tf.gather(mask, idx)
 
