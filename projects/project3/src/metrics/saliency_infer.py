@@ -133,9 +133,9 @@ for (x_batch_val, true_mask) in test_dataset:
 
         n_seg_pixels_mask = tf.math.reduce_sum(val_GT_mask).numpy()
         n_seg_pixels_pred = tf.math.reduce_sum(pred_mask).numpy()
-        p_diff = (n_seg_pixels_pred - n_seg_pixels_mask) / n_seg_pixels_mask
+        p_diff = ((n_seg_pixels_pred - n_seg_pixels_mask) / n_seg_pixels_mask)*100
         total_p_diff.append( p_diff )
 
 print("IoU for entire test set: ",np.array(total_iou).mean())
-print("Pixel diff entire test set: ",np.array(total_p_diff).mean())
+print("Pixel diff entire test set in %: ",np.array(total_p_diff).mean())
 

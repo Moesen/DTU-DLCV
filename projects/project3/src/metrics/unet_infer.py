@@ -31,7 +31,7 @@ model_path = PROJECT_ROOT / "models" / model_name
 
 loss_fn = tf.keras.losses.BinaryCrossentropy()#focal_loss()
 
-unet = tf.keras.models.load_model(model_path)#, custom_objects={"loss": loss_fn })
+unet = tf.keras.models.load_model(model_path, custom_objects={"loss": loss_fn })
 unet.summary()
 
 ### the models trained on other segmentation types 
@@ -186,10 +186,10 @@ for m, model in enumerate(unet_models):
 
             n_seg_pixels_mask = tf.math.reduce_sum(val_GT_mask).numpy()
             n_seg_pixels_pred = tf.math.reduce_sum(pred_mask).numpy()
-            p_diff = (n_seg_pixels_pred - n_seg_pixels_mask) / n_seg_pixels_mask
+            p_diff = ((n_seg_pixels_pred - n_seg_pixels_mask) / n_seg_pixels_mask)*100
             total_p_diff.append( p_diff )
 
     print(unet_seg_type[m])
     print("IoU for entire test set: ",np.array(total_iou).mean())
-    print("Pixel diff entire test set: ",np.array(total_p_diff).mean())
+    print("Pixel diff entire test set in %: ",np.array(total_p_diff).mean())
 
