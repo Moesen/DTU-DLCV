@@ -221,6 +221,6 @@ for m, model in enumerate(unet_models):
             total_p_diff.append( p_diff )
 
     print(unet_seg_type[m])
-    print("IoU for entire test set: ",np.array(total_iou).mean())
-    print("Pixel diff entire test set in %: ",np.array(total_p_diff).mean())
+    print("IoU for entire train set: ",np.array(total_iou).mean())
+    print("Pixel diff entire train set in %: ",np.array(total_p_diff).mean())
 

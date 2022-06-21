@@ -144,7 +144,7 @@ for n,(x_batch_val, true_mask) in enumerate(test_dataset):
         saliency_map = saliency(
             score,
             img,
-            smooth_samples=20,  # The number of calculating gradients iterations.
+            smooth_samples=50,  # The number of calculating gradients iterations.
             smooth_noise=0.2,
         )  # noise spread level.
 
