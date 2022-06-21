@@ -48,12 +48,12 @@ if __name__ == '__main__':
     
     BATCH_SIZE = 16
     IMG_SIZE = (256,256) #(256,256,3)
-    GF = 32
+    GF = 20
 
     ##### TRAIN MODEL ##### 
     save_model = True
 
-    num_epochs = 50
+    num_epochs = 80
 
     proot = get_project3_root()
     data_root = proot / "data/isic/train_allstyles"
@@ -70,14 +70,14 @@ if __name__ == '__main__':
 
         print("Initiating model for style " + sn)
 
-        unet = Pix2Pix_Unet(loss_f=focal_loss(),#tf.keras.losses.BinaryCrossentropy(),  #tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+        unet = Pix2Pix_Unet(loss_f=weighted_cross_entropy(),#focal_loss(),#tf.keras.losses.BinaryCrossentropy(),  #tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
                     train_dataset=[],
                     test_data=[],
                     img_size=(*IMG_SIZE, 3),
                     gf=GF,
                     num_conv=2,
                     depth=5,
-                    batchnorm=True,
+                    batchnorm=False,
                     )
 
         unet.unet.summary()
@@ -96,9 +96,9 @@ if __name__ == '__main__':
             output_image_path=False,
             validation_percentage=.2,
             seed=69,
-            flipping="horizontal_and_vertical",
+            flipping="vertical",
             rotation=0.2,
-            hue=0.05,
+            #hue=0.05,
         )
 
         train_dataset, val_dataset = dataset_loader.get_dataset(batch_size=BATCH_SIZE, shuffle=True)
