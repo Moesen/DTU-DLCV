@@ -26,7 +26,7 @@ from projects.project3.src.visualization.make_boundary import get_boundary
 
 ## load the base model
 PROJECT_ROOT = get_project3_root()
-model_name = "unet_all_20220620230405" #"unet_20220618123600"
+model_name = "unet_all_20220621020942" #"unet_20220618123600"
 model_path = PROJECT_ROOT / "models" / model_name
 
 loss_fn = tf.keras.losses.BinaryCrossentropy()#focal_loss()
@@ -35,15 +35,15 @@ unet = tf.keras.models.load_model(model_path)#, custom_objects={"loss": loss_fn 
 unet.summary()
 
 ### the models trained on other segmentation types 
-model_name0 = "unet_0_20220620211834"
+model_name0 = "unet_0_20220620235357"
 model_path0 = PROJECT_ROOT / "models" / model_name0
 unet0 = tf.keras.models.load_model(model_path0, custom_objects={"loss": loss_fn })
 
-model_name1 = "unet_1_20220620213831"
+model_name1 = "unet_1_20220621002000"
 model_path1 = PROJECT_ROOT / "models" / model_name1
 unet1 = tf.keras.models.load_model(model_path1, custom_objects={"loss": loss_fn })
 
-model_name2 = "unet_2_20220620220117"
+model_name2 = "unet_2_20220621004926"
 model_path2 = PROJECT_ROOT / "models" / model_name2
 unet2 = tf.keras.models.load_model(model_path2, custom_objects={"loss": loss_fn })
 
