@@ -58,6 +58,26 @@ BATCH_SIZE = 20
 IMG_SIZE = (256,256)
 
 proot = get_project3_root()
+data_root = proot / "data/isic/train_allstyles"
+image_path = data_root / "Images"
+mask_path = data_root / "Segmentations"
+
+dataset_loader = IsicDataSet(
+    image_folder=image_path,
+    mask_folder=mask_path,
+    image_size=IMG_SIZE,
+    image_channels=3,
+    mask_channels=1,
+    image_file_extension="jpg",
+    mask_file_extension="png",
+    do_normalize=True,
+    validation_percentage=.2,
+    seed=69,
+)
+train_dataset, val_dataset = dataset_loader.get_dataset(batch_size=BATCH_SIZE, shuffle=True)
+
+
+
 data_root = proot / "data/isic/test_style0" #train_allstyles" #test_style0"
 image_path = data_root / "Images"
 mask_path = data_root / "Segmentations"
@@ -171,11 +191,37 @@ plt.savefig(fig_path)
 #compute metrics for model
 
 print("Computing final metrics...")
+print("On testset --------")
 for m, model in enumerate(unet_models):
     total_iou = []
     total_p_diff = []
     print("... for model " + unet_seg_type[m])
     for (x_batch_val, true_mask) in test_dataset:
+        for (val_img, val_GT_mask) in zip(x_batch_val, true_mask):
+            val_logits = model(tf.expand_dims(val_img, 0), training=False)
+            val_probs = tf.keras.activations.sigmoid(val_logits)
+            pred_mask = tf.squeeze(tf.math.round(val_probs))
+
+            compute_IoU = tf.keras.metrics.BinaryIoU() #compute_IoU = tf.keras.metrics.IoU(num_classes=2, target_class_ids=[0])
+            batch_iou = compute_IoU(pred_mask, val_GT_mask)
+            total_iou.append( batch_iou )
+
+            n_seg_pixels_mask = tf.math.reduce_sum(val_GT_mask).numpy()
+            n_seg_pixels_pred = tf.math.reduce_sum(pred_mask).numpy()
+            p_diff = ((n_seg_pixels_pred - n_seg_pixels_mask) / n_seg_pixels_mask)*100
+            total_p_diff.append( p_diff )
+
+    print(unet_seg_type[m])
+    print("IoU for entire test set: ",np.array(total_iou).mean())
+    print("Pixel diff entire test set in %: ",np.array(total_p_diff).mean())
+
+
+print("On trainset --------")
+for m, model in enumerate(unet_models):
+    total_iou = []
+    total_p_diff = []
+    print("... for model " + unet_seg_type[m])
+    for (x_batch_val, true_mask) in train_dataset:
         for (val_img, val_GT_mask) in zip(x_batch_val, true_mask):
             val_logits = model(tf.expand_dims(val_img, 0), training=False)
             val_probs = tf.keras.activations.sigmoid(val_logits)
