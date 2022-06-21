@@ -107,7 +107,7 @@ def create_CNN(IMG_SIZE):
 
     inputs = tf.keras.Input(shape=IMG_SIZE)
     x = base_model(inputs)
-    x = Conv2D(32, kernel_size=3, padding='same', strides=1)(x)
+    #x = Conv2D(32, kernel_size=3, padding='same', strides=1)(x)
     x = tf.keras.layers.GlobalAveragePooling2D()(x) ##
     x = tf.keras.layers.Dense(200,kernel_regularizer=regularizers.l2(1e-3), kernel_initializer='he_normal')(x) ##
     x = tf.keras.layers.Dropout(0.2)(x)

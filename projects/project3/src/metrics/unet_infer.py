@@ -54,7 +54,7 @@ unet_seg_type = ["All", "Type 0", "Type 1", "Type 2"]
 
 
 #Initialize dataloader
-BATCH_SIZE = 16
+BATCH_SIZE = 20
 IMG_SIZE = (256,256)
 
 proot = get_project3_root()
@@ -81,7 +81,7 @@ print("Loading first batch...")
 test_img, mask = list(iter(test_dataset))[0]
 
 #use these images 
-idx = tf.constant([0,8,10,15])
+idx = tf.constant([0,8,15,19])
 test_img_plot1 = tf.gather(test_img, idx)
 mask_img_plot1 = tf.gather(mask, idx)
 
@@ -133,7 +133,7 @@ for m, model in enumerate(unet_models):
             rc = mpl.colors.to_rgba((1,0,0))
             green_patch = mpatches.Patch(color=gc, label='GT')
             red_patch = mpatches.Patch(color=rc, label='Pred')
-            axs[m,n].legend(handles=[green_patch,red_patch], bbox_to_anchor=(0.35, -0.05), ncol=2, prop={'size': 16})
+            axs[m,n].legend(handles=[green_patch,red_patch], bbox_to_anchor=(0.4, -0.05), ncol=2, prop={'size': 16})
 
         #plot the iou and area difference in title
         compute_IoU = tf.keras.metrics.BinaryIoU()

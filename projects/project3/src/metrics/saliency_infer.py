@@ -60,6 +60,36 @@ if __name__ == "__main__":
     IMG_SIZE = (256,256)
     #lesions_path = proot / "data/isic" / "train_allstyles/Images" / "ISIC_0000013.jpg"
 
+
+    ## compute CNN acucracy 
+    data_root = proot / "data/isic"
+    lesions_path = data_root / "train_allstyles/Images"
+    background_path = data_root / "background"
+
+    dataset_loader = IsicDataSet(
+        lesions_folder=lesions_path,
+        background_folder=background_path,
+        image_size=IMG_SIZE,
+        image_channels=3,
+        # mask_channels=1,
+        image_file_extension="jpg",
+        # mask_file_extension="png",
+        do_normalize=False,
+        validation_percentage=0.2,
+        seed=69,
+        # segmentation_type="0",
+    )
+
+    _, val_dataset = dataset_loader.get_dataset(batch_size=16, shuffle=False)
+
+    for (x_batch_val, y_label) in val_dataset:
+        val_logits = cnn_model(x_batch_val, training=False)
+        predicted = K.cast(K.argmax(val_logits, axis=1), "uint8").numpy()
+        
+        breakpoint()
+    ##
+
+
     data_root = proot / "data/isic/test_style0" #train_allstyles" #test_style0"
     image_path = data_root / "Images"
     mask_path = data_root / "Segmentations"
@@ -89,7 +119,6 @@ total_p_diff = []
 for (x_batch_val, true_mask) in test_dataset:
     print("New batch...")
     for (val_img, val_GT_mask) in zip(x_batch_val, true_mask):
-        breakpoint()
         img = tf.expand_dims(val_img, 0)
         val_logits = cnn_model(img, training=False)
         #val_probs = tf.keras.activations.sigmoid(val_logits)
