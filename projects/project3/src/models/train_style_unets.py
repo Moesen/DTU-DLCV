@@ -53,7 +53,7 @@ if __name__ == '__main__':
     ##### TRAIN MODEL ##### 
     save_model = True
 
-    num_epochs = 100
+    num_epochs = 50
 
     proot = get_project3_root()
     data_root = proot / "data/isic/train_allstyles"
@@ -75,7 +75,7 @@ if __name__ == '__main__':
                     test_data=[],
                     img_size=(*IMG_SIZE, 3),
                     gf=GF,
-                    num_conv=3,
+                    num_conv=2,
                     depth=5,
                     batchnorm=True,
                     )
@@ -97,8 +97,8 @@ if __name__ == '__main__':
             validation_percentage=.2,
             seed=69,
             flipping="horizontal_and_vertical",
-            rotation=0.5,
-            hue=0.1,
+            rotation=0.2,
+            hue=0.05,
         )
 
         train_dataset, val_dataset = dataset_loader.get_dataset(batch_size=BATCH_SIZE, shuffle=True)
