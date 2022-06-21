@@ -27,7 +27,7 @@ from wandb.keras import WandbCallback
 log_path = Path("./log")
 logger = init_logger(__name__, True, log_path)
 
-study_name = "unet_test_100"
+study_name = "unet_test_aug"
 
 NUM_EPOCHS = 100
 IMG_SIZE = (256, 256)  # (256,256,3)
@@ -68,33 +68,43 @@ def objective(trial: optuna.trial.Trial) -> float:
     # config
     c = dict(
         # Network
-        first_layer_channels=trial.suggest_int("First layer channels", 10, 32),
+        first_layer_channels=trial.suggest_int("First layer channels", 10, 20),
         depth=trial.suggest_int("Depth", 2, 5),
         # Kernels
         num_kernels=trial.suggest_int("Convolutinal layers", 1, 3),
         # Learning
         dropout_percentage=trial.suggest_float("dropout_percentage", 0.1, 0.4),
-        learning_rate=trial.suggest_loguniform("learning rate", 1e-5, 1e-3),
+        learning_rate=trial.suggest_loguniform("learning rate", 5e-5, 1e-3),
         batch_size=trial.suggest_int("batch size", 4, 16, 4),
         batchnorm=trial.suggest_categorical("batch norm", [True, False]),
-        # TODO: Add binary crossentropy (keras)
         loss_func=trial.suggest_categorical(
+            #  
             "Loss function", ["focal_loss", "dice_loss", "weighted_cross_entropy"]
         ),
-        # Augmentations
-        # augmentation_flip=trial.suggest_categorical(
-        #    "augmentation_flip",
-        #    ["horizontal_and_vertical", "horizontal", "vertical", "none"],
-        # ),
-        # augmentation_rotation=trial.suggest_float("augmentation_rotation", 0.0, 0.2),
-        # augmentation_contrast=trial.suggest_float("augmentation_contrast", 0.0, 0.6),
+        augmentation_flip=trial.suggest_categorical(
+            "augmentation_flip",
+            ["horizontal_and_vertical", "horizontal", "vertical", "none"],
+        ),
+        augmentation_rotation=trial.suggest_float("augmentation_rotation", 0.0, 0.2),
+        augmentation_brightness=trial.suggest_float(
+            "augmentation_brightness", 0.0, 1.0
+        ),
+        augmentation_contrast=trial.suggest_float("augmentation_contrast", 0.0, 0.6),
+        augmentation_saturation=trial.suggest_float(
+            "augmentation_saturation", 0.0, 1.0
+        ),
+        augmentation_hue=trial.suggest_float("augmentation_hue", 0.0, 0.5),
     )
+
+    #fmt: off
     timer.add_new("creating config")
     switch = {
-        "focal_loss": focal_loss,
-        "dice_loss": dice_loss,
-        "weighted_cross_entropy": weighted_cross_entropy,
+        "focal_loss"             : focal_loss,
+        "dice_loss"              : dice_loss,
+        "weighted_cross_entropy" : weighted_cross_entropy,
     }
+    # fmt: on
+
     loss_func = switch[c["loss_func"]]()
 
     logger.info(
@@ -104,21 +114,29 @@ def objective(trial: optuna.trial.Trial) -> float:
     data_root = Path("/dtu/datasets1/02514/isic/train_allstyles")
     image_path = data_root / "Images"
     mask_path = data_root / "Segmentations"
-
+    
+    # fmt: off
     dataset_loader = IsicDataSet(
-        image_folder=image_path,
-        mask_folder=mask_path,
-        image_size=IMG_SIZE,
-        image_channels=3,
-        mask_channels=1,
-        image_file_extension="jpg",
-        mask_file_extension="png",
-        do_normalize=True,
-        validation_percentage=0.2,
-        seed=69,
+        image_folder          = image_path,
+        mask_folder           = mask_path,
+        image_size            = IMG_SIZE,
+        image_channels        = 3,
+        mask_channels         = 1,
+        image_file_extension  = "jpg",
+        mask_file_extension   = "png",
+        do_normalize          = True,
+        validation_percentage = 0.2,
+        seed                  = 69,
+        flipping              = c["augmentation_flip"],       # type: ignore
+        rotation              = c["augmentation_rotation"],   # type: ignore
+        brightness            = c["augmentation_brightness"], # type: ignore
+        contrast              = c["augmentation_contrast"],   # type: ignore
+        saturation            = c["augmentation_saturation"], # type: ignore
+        hue                   = c["augmentation_hue"],        # type: ignore
     )
-    timer.add_new("Dataset class")
+    # fmt: on
 
+    timer.add_new("Dataset class")
     train_dataset, val_dataset = dataset_loader.get_dataset(
         batch_size=c["batch_size"], shuffle=True
     )
@@ -182,7 +200,6 @@ def objective(trial: optuna.trial.Trial) -> float:
 
     # Callbacks
     image_callback = keras.callbacks.LambdaCallback(on_epoch_end=log_image)
-    time_callback = keras.callbacks.LambdaCallback(on_epoch_end=log_time)
     wandb_callback = WandbCallback(
         monitor="val_loss",
         log_evaluation=False,
@@ -192,7 +209,7 @@ def objective(trial: optuna.trial.Trial) -> float:
     image_callback = keras.callbacks.LambdaCallback(on_epoch_end=log_image)
     early_stopping = tf.keras.callbacks.EarlyStopping(
         monitor="val_loss",
-        patience=10,
+        patience=6,
         verbose=1,
         mode="min",
         restore_best_weights=True,
@@ -203,7 +220,7 @@ def objective(trial: optuna.trial.Trial) -> float:
         train_dataset,
         validation_data=val_dataset,
         epochs=NUM_EPOCHS,
-        callbacks=[early_stopping, image_callback, wandb_callback, time_callback],
+        callbacks=[early_stopping, image_callback, wandb_callback],
     )
     # fmt: on
 
