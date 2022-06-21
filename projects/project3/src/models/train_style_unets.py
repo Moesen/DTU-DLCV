@@ -48,7 +48,7 @@ if __name__ == '__main__':
     
     BATCH_SIZE = 8
     IMG_SIZE = (256,256) #(256,256,3)
-    GF = 20
+    GF = 32
 
     ##### TRAIN MODEL ##### 
     save_model = True
@@ -78,6 +78,7 @@ if __name__ == '__main__':
                     num_conv=1,
                     depth=5,
                     batchnorm=False,
+                    dropout_percent=0.3,
                     )
 
         unet.unet.summary()
