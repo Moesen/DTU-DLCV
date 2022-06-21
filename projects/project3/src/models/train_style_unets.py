@@ -46,7 +46,7 @@ if len(tf.config.list_physical_devices("GPU")) > 0:
 
 if __name__ == '__main__':
     
-    BATCH_SIZE = 16
+    BATCH_SIZE = 8
     IMG_SIZE = (256,256) #(256,256,3)
     GF = 20
 
@@ -64,7 +64,7 @@ if __name__ == '__main__':
     mask_path_all = data_root / "Segmentations"
 
     mask_path_list = [mask_path0, mask_path1, mask_path2]#, mask_path_all]
-    style_names = ["0","1","2"]#,"all"]
+    style_names = ["0","1","2","all"]
 
     for sn, mask_path in zip(style_names, mask_path_list):
 
@@ -75,7 +75,7 @@ if __name__ == '__main__':
                     test_data=[],
                     img_size=(*IMG_SIZE, 3),
                     gf=GF,
-                    num_conv=2,
+                    num_conv=1,
                     depth=5,
                     batchnorm=False,
                     )
@@ -98,6 +98,7 @@ if __name__ == '__main__':
             seed=69,
             flipping="vertical",
             rotation=0.2,
+            brightness=0.1,
             #hue=0.05,
         )
 
