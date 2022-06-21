@@ -17,7 +17,6 @@ from collections import defaultdict
 from PIL import Image, ImageFilter
 
 from projects.utils import get_project3_root
-#from projects.project3.src.data.simple_dataloader import basic_loader
 from projects.project3.src.data.dataloader import IsicDataSet
 from projects.project3.src.models.Networks import Pix2Pix_Unet
 from projects.project3.src.metrics.losses import *
@@ -35,15 +34,15 @@ unet = tf.keras.models.load_model(model_path, custom_objects={"loss": loss_fn })
 unet.summary()
 
 ### the models trained on other segmentation types 
-model_name0 = "unet_0_20220621161247"#"unet_0_20220621115543" #"unet_0_20220620235357"
+model_name0 = "unet_0_20220621190637"#"unet_0_20220621161247"#"unet_0_20220621115543" #"unet_0_20220620235357"
 model_path0 = PROJECT_ROOT / "models" / model_name0
 unet0 = tf.keras.models.load_model(model_path0, custom_objects={"loss": loss_fn })
 
-model_name1 = "unet_1_20220621163655"#"unet_1_20220621123347"#"unet_1_20220621002000"
+model_name1 = "unet_1_20220621191602"#"unet_1_20220621163655"#"unet_1_20220621123347"#"unet_1_20220621002000"
 model_path1 = PROJECT_ROOT / "models" / model_name1
 unet1 = tf.keras.models.load_model(model_path1, custom_objects={"loss": loss_fn })
 
-model_name2 = "unet_2_20220621170446"#"unet_2_20220621131331"#"unet_2_20220621004926"
+model_name2 = "unet_2_20220621193037"#"unet_2_20220621170446"#"unet_2_20220621131331"#"unet_2_20220621004926"
 model_path2 = PROJECT_ROOT / "models" / model_name2
 unet2 = tf.keras.models.load_model(model_path2, custom_objects={"loss": loss_fn })
 
