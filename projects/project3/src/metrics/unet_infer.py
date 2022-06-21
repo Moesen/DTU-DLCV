@@ -100,7 +100,7 @@ print("Loading first batch...")
 test_img, mask = list(iter(test_dataset))[0]
 
 #use these images 
-idx = tf.constant([8,15,24,28])
+idx = tf.constant([8,15,24,31])
 test_img_plot1 = tf.gather(test_img, idx)
 mask_img_plot1 = tf.gather(mask, idx)
 

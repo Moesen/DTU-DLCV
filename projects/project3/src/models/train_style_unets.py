@@ -46,9 +46,9 @@ if len(tf.config.list_physical_devices("GPU")) > 0:
 
 if __name__ == '__main__':
     
-    BATCH_SIZE = 8
+    BATCH_SIZE = 16
     IMG_SIZE = (256,256) #(256,256,3)
-    GF = 20
+    GF = 24
 
     ##### TRAIN MODEL ##### 
     save_model = True
