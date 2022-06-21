@@ -53,7 +53,7 @@ unet_seg_type = ["All", "Type 0", "Type 1", "Type 2"]
 
 
 #Initialize dataloader
-BATCH_SIZE = 50
+BATCH_SIZE = 100
 IMG_SIZE = (256,256)
 
 proot = get_project3_root()
@@ -100,7 +100,7 @@ print("Loading first batch...")
 test_img, mask = list(iter(test_dataset))[0]
 
 #use these images 
-idx = tf.constant([8,15,24,49])
+idx = tf.constant([8,15,24,99])
 test_img_plot1 = tf.gather(test_img, idx)
 mask_img_plot1 = tf.gather(mask, idx)
 
