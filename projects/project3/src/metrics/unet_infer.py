@@ -145,8 +145,6 @@ for m, model in enumerate(unet_models):
         
         n_seg_pixels_mask = tf.math.reduce_sum(GT_mask).numpy()
         n_seg_pixels_pred = tf.math.reduce_sum(pred_mask).numpy()
-
-        breakpoint()
         
         p_diff = ((n_seg_pixels_pred - n_seg_pixels_mask) / n_seg_pixels_mask)*100
 
