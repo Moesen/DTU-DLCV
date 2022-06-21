@@ -74,7 +74,7 @@ def objective(trial: optuna.trial.Trial) -> float:
         num_kernels=trial.suggest_int("Convolutinal layers", 1, 3),
         # Learning
         dropout_percentage=trial.suggest_float("dropout_percentage", 0.1, 0.4),
-        learning_rate=trial.suggest_loguniform("learning rate", 5e-5, 1e-3),
+        learning_rate=trial.suggest_loguniform("learning rate", 1e-5, 1e-3),
         batch_size=trial.suggest_int("batch size", 4, 16, 4),
         batchnorm=trial.suggest_categorical("batch norm", [True, False]),
         loss_func=trial.suggest_categorical(
