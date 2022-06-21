@@ -63,8 +63,8 @@ if __name__ == '__main__':
     mask_path2 = proot / "data/isic/train_style2/Segmentations"
     mask_path_all = data_root / "Segmentations"
 
-    mask_path_list = [mask_path0, mask_path1, mask_path2, mask_path_all]
-    style_names = ["0","1","2","all"]
+    mask_path_list = [mask_path0, mask_path1, mask_path2]#, mask_path_all]
+    style_names = ["0","1","2"]#,"all"]
 
     for sn, mask_path in zip(style_names, mask_path_list):
 
@@ -96,9 +96,9 @@ if __name__ == '__main__':
             output_image_path=False,
             validation_percentage=.2,
             seed=69,
-            #flipping="horizontal_and_vertical",
-            #rotation=0.5,
-            #hue=0.5,
+            flipping="horizontal_and_vertical",
+            rotation=0.5,
+            hue=0.1,
         )
 
         train_dataset, val_dataset = dataset_loader.get_dataset(batch_size=BATCH_SIZE, shuffle=True)
