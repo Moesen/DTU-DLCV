@@ -35,3 +35,6 @@ def unet_pixel_indexs(output_pixel: np.ndarray = np.array([5, 6])) -> None:
 
     print(f"shape: \t {input_shape} -> {shape}")
     print(f"pixel: \t {output_pixel + diff/2} <- {output_pixel}")
+
+if __name__ == "__main__":
+    unet_pixel_indexs()
