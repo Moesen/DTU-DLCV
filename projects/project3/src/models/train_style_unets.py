@@ -48,12 +48,12 @@ if __name__ == '__main__':
     
     BATCH_SIZE = 16
     IMG_SIZE = (256,256) #(256,256,3)
-    GF = 20
+    GF = 24
 
     ##### TRAIN MODEL ##### 
     save_model = True
 
-    num_epochs = 80
+    num_epochs = 100
 
     proot = get_project3_root()
     data_root = proot / "data/isic/train_allstyles"
@@ -63,8 +63,8 @@ if __name__ == '__main__':
     mask_path2 = proot / "data/isic/train_style2/Segmentations"
     mask_path_all = data_root / "Segmentations"
 
-    mask_path_list = [mask_path0, mask_path1, mask_path2]#, mask_path_all]
-    style_names = ["0","1","2"]#,"all"]
+    mask_path_list = [mask_path2, mask_path_all] #[mask_path0, mask_path1, mask_path2, mask_path_all]
+    style_names = ["2", "all"] #["0","1","2","all"]
 
     for sn, mask_path in zip(style_names, mask_path_list):
 
@@ -75,9 +75,10 @@ if __name__ == '__main__':
                     test_data=[],
                     img_size=(*IMG_SIZE, 3),
                     gf=GF,
-                    num_conv=2,
+                    num_conv=1,
                     depth=5,
                     batchnorm=False,
+                    dropout_percent=0.3,
                     )
 
         unet.unet.summary()
@@ -98,12 +99,21 @@ if __name__ == '__main__':
             seed=69,
             flipping="vertical",
             rotation=0.2,
+            #brightness=0.1,
             #hue=0.05,
         )
 
         train_dataset, val_dataset = dataset_loader.get_dataset(batch_size=BATCH_SIZE, shuffle=True)
 
-        model_history = unet.unet.fit(train_dataset, epochs=num_epochs,validation_data=val_dataset)
+        early_stopping = tf.keras.callbacks.EarlyStopping(
+        monitor="val_loss",
+        patience=10,
+        verbose=1,
+        mode="min",
+        restore_best_weights=True,
+        )
+
+        model_history = unet.unet.fit(train_dataset, epochs=num_epochs,validation_data=val_dataset,callbacks=early_stopping)
         
         # Saving model
         print("Saving model...")

@@ -17,7 +17,6 @@ from collections import defaultdict
 from PIL import Image, ImageFilter
 
 from projects.utils import get_project3_root
-#from projects.project3.src.data.simple_dataloader import basic_loader
 from projects.project3.src.data.dataloader import IsicDataSet
 from projects.project3.src.models.Networks import Pix2Pix_Unet
 from projects.project3.src.metrics.losses import *
@@ -26,24 +25,24 @@ from projects.project3.src.visualization.make_boundary import get_boundary
 
 ## load the base model
 PROJECT_ROOT = get_project3_root()
-model_name = "unet_all_20220621020942" #"unet_20220618123600"
+model_name = "unet_20220618123600"#"unet_all_20220621214620"#"unet_all_20220621020942" #"unet_20220618123600"
 model_path = PROJECT_ROOT / "models" / model_name
 
-loss_fn = tf.keras.losses.BinaryCrossentropy()#focal_loss()
+loss_fn = weighted_cross_entropy() #tf.keras.losses.BinaryCrossentropy()#focal_loss()
 
 unet = tf.keras.models.load_model(model_path, custom_objects={"loss": loss_fn })
 unet.summary()
 
 ### the models trained on other segmentation types 
-model_name0 = "unet_0_20220621144608"#"unet_0_20220621115543" #"unet_0_20220620235357"
+model_name0 = "unet_0_20220621190637"#"unet_0_20220621161247"#"unet_0_20220621115543" #"unet_0_20220620235357"
 model_path0 = PROJECT_ROOT / "models" / model_name0
 unet0 = tf.keras.models.load_model(model_path0, custom_objects={"loss": loss_fn })
 
-model_name1 = "unet_1_20220621150432"#"unet_1_20220621123347"#"unet_1_20220621002000"
+model_name1 = "unet_1_20220621002000" #"unet_1_20220621191602"#"unet_1_20220621163655"#"unet_1_20220621123347"#"unet_1_20220621002000"
 model_path1 = PROJECT_ROOT / "models" / model_name1
 unet1 = tf.keras.models.load_model(model_path1, custom_objects={"loss": loss_fn })
 
-model_name2 = "unet_2_20220621152543"#"unet_2_20220621131331"#"unet_2_20220621004926"
+model_name2 = "unet_2_20220621170446"#"unet_2_20220621193037"#"unet_2_20220621170446"#"unet_2_20220621131331"#"unet_2_20220621004926"
 model_path2 = PROJECT_ROOT / "models" / model_name2
 unet2 = tf.keras.models.load_model(model_path2, custom_objects={"loss": loss_fn })
 
@@ -54,7 +53,7 @@ unet_seg_type = ["All", "Type 0", "Type 1", "Type 2"]
 
 
 #Initialize dataloader
-BATCH_SIZE = 20
+BATCH_SIZE = 100
 IMG_SIZE = (256,256)
 
 proot = get_project3_root()
@@ -101,18 +100,10 @@ print("Loading first batch...")
 test_img, mask = list(iter(test_dataset))[0]
 
 #use these images 
-idx = tf.constant([0,8,15,19])
+idx = tf.constant([24,99,8,15])
 test_img_plot1 = tf.gather(test_img, idx)
 mask_img_plot1 = tf.gather(mask, idx)
 
-"""img_list = []
-mask_list = []
-for _ in range(len(unet_models)):
-    img_list.append(test_img_plot1)
-    mask_list.append(mask_img_plot1)
-
-test_img_plot = tf.concat(img_list, axis=0)
-mask_img_plot = tf.concat(mask_list, axis=0)"""
 
 test_img_plot = test_img_plot1
 mask_img_plot = mask_img_plot1
@@ -162,9 +153,8 @@ for m, model in enumerate(unet_models):
         
         img_iou = compute_IoU(pred_mask, GT_mask)
 
-        
-        n_seg_pixels_mask = tf.math.reduce_sum(GT_mask).numpy()
-        n_seg_pixels_pred = tf.math.reduce_sum(pred_mask).numpy()
+        n_seg_pixels_mask = int(GT_mask.numpy().sum())
+        n_seg_pixels_pred = int(pred_mask.numpy().sum())
         
         p_diff = ((n_seg_pixels_pred - n_seg_pixels_mask) / n_seg_pixels_mask)*100
 
@@ -180,22 +170,13 @@ fig_path = PROJECT_ROOT / "reports/figures/1_boundary.png"
 plt.savefig(fig_path,bbox_inches='tight')
 
 
-#plot a figure of the GT segmentations to check implementation
-fig, axs = plt.subplots(1,4, figsize=(15,8))
-for n, (mask, ax) in enumerate(zip(mask_img_plot, axs.ravel())):
-    ax.imshow(mask)
-fig_path = PROJECT_ROOT / "reports/figures/GT_boundary.png"
-plt.savefig(fig_path)
-
-
 #compute metrics for model
-
 print("Computing final metrics...")
 print("On testset --------")
 for m, model in enumerate(unet_models):
     total_iou = []
     total_p_diff = []
-    print("... for model " + unet_seg_type[m])
+    print("For model " + unet_seg_type[m])
     for (x_batch_val, true_mask) in test_dataset:
         for (val_img, val_GT_mask) in zip(x_batch_val, true_mask):
             val_logits = model(tf.expand_dims(val_img, 0), training=False)
@@ -206,8 +187,9 @@ for m, model in enumerate(unet_models):
             batch_iou = compute_IoU(pred_mask, val_GT_mask)
             total_iou.append( batch_iou )
 
-            n_seg_pixels_mask = tf.math.reduce_sum(val_GT_mask).numpy()
-            n_seg_pixels_pred = tf.math.reduce_sum(pred_mask).numpy()
+            n_seg_pixels_mask = int(val_GT_mask.numpy().sum())
+            n_seg_pixels_pred = int(pred_mask.numpy().sum())
+
             p_diff = ((n_seg_pixels_pred - n_seg_pixels_mask) / n_seg_pixels_mask)*100
             total_p_diff.append( p_diff )
 
@@ -220,7 +202,7 @@ print("On trainset --------")
 for m, model in enumerate(unet_models):
     total_iou = []
     total_p_diff = []
-    print("... for model " + unet_seg_type[m])
+    print("For model " + unet_seg_type[m])
     for (x_batch_val, true_mask) in train_dataset:
         for (val_img, val_GT_mask) in zip(x_batch_val, true_mask):
             val_logits = model(tf.expand_dims(val_img, 0), training=False)
@@ -231,12 +213,13 @@ for m, model in enumerate(unet_models):
             batch_iou = compute_IoU(pred_mask, val_GT_mask)
             total_iou.append( batch_iou )
 
-            n_seg_pixels_mask = tf.math.reduce_sum(val_GT_mask).numpy()
-            n_seg_pixels_pred = tf.math.reduce_sum(pred_mask).numpy()
+            n_seg_pixels_mask = int(val_GT_mask.numpy().sum())
+            n_seg_pixels_pred = int(pred_mask.numpy().sum())
+
             p_diff = ((n_seg_pixels_pred - n_seg_pixels_mask) / n_seg_pixels_mask)*100
             total_p_diff.append( p_diff )
 
     print(unet_seg_type[m])
-    print("IoU for entire test set: ",np.array(total_iou).mean())
-    print("Pixel diff entire test set in %: ",np.array(total_p_diff).mean())
+    print("IoU for entire train set: ",np.array(total_iou).mean())
+    print("Pixel diff entire train set in %: ",np.array(total_p_diff).mean())
 
