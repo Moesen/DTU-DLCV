@@ -67,7 +67,7 @@ importlib-resources==5.4.0
 isort==5.10.1
 jedi==0.18.1
 joblib==1.1.0
-keras==2.9.0
+keras==2.9.0 
 Keras-Preprocessing==1.1.2
 kiwisolver==1.4.2
 libclang==14.0.1
@@ -102,7 +102,6 @@ pipreqs==0.4.11
 platformdirs==2.4.1
 ply==3.11
 prettytable==3.3.0
--e git+ssh://git@github.com/Moesen/DTU-DLCV.git@f5de5113790e085cfa4e4a267498646f56bea9f9#egg=projects
 promise==2.3
 protobuf==3.19.4
 psutil==5.9.0
